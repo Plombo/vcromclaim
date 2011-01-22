@@ -5,7 +5,7 @@
 # Thanks to Leathl for writing Wii.cs in ShowMiiWads, which was an important 
 # reference in writing this program.
 
-import os, os.path, struct
+import os, os.path, struct, shutil
 from cStringIO import StringIO
 import romc
 from u8archive import U8Archive
@@ -153,6 +153,8 @@ class RomExtractor(object):
 		else: return False
 	
 	def extractrom_snes(self, arc, filename):
+		extracted = False
+		
 		# try to find the original ROM first
 		for f in arc.files:
 			path = f.path.split('.')
@@ -161,45 +163,54 @@ class RomExtractor(object):
 				rom = arc.getfile(f.path)
 				writerom(rom, filename)
 				print 'Got ROM: %s' % filename
-				return True
+				
+				extracted = True
 	
 		# if original ROM not present, try to create a playable ROM by recreating and injecting the original sounds
-		for f in arc.files:
-			path = f.path.split('.')
-			if len(path) == 2 and path[1] == 'rom':
-				print "Recreating original ROM from %s" % f.path
-				vcrom = arc.getfile(f.path)
-				if not vcrom: print "Error in reading ROM file %s" % f.path; return False
+		if not extracted:
+			for f in arc.files:
+				path = f.path.split('.')
+				if len(path) == 2 and path[1] == 'rom':
+					print "Recreating original ROM from %s" % f.path
+					vcrom = arc.getfile(f.path)
+					if not vcrom: print "Error in reading ROM file %s" % f.path; return False
 			
-				# find raw PCM data
-				pcm = None
-				for f2 in arc.files:
-					path2 = f2.path.split('.')
-					if len(path2) == 2 and path2[1] == 'pcm':
-						pcm = arc.getfile(f2.path)
-				if not pcm: print 'Error: PCM audio data not found'; return False
+					# find raw PCM data
+					pcm = None
+					for f2 in arc.files:
+						path2 = f2.path.split('.')
+						if len(path2) == 2 and path2[1] == 'pcm':
+							pcm = arc.getfile(f2.path)
+					if not pcm: print 'Error: PCM audio data not found'; return False
 			
-				'''# encode raw PCM in SNES BRR format
-				print 'Encoding audio as BRR'
-				brr = StringIO()
-				enc = BRREncoder(pcm, brr)
-				enc.encode()
-				pcm.close()'''
+					'''# encode raw PCM in SNES BRR format
+					print 'Encoding audio as BRR'
+					brr = StringIO()
+					enc = BRREncoder(pcm, brr)
+					enc.encode()
+					pcm.close()'''
 			
-				# inject BRR audio into the ROM
-				print 'Encoding and restoring BRR audio data to ROM'
-				romdata = restore_brr_samples(vcrom, pcm)
-				vcrom.close()
-				pcm.close()
+					# inject BRR audio into the ROM
+					print 'Encoding and restoring BRR audio data to ROM'
+					romdata = restore_brr_samples(vcrom, pcm)
+					vcrom.close()
+					pcm.close()
 			
-				# write the recreated ROM to disk
-				f = open(filename, 'wb')
-				f.write(romdata)
-				f.close()
-				print 'Got ROM: %s' % filename
-				return True
-	
-		return False
+					# write the recreated ROM to disk
+					f = open(filename, 'wb')
+					f.write(romdata)
+					f.close()
+					print 'Got ROM: %s' % filename
+					extracted = True
+		
+		# extract save data (but don't overwrite existing save data)
+		if extracted:
+			srm = filename[0:filename.rfind('.smc')] + '.srm'
+			if os.path.lexists(srm): print 'Not overwriting existing save data'
+			elif self.extractsave(srm): print 'Extracted save data to %s' % srm
+			else: print 'Could not extract save data'
+		
+		return extracted
 	
 	# copy save file verbatim
 	def extractsave(self, dest):
