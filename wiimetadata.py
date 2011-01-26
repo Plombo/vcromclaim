@@ -7,7 +7,7 @@
 
 import os, os.path, struct, shutil
 from cStringIO import StringIO
-import romc
+import romc, gensave, n64save
 from u8archive import U8Archive
 from ccfarchive import CCFArchive
 from nes_rom_extract import extract_nes_rom
@@ -22,30 +22,30 @@ def writerom(rom, path):
 	rom.seek(0)
 
 class RomExtractor(object):
+	# file extensions for ROMs
+	extensions = {
+		'Nintendo 64': '.z64',
+		'Genesis': '.gen',
+		'Master System': '.sms',
+		'NES': '.nes',
+		'SNES': '.smc',
+		'TurboGrafx16': '.pce'
+	}
+	
 	def __init__(self, id, name, channeltype, nand):
 		self.id = id
 		self.name = name
 		self.channeltype = channeltype
 		self.nand = nand
 	
-	# Get proper file extension for the ROM
-	def extension(self):
-		if self.channeltype == 'Nintendo 64': return '.z64'
-		elif self.channeltype == 'Genesis': return '.gen'
-		elif self.channeltype == 'Master System': return '.sms'
-		elif self.channeltype == 'NES': return '.nes'
-		elif self.channeltype == 'SNES': return '.smc'
-		elif self.channeltype == 'TurboGrafx16': return '.pce'
-		else: return ''
-	
 	def extract(self):
-		content = self.nand.path + 'title/00010001/' + self.id + '/content/'
+		content = os.path.join(self.nand.path, 'title', '00010001', self.id, 'content')
 		rom_extracted = False
 		manual_extracted = False
 		
 		for app in os.listdir(content):
 			if not app.endswith('.app'): continue
-			app = content + app
+			app = os.path.join(content, app)
 			if self.extractrom(app): rom_extracted = True
 			if self.extractmanual(app): manual_extracted = True
 			if rom_extracted and manual_extracted: return
@@ -55,57 +55,68 @@ class RomExtractor(object):
 		else: print 'Unable to extract ROM and manual.'
 	
 	# Actually extract the ROM
-	# Currently works for almost all NES, SNES, N64, TG16, Master System, and Genesis ROMs
+	# Currently works for almost all NES, SNES, N64, TG16, Master System, and Genesis ROMs.
 	def extractrom(self, u8path):
-		if self.channeltype != 'NES':
+		funcs = {
+			'Nintendo 64': self.extractrom_n64,
+			'Genesis': self.extractrom_sega,
+			'Master System': self.extractrom_sega,
+			'NES': self.extractrom_nes,
+			'SNES': self.extractrom_snes,
+			'TurboGrafx16': self.extractrom_tg16
+		}
+		
+		if self.channeltype == 'NES':
+			arc = u8path
+		else:
 			try:
 				arc = U8Archive(u8path)
 			except AssertionError:
 				return False
+		
+		if self.channeltype in funcs.keys():
+			return funcs[self.channeltype](arc, self.name + self.extensions[self.channeltype])
+		else:
+			return False
 	
-		filename = self.name + self.extension()
-		if self.channeltype == 'Nintendo 64':
-			return self.extractrom_n64(arc, filename)
-		elif self.channeltype in ('Genesis', 'Master System'):
-			return self.extractrom_sega(arc, filename)
-		elif self.channeltype == 'NES':
-			if os.path.exists(u8path):
-				f = open(u8path, 'rb')
-				rom = extract_nes_rom(f)
-				f.close()
-				if rom:
-					print 'Got ROM: %s' % filename
-					writerom(rom, filename)
-					return True
-				else: return False
-		elif self.channeltype == 'SNES':
-			return self.extractrom_snes(arc, filename)
-		elif self.channeltype == 'TurboGrafx16':
-			return self.extractrom_tg16(arc, filename)
-	
-		# default if the function hasn't returned yet
-		return False
+	def extractrom_nes(self, u8path, filename):
+		if os.path.exists(u8path):
+			f = open(u8path, 'rb')
+			rom = extract_nes_rom(f)
+			f.close()
+			if rom:
+				print 'Got ROM: %s' % filename
+				writerom(rom, filename)
+				return True
+			else: return False
 	
 	def extractrom_n64(self, arc, filename):
 		if arc.hasfile('rom'):
 			rom = arc.getfile('rom')
 			print 'Got ROM: %s' % filename
 			writerom(rom, filename)
-			return True
 		elif arc.hasfile('romc'):
 			rom = arc.getfile('romc')
 			print 'Decompressing ROM: %s (this could take a minute or two)' % filename
 			try:
+				romdata = romc.decompress(rom)
 				outfile = open(filename, 'wb')
-				outfile.write(romc.decompress(rom))
+				outfile.write(romdata)
 				outfile.close()
 				print 'Got ROM: %s' % filename
-				return True
 			except IndexError: # unknown compression - something besides LZSS and romchu?
 				print 'Decompression failed: unknown compression type'
 				outfile.close()
 				os.remove(filename)
 				return False
+		else: return False
+		
+		# extract save file
+		savepath = self.extractsave()
+		if savepath: print 'Extracted save file(s)'
+		else: print 'Failed to extract save file(s)'
+		
+		return True
 	
 	def extractrom_sega(self, arc, filename):
 		if arc.hasfile('data.ccf'):
@@ -123,9 +134,13 @@ class RomExtractor(object):
 				rom = ccf.find(romname)
 				writerom(rom, filename)
 				print 'Got ROM: %s' % filename
+				
+				if self.extractsave(): print 'Extracted save to %s.srm' % self.name
+				else: print 'No save file found'
+				
 				return True
 			else:
-				print 'ROM filename not in config'
+				print 'ROM filename not specified in config'
 				return False
 	
 	def extractrom_tg16(self, arc, filename):
@@ -207,18 +222,47 @@ class RomExtractor(object):
 		if extracted:
 			srm = filename[0:filename.rfind('.smc')] + '.srm'
 			if os.path.lexists(srm): print 'Not overwriting existing save data'
-			elif self.extractsave(srm): print 'Extracted save data to %s' % srm
+			elif self.extractsave(): print 'Extracted save data to %s' % srm
 			else: print 'Could not extract save data'
 		
 		return extracted
 	
-	# copy save file verbatim
-	def extractsave(self, dest):
-		path = self.nand.path + 'title/00010001/' + self.id + '/data/savedata.bin'
-		if os.path.exists(path):
-			shutil.copy2(path, dest)
-			return True
-		else: return False
+	# copy save file, doing any necessary conversions to common emulator formats
+	def extractsave(self):
+		datadir = os.path.join(self.nand.path, 'title', '00010001', self.id, 'data')
+		datafiles = os.listdir(datadir)
+		
+		for filename in datafiles:
+			path = os.path.join(datadir, filename)
+			if filename == 'savedata.bin':
+				if self.channeltype == 'SNES':
+					# VC SNES saves are standard SRM files
+					outpath = self.name + '.srm'
+					shutil.copy2(path, outpath)
+					return True
+				elif self.channeltype == 'NES':
+					# VC NES saves use the same format as FCEUX, except with an
+					# additional 64-byte header
+					outpath = self.name + '.sav'
+					infile = open(path, 'rb')
+					outfile = open(outpath, 'wb')
+					infile.seek(64)
+					outfile.write(infile.read())
+					outfile.close()
+					infile.close()
+					return True
+				elif self.channeltype == 'Genesis':
+					# VC Genesis saves use a slightly different format from 
+					# the one used by Gens/GS and other emulators
+					outpath = self.name + '.srm'
+					gensave.convert(path, outpath)
+					return True
+			elif filename.startswith('EEP_') or filename.startswith('RAM_'):
+				assert self.channeltype == 'Nintendo 64'
+				n64save.convert(path, self.name)
+				return True
+		
+		return False
 	
 	def extractmanual(self, u8path):
 		try:
@@ -254,27 +298,26 @@ class NandDump(object):
 		self.path = path + '/'
 	
 	def scantickets(self):
-		tickets = os.listdir(self.path + '/ticket/00010001')
+		tickets = os.listdir(os.path.join(self.path, 'ticket', '00010001'))
 		for ticket in tickets:
 			id = ticket.rstrip('.tik')
-			content = 'title/00010001/' + id + '/content/'
-			title = content + 'title.tmd'
-			if(os.path.exists(self.path + title)):
+			content = os.path.join('title', '00010001', id, 'content')
+			title = os.path.join(content, 'title.tmd')
+			if(os.path.exists(os.path.join(self.path, title))):
 				appname = self.getappname(title)
 				if not appname: continue
 				#print title, content + appname
-				name = self.gettitle(content + appname)
+				name = self.gettitle(os.path.join(content, appname))
 				channeltype = self.channeltype(ticket)
 				if name and channeltype:
-					print '%s: %s' % (channeltype, name)
-					#print id
+					print '%s: %s (ID: %s)' % (channeltype, name, id)
 					ext = RomExtractor(id, name, channeltype, self)
 					ext.extract()
 					print
 	
 	# Returns a string denoting the channel type.  Returns None if it's not a VC game.
 	def channeltype(self, ticket):
-		f = open(self.path + '/ticket/00010001/' + ticket, 'rb')
+		f = open(os.path.join(self.path, 'ticket', '00010001', ticket), 'rb')
 		f.seek(0x1dc)
 		thistype = struct.unpack('>I', f.read(4))[0]
 		if thistype != 0x10001: return None
@@ -299,7 +342,7 @@ class NandDump(object):
 	# Returns the path to the 00.app file containing the game's title
 	# Precondition: the file denoted by "title" exists on the filesystem
 	def getappname(self, title):
-		f = open(self.path + title, 'rb')
+		f = open(os.path.join(self.path, title), 'rb')
 		f.seek(0x1de)
 		count = struct.unpack('>H', f.read(2))[0]
 		f.seek(0x1e4)
@@ -313,8 +356,9 @@ class NandDump(object):
 	
 	# Gets title (in English) from a 00.app file
 	def gettitle(self, path):
-		if not os.path.exists(self.path + path): return None
-		f = open(self.path + path, 'rb')
+		path = os.path.join(self.path, path)
+		if not os.path.exists(path): return None
+		f = open(path, 'rb')
 		data = f.read()
 		f.close()
 		index = data.find('IMET')
