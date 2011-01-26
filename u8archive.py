@@ -116,7 +116,8 @@ class U8Archive(object):
 	# finds a file with the given name, accounting for compression prefixes like "LZ77", "Huf8", etc.
 	def findfile(self, name):
 		for f in self.files:
-			if f.name in (name, "LZ77"+name, "Huf8"+name, "LZH8"+name): return f.name
+			names = (name, "LZ77"+name, "LZ77_"+name, "Huf8"+name, "Huf8_"+name, "LZH8"+name, "LZH8_"+name)
+			if f.name in names: return f.name
 		return None
 	
 	def extract(self, dest):
