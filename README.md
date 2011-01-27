@@ -6,7 +6,8 @@ Intro
 vcromclaim is a program to extract game ROMs from Wii Virtual Console games. 
 It does this by analyzing an extracted Wii NAND filesystem, locating the ROMs, 
 and extracting them.  It automatically detects and decompresses compressed ROMs.
-It also extracts the game manual for each Virtual Console game it encounters.
+It also extracts the game manual and save files for each Virtual Console game 
+it encounters.
 
 Features
 --------
@@ -16,7 +17,10 @@ Features
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
-* Displays useful information in the extraction process.
+* Automatically extracts the built-in manuals in VC games.
+* Automatically extracts saves for NES, SNES, Genesis, and Nintendo 64 games,
+  converting them to the formats used by popular emulators for those platforms.
+* Displays useful debugging information in the extraction process.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
   platform supported by Python.
 
@@ -30,7 +34,7 @@ Usage
 -----
 The program is run by executing wiimetadata.py:  
 
-    python wiimetadata.py nand
+    python wiimetadata.py nand_directory
 
 Known Issues
 ------------
@@ -41,11 +45,11 @@ Credits
 -------
 * [Bryan Cain](https://github.com/Plombo) - author of vcromclaim
 * [hcs](http://hcs64.com) - author of C decompression code for Huf8, LZH8, and 
-  romchu; ported to Python by Bryan Cain
+  romchu, all of which I (Bryan) ported to Python for vcromextract.
 * [Hector Martin (marcan)](http://marcansoft.com/blog) - original author of the 
-  Python LZ77 decompression code, which was heavily modified and expanded for 
-  vcromextract by Bryan Cain.
+  Python LZ77 decompression code, which I heavily modified and expanded for 
+  vcromextract.
 * [Bregalad](http://www.romhacking.net/community/1067) - author of BRRTools, 
-  a Java program on which the BRR encoder in vcromclaim was based
+  a Java program on which the BRR encoder in vcromclaim was based.
 
 
