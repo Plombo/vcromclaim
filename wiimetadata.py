@@ -79,12 +79,21 @@ class RomExtractor(object):
 		else:
 			return False
 	
+	# FIXME: use string instead of StringIO
 	def extractrom_nes(self, u8path, filename):
 		if os.path.exists(u8path):
 			f = open(u8path, 'rb')
 			rom = extract_nes_rom(f)
 			f.close()
 			if rom:
+				# make sure save flag is set if the game has save data
+				if os.path.exists(os.path.join(self.nand.path, 'title', '00010001', self.id, 'data', 'savedata.bin')):
+					if not (ord(rom.getvalue()[6]) & 2):
+						rom = list(rom.getvalue())
+						rom[6] = chr(ord(rom[6]) | 2)
+						rom = StringIO(''.join(rom))
+						print 'Set the save flag to true'
+				
 				print 'Got ROM: %s' % filename
 				writerom(rom, filename)
 				return True
