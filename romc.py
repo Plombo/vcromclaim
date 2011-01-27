@@ -31,6 +31,7 @@ def decompress(infile):
 
 if __name__ == '__main__':
 	import sys, time
+	import cProfile
 	
 	if len(sys.argv) != 3:
 		print 'Usage: %s infile outfile' % sys.argv[0]
@@ -38,7 +39,7 @@ if __name__ == '__main__':
 	
 	infile = open(sys.argv[1], 'rb')
 	start = time.clock()
-	output = decompress(infile)
+	output = decompress(infile) # cProfile.run('output = decompress(infile)')
 	end = time.clock()
 	print 'Time: %.2f seconds' % (end - start)
 	

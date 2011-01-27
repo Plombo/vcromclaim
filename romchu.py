@@ -165,7 +165,7 @@ def decompress(infile):
 			body_size = payload_bytes*8 + payload_bits - body_offset*8
 			bs = init_bitstream(payload_buf, body_offset, body_size)
 
-			while not bitstream_eof(bs):
+			while (bs.bits_left + bs.first_byte_bits) != 0:
 				symbol = huf_lookup(bs, table1)
 
 				if symbol < 0x100:
@@ -282,9 +282,6 @@ def get_bits(bs, bits):
 
 	return accum >> (32-bits)
 
-def bitstream_eof(bs):
-	return (bs.bits_left + bs.first_byte_bits == 0)
-
 def free_bitstream(bs):
 	pass
 
@@ -342,7 +339,7 @@ def load_table(bs, symbols):
 				len_count[length] += 1
 				i += 1
 
-	assert bitstream_eof(bs) # did not exhaust bitstream reading table
+	assert (bs.bits_left + bs.first_byte_bits) == 0 # did not exhaust bitstream reading table
 
 	# compute the first canonical Hufman code for each length
 	accum = 0
