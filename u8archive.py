@@ -11,9 +11,11 @@ class U8Archive(object):
 	# archive can be a string (filesystem path) or file-like object
 	def __init__(self, archive):
 		if type(archive) == str:
+			#print archive
 			self.file = open(archive, 'rb')
 		else:
 			self.file = archive
+		assert self.file
 		self.files = []
 		self.readheader()
 	

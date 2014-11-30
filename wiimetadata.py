@@ -71,6 +71,7 @@ class RomExtractor(object):
 		else:
 			try:
 				arc = U8Archive(u8path)
+				if not arc: return False
 			except AssertionError:
 				return False
 		
@@ -278,23 +279,26 @@ class RomExtractor(object):
 	def extractmanual(self, u8path):
 		try:
 			arc = U8Archive(u8path)
+			if not arc: return False
 		except AssertionError: 
 			return False
 	
 		man = None
-		if arc.findfile('emanual.arc'):
-			man = U8Archive(arc.getfile(arc.findfile('emanual.arc')))
-		elif arc.findfile('html.arc'):
-			man = U8Archive(arc.getfile(arc.findfile('html.arc')))
-		elif arc.findfile('man.arc'):
-			man = U8Archive(arc.getfile(arc.findfile('man.arc')))
-		elif arc.findfile('data.ccf'):
-			ccf = CCFArchive(arc.getfile(arc.findfile('data.ccf')))
-			man = U8Archive(ccf.getfile('man.arc'))
-		elif arc.findfile('htmlc.arc'):
-			manc = arc.getfile(arc.findfile('htmlc.arc'))
-			print 'Decompressing manual: htmlc.arc'
-			man = U8Archive(StringIO(romc.decompress(manc)))
+		try:
+			if arc.findfile('emanual.arc'):
+				man = U8Archive(arc.getfile(arc.findfile('emanual.arc')))
+			elif arc.findfile('html.arc'):
+				man = U8Archive(arc.getfile(arc.findfile('html.arc')))
+			elif arc.findfile('man.arc'):
+				man = U8Archive(arc.getfile(arc.findfile('man.arc')))
+			elif arc.findfile('data.ccf'):
+				ccf = CCFArchive(arc.getfile(arc.findfile('data.ccf')))
+				man = U8Archive(ccf.getfile('man.arc'))
+			elif arc.findfile('htmlc.arc'):
+				manc = arc.getfile(arc.findfile('htmlc.arc'))
+				print 'Decompressing manual: htmlc.arc'
+				man = U8Archive(StringIO(romc.decompress(manc)))
+		except AssertionError: pass
 	
 		if man:
 			man.extract(os.path.join('manuals', self.name))
