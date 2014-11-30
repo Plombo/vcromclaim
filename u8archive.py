@@ -98,7 +98,7 @@ class U8Archive(object):
 				elif path.startswith("LZH8"):
 					try:
 						decompressed_file = StringIO()
-						decompressed_file.write(lzh8.decompress(file, decompressed_file))
+						decompressed_file.write(lzh8.decompress(file))
 						decompressed_file.seek(0)
 						file.close()
 						return decompressed_file
