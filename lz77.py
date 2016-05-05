@@ -121,7 +121,7 @@ def romc_decode(infile):
 
 if __name__ == '__main__':
 	import time
-	f = open(sys.argv[1])
+	f = open(sys.argv[1], 'rb')
 	
 	start = time.clock()
 	unc = WiiLZ77(f)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
 		
 	#du = romc_decode(f)
 	 
-	f2 = open(sys.argv[2],"w")
+	f2 = open(sys.argv[2], 'wb')
 	f2.write(''.join(du))
 	f2.close()
 	f.close()
