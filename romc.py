@@ -6,15 +6,39 @@
 import lz77, romchu, struct
 
 class RomcLZ77(lz77.BaseLZ77):
-	FOURMBYTE = 4194304 # 4MB rom size
+
+	SIZEBYTE2MULTIPLIER = 64
+	SIZEBYTE1MULTIPLIER = SIZEBYTE2MULTIPLIER * 256
+	SIZEBYTE0MULTIPLIER = SIZEBYTE1MULTIPLIER * 256
 	
 	def __init__(self, file):
 		self.file = file
 		self.offset = 0
-		self.uncompressed_length = self.FOURMBYTE * struct.unpack(">BBBB", self.file.read(4))[0]
+		unpacked = struct.unpack(">BBBB", self.file.read(4))
+		
+		# How these four bytes determine the uncompressed file size is a bit uncertain.
+		# The following has been tested with these games (all North American NTSC):
+
+		# Kirby 64 ROM: 8,0,0,1
+		# Mario Golf ROM: 8,0,0,1
+		# Mario Golf MANUAL: 0, 100, 186, 201
+		# Paper Mario ROM: 10,0,0,1
+
+		#  Works for everything above
+		self.uncompressed_length = unpacked[0] * self.SIZEBYTE0MULTIPLIER + unpacked[1] * self.SIZEBYTE1MULTIPLIER + unpacked[2] * self.SIZEBYTE2MULTIPLIER
+
+		#  Works for Mario Golf ROM and Kirby 64 ROM
+		#  Does NOT work for Mario Golf MANUAL (manual is extracted without error messages, but some of the extracted files are empty)
+		#self.uncompressed_length = unpacked[0] * self.SIZEBYTE0MULTIPLIER + unpacked[1] * self.SIZEBYTE1MULTIPLIER
+
+		#  Works for Mario Golf ROM and Kirby 64 ROM
+		#  Does NOT work for Mario Golf MANUAL (fails completely to extract manual)
+		#self.uncompressed_length = unpacked[0] * self.SIZEBYTE0MULTIPLIER
+		
 		self.compression_type = self.TYPE_LZ77_10
 
 def decompress(infile):
+
 	# read compression type
 	infile.seek(0)
 	compression_type = struct.unpack(">BBBB", infile.read(4))[3] & 0x3
