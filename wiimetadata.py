@@ -5,7 +5,7 @@
 # Thanks to Leathl for writing Wii.cs in ShowMiiWads, which was an important 
 # reference in writing this program.
 
-import os, os.path, struct, shutil
+import os, os.path, struct, shutil, re
 from cStringIO import StringIO
 import romc, gensave, n64save
 from u8archive import U8Archive
@@ -322,7 +322,7 @@ class NandDump(object):
 				appname = self.getappname(title)
 				if not appname: continue
 				#print title, content + appname
-				name = self.gettitle(os.path.join(content, appname))
+				name = self.gettitle(os.path.join(content, appname), id)
 				channeltype = self.channeltype(ticket)
 				if name and channeltype:
 					print '%s: %s (ID: %s)' % (channeltype, name, id)
@@ -370,7 +370,7 @@ class NandDump(object):
 		return appname
 	
 	# Gets title (in English) from a 00.app file
-	def gettitle(self, path):
+	def gettitle(self, path, defaultTitle):
 		path = os.path.join(self.path, path)
 		if not os.path.exists(path): return None
 		f = open(path, 'rb')
@@ -388,11 +388,22 @@ class NandDump(object):
 		title = title.replace('\0', '')
 		title = title.replace(':', ' - ')
 		while title.find('  ') >= 0: title = title.replace('  ', ' ')
+		
+		# Find all remaining characters that are not known to be safe
+		# Delete any such characters
+		title = re.sub('[^A-Za-z0-9\\-\\!\\_ ]', '', title)
+
+		# Make sure the string didn't end up starting or ending with a space - if so, delete them as well
+		title = re.sub('(\\s*$)|(^\\s*)', '', title)
+
+		# If we stripped everything (maybe can happen on japanese titles?), fall back to using defaultTitle
+		if len(title) <= 0:
+			title = defaultTitle
+
 		return title
 
 if __name__ == '__main__':
 	import sys
 	nand = NandDump(sys.argv[1])
 	nand.scantickets()
-	if len(sys.argv) >= 3: print nand.gettitle(sys.argv[2])
 
