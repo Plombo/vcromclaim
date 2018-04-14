@@ -12,12 +12,29 @@ def convert(src, dest):
 	outfile = open(dest, 'wb')
 	
 	# read VC header
+
+	# first, magic word VCSD
 	assert infile.read(4) == 'VCSD'
-	size1 = struct.unpack('<I', infile.read(4))[0] # size of expanded file + size of SRAM block (0x8)
-	infile.read(4) # not sure what these 4 bytes do
-	assert infile.read(4) == 'SRAM'
-	size = struct.unpack('<I', infile.read(4))[0] # size of expanded file; equal to (size1 - 0x8)
-	assert size == size1 - 0x8
+
+	# now a header that may be 8-9 bytes, maybe more or less?
+	# At least north american Monster World IV has 9 bytes header.
+	
+	#first four bytes of that header contains an integer which is
+	# the size of expanded file + headerSize of this header below
+	totalSize = struct.unpack('<I', infile.read(4))[0] 
+	headSize = 4
+	# remaining bytes of the header is unknown
+	
+	# search for 'SRAM' magic word.
+	while infile.read(4) != 'SRAM' and headSize < totalSize:
+		infile.seek(-3,1) #step 3 bytes back and look again
+		headSize = headSize + 1
+
+	# sanity check. if this is not true then SRAM was not found in the file.
+	assert headSize < totalSize
+
+	size = struct.unpack('<I', infile.read(4))[0] # size of expanded file; equal to (totalSize - headSize)
+	assert size == (totalSize - headSize)
 	
 	while outfile.tell() < size:
 		data = infile.read(512)
