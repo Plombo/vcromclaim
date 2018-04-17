@@ -27,9 +27,9 @@ class RomExtractor(object):
 		'Nintendo 64': '.z64',
 		'Genesis': '.gen',
 		'Master System': '.sms',
-		'NES': '.nes',
 		'SNES': '.smc',
 		'TurboGrafx16': '.pce'
+		#NES extension is determined by media type (cart = nes, disk = fds)
 	}
 	
 	def __init__(self, id, name, channeltype, nand):
@@ -76,33 +76,49 @@ class RomExtractor(object):
 				return False
 		
 		if self.channeltype in funcs.keys():
-			return funcs[self.channeltype](arc, self.name + self.extensions[self.channeltype])
+			return funcs[self.channeltype](arc, self.name)
 		else:
 			return False
 	
 	# FIXME: use string instead of StringIO
-	def extractrom_nes(self, u8path, filename):
+	def extractrom_nes(self, u8path, filenameWithoutExtension):
 		if not os.path.exists(u8path): return False
 		
 		f = open(u8path, 'rb')
-		rom = extract_nes_rom(f)
+		result, output = extract_nes_rom(f)
 		f.close()
 		
-		if not rom: return False
-		
-		# make sure save flag is set if the game has save data
-		if self.extractsave():
-			if not (ord(rom.getvalue()[6]) & 2):
-				rom = list(rom.getvalue())
-				rom[6] = chr(ord(rom[6]) | 2)
-				rom = StringIO(''.join(rom))
-				print 'Set the save flag to true'
-			
-		print 'Got ROM: %s' % filename
-		writerom(rom, filename)
+		if result == 1:
+			# nes rom
+
+			# make sure save flag is set if the game has save data
+			if self.extractsave():
+				if not (ord(output.getvalue()[6]) & 2):
+					output = list(output.getvalue())
+					output[6] = chr(ord(output[6]) | 2)
+					output = StringIO(''.join(output))
+					print 'Set the save flag to true'
+
+			filename = filenameWithoutExtension + ".nes"
+
+			print 'Got ROM: %s' % filename
+
+		elif result == 2:
+			# FDS
+			print "Sorry, no save file support for FDS games yet."
+
+			filename = filenameWithoutExtension + ".fds"
+
+			print 'Got FDS image: %s' % filename
+
+		else:
+			return False
+
+		writerom(output, filename)
 		return True
 	
-	def extractrom_n64(self, arc, filename):
+	def extractrom_n64(self, arc, filenameWithoutExtension):
+		filename = filenameWithoutExtension + self.extensions[self.channeltype]
 		if arc.hasfile('rom'):
 			rom = arc.getfile('rom')
 			print 'Got ROM: %s' % filename
@@ -130,7 +146,8 @@ class RomExtractor(object):
 		
 		return True
 	
-	def extractrom_sega(self, arc, filename):
+	def extractrom_sega(self, arc, filenameWithoutExtension):
+		filename = filenameWithoutExtension + self.extensions[self.channeltype]
 		if arc.hasfile('data.ccf'):
 			ccf = CCFArchive(arc.getfile('data.ccf'))
 		
@@ -155,7 +172,8 @@ class RomExtractor(object):
 				print 'ROM filename not specified in config'
 				return False
 	
-	def extractrom_tg16(self, arc, filename):
+	def extractrom_tg16(self, arc, filenameWithoutExtension):
+		filename = filenameWithoutExtension + self.extensions[self.channeltype]
 		config = arc.getfile('config.ini')
 		if not config:
 			print 'config.ini not found'
@@ -179,7 +197,8 @@ class RomExtractor(object):
 			return True
 		else: return False
 	
-	def extractrom_snes(self, arc, filename):
+	def extractrom_snes(self, arc, filenameWithoutExtension):
+		filename = filenameWithoutExtension + self.extensions[self.channeltype]
 		extracted = False
 		
 		# try to find the original ROM first
