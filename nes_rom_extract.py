@@ -5,33 +5,67 @@
 import sys, struct
 from array import array
 from cStringIO import StringIO
+from lz77 import WiiLZ77
+
+
+NES_HEADER_MAGIC_WORD = 'NES\x1a'
+FDS_SIDE_HEADER_MAGIC_WORD = '\x01*NINTENDO-HVC*'
+
 
 # return:
 # 	result = 0 (neither cartridge or FDS), 1 (cartridge), or 2 (FDS)
 #	output = the rom/disk image data as StringIO with iNES or FDS header 
-def extract_nes_rom(app1):
-	cartridgeRomOffset = scan_for_header(app1, 'NES\x1a')
-	fdsImageOffset = scan_for_header(app1, '\x01*NINTENDO-HVC*')
+def extract_nes_rom(app1, tryLZ77 = True):
+	
+	cartridgeRomOffset = scan_for_cartridge_header(app1)
+	if cartridgeRomOffset > 0:
+		return (1, extract_cartridge_rom(app1, cartridgeRomOffset))
 
-	if cartridgeRomOffset < 0 and fdsImageOffset < 0:
-		return (0,None)
-	elif fdsImageOffset < 0:
-		# only ROM was found
-		return (1, extract_cartridge_rom(app1, cartridgeRomOffset))
-	elif cartridgeRomOffset < 0:
-		# only disk image was found
+	fdsImageOffset = scan_for_fds_header(app1)
+	if fdsImageOffset > 0:
 		return (2, extract_fds_image(app1, fdsImageOffset))
-	elif cartridgeRomOffset < fdsImageOffset:
-		# both disk and rom magic was found. the rom happened before the FDS, so larger chance that that is valid.
-		return (1, extract_cartridge_rom(app1, cartridgeRomOffset))
+
+	# some app files are compressed. decompress the entire file.
+	# it seems the ROMs are decompressed properly even if we do not start the decompression at the ROM's start position.
+	if tryLZ77:
+		unc = WiiLZ77(app1)
+		try:
+			(result, output) = extract_nes_rom(StringIO(unc.uncompress_11()), False)
+			return (result, output)
+		except IndexError:
+			return (0,None)
+			
 	else:
-		# both disk and rom magic was found. the FDS happened before the FDS, so larger chance that that is valid.
-		return (2, extract_fds_image(app1, fdsImageOffset))
+		return (0,None)
 	
 
-def scan_for_header(inputFile, magicWord):
+def scan_for_cartridge_header(inputFile):
+	# The NES header is: (source = http://wiki.nesdev.com/w/index.php/INES )
+	# Byte 0-4 = 'NES\x1a'
+	# Byte 5-A = header data
+	# Byte B-F = 0x00
+	
+	position = 0
+	while True:
+		inputFile.seek(position)
+		position = inputFile.read().find(NES_HEADER_MAGIC_WORD)
+		if position < 0:
+			#no header found. return -1.
+			return position
+		else:
+			#check if header byte B-F is zeroes, to skip some false positives
+			inputFile.seek(position + 0xB)
+			if inputFile.read(5) == '\x00\x00\x00\x00\x00':
+				# most likely a NES header
+				return position
+			else:
+				# not a NES header - keep searching
+				position += 1
+
+
+def scan_for_fds_header(inputFile):
 	inputFile.seek(0)
-	return inputFile.read().find(magicWord)
+	return inputFile.read().find(FDS_SIDE_HEADER_MAGIC_WORD)
 
 
 def extract_cartridge_rom(inputFile, start):
@@ -40,8 +74,7 @@ def extract_cartridge_rom(inputFile, start):
 	#size += 16 * 1024 * ord(app1.read(1)) # next byte: number of PRG banks, 16KB each
 	#size += 8 * 1024 * ord(app1.read(1)) # next byte: number of CHR banks, 8KB each
 	inputFile.seek(start)
-	outputFile = StringIO(inputFile.read())
-	return outputFile
+	return StringIO(inputFile.read())
 
 def extract_fds_image(inputFile, start):
 	#NES VC FDS images are prefixed with VCI header.
@@ -63,11 +96,11 @@ def extract_fds_image(inputFile, start):
 	#OUTPUT FORMAT: (fds format as described here: https://wiki.nesdev.com/w/index.php/Family_Computer_Disk_System)
 	#Byte 00-03 = FDS\x1a
 	FDS_MAGIC_WORD_LENGTH = 0x4
-	#Byte 04 = number of pages (0x01, 0x02)
-	FDS_PAGE_COUNT_POSITION = 0x04
+	#Byte 04 = number of sides (0x01, 0x02)
+	FDS_SIDE_COUNT_POSITION = 0x04
 	#Byte 05-0F = 0x00
 	FDS_HEADER_LENGTH = 0x10
-	#DISK SIDE BLOCK (one for each page in byte 09)
+	#DISK SIDE BLOCK (one for each side in byte 04)
 	#0000-FFDC = image of one disk side, should start with \x00*NINTENDO-HVC. Disk gaps between files excluded. The end of the image is padded with zeroes.
 	FDS_DISK_SIDE_LENGTH = 0xFFDC
 
@@ -80,18 +113,17 @@ def extract_fds_image(inputFile, start):
 	while True:
 		vciSideStart = start + sideCounter*VCI_DISK_SIDE_LENGTH
 		inputFile.seek(vciSideStart)
-		if inputFile.read(15) == '\x01*NINTENDO-HVC*':
+		if inputFile.read(len(FDS_SIDE_HEADER_MAGIC_WORD)) == FDS_SIDE_HEADER_MAGIC_WORD:
 			sideData = extract_fds_side(inputFile, vciSideStart)
 			outputArray.extend(sideData)
 			outputArray.extend(array('B', '\0' * (FDS_DISK_SIDE_LENGTH - len(sideData))))
-			#outputArray.extend(array('B', inputFile.read(FDS_DISK_SIDE_LENGTH)))
 
 			sideCounter += 1
 		else:
 			break
 
-	outputArray[FDS_PAGE_COUNT_POSITION] = sideCounter
-	print "Found " + str(sideCounter) + " floppy disk pages"
+	outputArray[FDS_SIDE_COUNT_POSITION] = sideCounter
+	print "Found " + str(sideCounter) + " floppy disk sides"
 
 	return StringIO(outputArray)
 
