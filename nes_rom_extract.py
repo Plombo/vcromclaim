@@ -92,11 +92,14 @@ def scan_for_fds_header(inputFile):
 
 def extract_cartridge_rom(inputFile, start):
 	# NES ROM found; calculate size and extract it (FIXME: size calculation doesn't work)
-	#size = 16 + 128 # 16-byte header, 128-byte title data (optional footer)
-	#size += 16 * 1024 * ord(inputFile.read(1)) # next byte: number of PRG banks, 16KB each
-	#size += 8 * 1024 * ord(inputFile.read(1)) # next byte: number of CHR banks, 8KB each
+	inputFile.seek(start+4)
+	# This assumes the ROMs doesn't have any of the optional stuff (trainer, file name, etc)
+
+	size = 16 # 16-byte header, 128-byte title data (optional footer)
+	size += 16 * 1024 * struct.unpack(">B", inputFile.read(1))[0] # next byte: number of PRG banks, 16KB each
+	size += 8 * 1024 * struct.unpack(">B", inputFile.read(1))[0] # next byte: number of CHR banks, 8KB each
 	inputFile.seek(start)
-	return StringIO(inputFile.read())
+	return StringIO(inputFile.read(size))
 
 def extract_fds_image(inputFile, start):
 	#NES VC FDS images are prefixed with VCI header.
