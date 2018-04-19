@@ -406,14 +406,20 @@ class NandDump(object):
 		title = title.replace('\0\0', ' - ')
 		title = title.replace('\0', '')
 		title = title.replace(':', ' - ')
-		while title.find('  ') >= 0: title = title.replace('  ', ' ')
-		
-		# Find all remaining characters that are not known to be safe
-		# Delete any such characters
-		title = re.sub('[^A-Za-z0-9\\-\\!\\_ ]', '', title)
 
-		# Make sure the string didn't end up starting or ending with a space - if so, delete them as well
-		title = re.sub('(\\s*$)|(^\\s*)', '', title)
+		# Replace some characters
+		title = re.sub('!a', 'II', title) # e.g. Zelda II 
+		title = re.sub('!b', 'III', title) # e.g. Ninja Gaiden III
+		title = re.sub(' \x19', '\'', title) # e.g. Indiana Jones' GA
+
+		# Delete any characters that are not known to be safe
+		title = re.sub('[^A-Za-z0-9\\-\\!\\_\\&\\\'\\. ]', '', title)
+
+		# more than one consequtive spaces --> one space
+		while title.find('  ') >= 0: title = title.replace('  ', ' ')
+
+		# Delete any mix of "." and space at beginning or end of string
+		title = re.sub('(^[\\s.]*)|([\\s.]*$)', '', title)
 
 		# If we stripped everything (maybe can happen on japanese titles?), fall back to using defaultTitle
 		if len(title) <= 0:
