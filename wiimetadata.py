@@ -10,7 +10,7 @@ from cStringIO import StringIO
 import romc, gensave, n64save
 from u8archive import U8Archive
 from ccfarchive import CCFArchive
-from nes_rom_extract import extract_nes_rom
+from nes_rom_extract import extract_nes_rom, extract_fds_bios_rom
 from snesrestore import restore_brr_samples
 
 # rom: file-like object

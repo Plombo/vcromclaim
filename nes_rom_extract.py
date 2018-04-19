@@ -2,7 +2,7 @@
 # Author: Bryan Cain (Plombo)
 # Extracts an NES ROM or FDS image from a 00000001.app file from an NES Virtual Console game.
 
-import sys, struct
+import sys, struct, hashlib
 from array import array
 from cStringIO import StringIO
 from lz77 import WiiLZ77
@@ -10,6 +10,28 @@ from lz77 import WiiLZ77
 
 NES_HEADER_MAGIC_WORD = 'NES\x1a'
 FDS_SIDE_HEADER_MAGIC_WORD = '\x01*NINTENDO-HVC*'
+FDS_BIOS_HEADER_MAGIC_WORD = '\x00\x38\x4C\xC6\xC6\xC6\x64\x38\x00\x18\x38\x18\x18\x18\x18\x7E'
+
+
+def extract_fds_bios_rom(app1, tryLZ77 = True):
+	fdsBiosOffset = scan_for_fds_bios(app1)
+	if fdsBiosOffset >= 0:
+		app1.seek(fdsBiosOffset)
+		fileData = app1.read(0x2000) # = 8 KiB
+		fileHash = hashlib.md5(fileData)
+		print "Found FDS BIOS ROM with hash: " + fileHash.hexdigest()
+
+		return StringIO(fileData)
+	
+	if tryLZ77:
+		unc = WiiLZ77(app1)
+		try:
+			return extract_fds_bios_rom(StringIO(unc.uncompress_11()), False)
+		except IndexError:
+			return None
+
+	else:
+		return None
 
 
 # return:
@@ -18,11 +40,11 @@ FDS_SIDE_HEADER_MAGIC_WORD = '\x01*NINTENDO-HVC*'
 def extract_nes_rom(app1, tryLZ77 = True):
 	
 	cartridgeRomOffset = scan_for_cartridge_header(app1)
-	if cartridgeRomOffset > 0:
+	if cartridgeRomOffset >= 0:
 		return (1, extract_cartridge_rom(app1, cartridgeRomOffset))
 
 	fdsImageOffset = scan_for_fds_header(app1)
-	if fdsImageOffset > 0:
+	if fdsImageOffset >= 0:
 		return (2, extract_fds_image(app1, fdsImageOffset))
 
 	# some app files are compressed. decompress the entire file.
@@ -70,9 +92,9 @@ def scan_for_fds_header(inputFile):
 
 def extract_cartridge_rom(inputFile, start):
 	# NES ROM found; calculate size and extract it (FIXME: size calculation doesn't work)
-	#size = 16 + 128 # 16-byte header, 128-byte title data (footer)
-	#size += 16 * 1024 * ord(app1.read(1)) # next byte: number of PRG banks, 16KB each
-	#size += 8 * 1024 * ord(app1.read(1)) # next byte: number of CHR banks, 8KB each
+	#size = 16 + 128 # 16-byte header, 128-byte title data (optional footer)
+	#size += 16 * 1024 * ord(inputFile.read(1)) # next byte: number of PRG banks, 16KB each
+	#size += 8 * 1024 * ord(inputFile.read(1)) # next byte: number of CHR banks, 8KB each
 	inputFile.seek(start)
 	return StringIO(inputFile.read())
 
@@ -160,7 +182,7 @@ def extract_fds_side(inputFile, vciSideStart):
 	inputPosition += BLOCK_2_LENGTH + CHECKSUM_LENGTH
 
 	inputFile.seek(inputPosition)
-	while is_block(inputFile, inputPosition, BLOCK_3_HEADER):
+	while is_fds_block(inputFile, inputPosition, BLOCK_3_HEADER):
 		block3 = extract_fds_block(inputFile, inputPosition, BLOCK_3_LENGTH, BLOCK_3_HEADER)
 		block4length = BLOCK_4_HEADER_LENGTH + struct.unpack('<H', block3[BLOCK_3_SIZE_OF_BLOCK_4_POSITION : BLOCK_3_SIZE_OF_BLOCK_4_POSITION+BLOCK_3_SIZE_OF_BLOCK_4_SIZE])[0]
 		side.extend(block3)
@@ -176,7 +198,7 @@ def extract_fds_side(inputFile, vciSideStart):
 # returns True if the block at inputStart matches the header.
 # returns False if the block at inputStart is empty 0x00 (i.e. no more files)
 # throws error if the header is of not the expected type
-def is_block(inputFile, inputStart, header):
+def is_fds_block(inputFile, inputStart, header):
 	inputFile.seek(inputStart)
 	if inputFile.read(len(header)) == header:
 		return True
@@ -196,6 +218,11 @@ def extract_fds_block(inputFile, inputStart, length, header):
 
 	inputFile.seek(inputStart)
 	return array('B', inputFile.read(length))
+
+
+def scan_for_fds_bios(inputFile):
+	inputFile.seek(0)
+	return inputFile.read().find(FDS_BIOS_HEADER_MAGIC_WORD)
 
 
 
