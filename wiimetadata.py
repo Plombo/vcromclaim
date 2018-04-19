@@ -418,7 +418,7 @@ class NandDump(object):
 		# more than one consequtive spaces --> one space
 		while title.find('  ') >= 0: title = title.replace('  ', ' ')
 
-		# Delete any mix of "." and space at beginning or end of string
+		# Delete any mix of "." and space at beginning or end of string - they are valid in filenames, but not always as head or tail
 		title = re.sub('(^[\\s.]*)|([\\s.]*$)', '', title)
 
 		# If we stripped everything (maybe can happen on japanese titles?), fall back to using defaultTitle
