@@ -5,7 +5,7 @@
 # Thanks to Leathl for writing Wii.cs in ShowMiiWads, which was an important 
 # reference in writing this program.
 
-import os, os.path, struct, shutil, re
+import os, os.path, struct, shutil, re, zlib
 from cStringIO import StringIO
 import romc, gensave, n64save
 from u8archive import U8Archive
@@ -17,6 +17,7 @@ from snesrestore import restore_brr_samples
 # path: string (filesystem path)
 def writerom(rom, path):
 	f = open(path, 'wb')
+	rom.seek(0)
 	f.write(rom.read())
 	f.close()
 	rom.seek(0)
@@ -262,9 +263,23 @@ class RomExtractor(object):
 		foundRom = False
 		for file in arc.files:
 			#print file.name
-			if file.name == "game.bin" or file.name == "game.bin.z":
+			if file.name == "game.bin":
 				rom = arc.getfile(file.path)
 				writerom(rom, filenameWithoutExtension + "." + file.name)
+				print 'Got ROM'
+				print "Sorry, no save file support for Neo Geo games yet."
+				foundRom = True
+			if file.name == "game.bin.z":
+				rom = arc.getfile(file.path)
+				firstByte = rom.read(1)
+				if firstByte == '\x78': # zlib compression
+					rom.seek(0)
+					writerom(StringIO(zlib.decompress(rom.read())), filenameWithoutExtension + ".game.bin")
+				elif firstByte == '\x43':
+					writerom(rom, filenameWithoutExtension + ".cr." + file.name)
+				else:
+					writerom(rom, filenameWithoutExtension + "." + file.name)
+
 				print 'Got ROM'
 				print "Sorry, no save file support for Neo Geo games yet."
 				foundRom = True
