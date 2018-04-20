@@ -22,14 +22,13 @@ def writerom(rom, path):
 	rom.seek(0)
 
 class RomExtractor(object):
-	# file extensions for ROMs
+	# file extensions for ROMs (not applicable for all formats)
 	extensions = {
 		'Nintendo 64': '.z64',
 		'Genesis': '.gen',
 		'Master System': '.sms',
 		'SNES': '.smc',
 		'TurboGrafx16': '.pce'
-		#NES extension is determined by media type (cart = nes, disk = fds)
 	}
 	
 	def __init__(self, id, name, channeltype, nand):
@@ -42,15 +41,15 @@ class RomExtractor(object):
 		content = os.path.join(self.nand.path, 'title', '00010001', self.id, 'content')
 		rom_extracted = False
 		manual_extracted = False
-		
+
 		for app in os.listdir(content):
 			if not app.endswith('.app'): continue
 			app = os.path.join(content, app)
 			if self.extractrom(app): rom_extracted = True
 			if self.extractmanual(app): manual_extracted = True
-			if rom_extracted and manual_extracted: return
 		
-		if rom_extracted: print 'Unable to extract manual.'
+		if rom_extracted and manual_extracted: return
+		elif rom_extracted: print 'Unable to extract manual.'
 		elif manual_extracted: print 'Unable to extract ROM.'
 		else: print 'Unable to extract ROM and manual.'
 	
@@ -63,7 +62,8 @@ class RomExtractor(object):
 			'Master System': self.extractrom_sega,
 			'NES': self.extractrom_nes,
 			'SNES': self.extractrom_snes,
-			'TurboGrafx16': self.extractrom_tg16
+			'TurboGrafx16': self.extractrom_tg16,
+			'Neo Geo': self.extractrom_neogeo
 		}
 		
 		if self.channeltype == 'NES':
@@ -257,6 +257,30 @@ class RomExtractor(object):
 			else: print 'Could not extract save data'
 		
 		return extracted
+
+	def extractrom_neogeo(self, arc, filenameWithoutExtension):
+		foundRom = False
+		for file in arc.files:
+			#print file.name
+			if file.name == "game.bin" or file.name == "game.bin.z":
+				rom = arc.getfile(file.path)
+				writerom(rom, filenameWithoutExtension + "." + file.name)
+				print 'Got ROM'
+				print "Sorry, no save file support for Neo Geo games yet."
+				foundRom = True
+			elif file.name == "memcard.dat":
+				rom = arc.getfile(file.path)
+				print 'Got default save data'
+				writerom(rom, filenameWithoutExtension + ".memcard.dat")
+			elif file.name == "config.dat":
+				rom = arc.getfile(file.path)
+				print 'Got config.dat'
+				writerom(rom, filenameWithoutExtension + ".config.dat")
+		
+		if foundRom:
+			print "Warning: Exported format not compatible with emulators"
+		
+		return foundRom
 	
 	# copy save file, doing any necessary conversions to common emulator formats
 	def extractsave(self):
@@ -367,8 +391,10 @@ class NandDump(object):
 		elif ident[0] == 'M': return 'Genesis'
 		elif ident[0] == 'N': return 'Nintendo 64'
 		elif ident[0] == 'P': return 'TurboGrafx16'
-		#elif ident == 'EA': return 'Neo Geo'
-		#elif ident[0] == 'E': return 'Arcade'
+		elif ident == 'EA': return 'Neo Geo' #E.g. Neo Turf Master
+		elif ident == 'EB': return 'Neo Geo' #E.g. Spin Master, RFBB Special
+		elif ident == 'EC': return 'Neo Geo' #E.g. Shock Troopers 2, NAM-1975
+		#elif ident[0] == 'E': return 'Arcade' #E.g. E5 = Ghosts'n' Goblins, E6 = Space Harrier
 		#elif ident[0] == 'Q': return 'TurboGrafx CD'
 		#elif ident[0] == 'C': return 'Commodore 64'
 		else: return None
