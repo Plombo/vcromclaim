@@ -12,6 +12,7 @@ from u8archive import U8Archive
 from ccfarchive import CCFArchive
 from nes_rom_extract import extract_nes_rom, extract_fds_bios_rom
 from snesrestore import restore_brr_samples
+from neogeo_convert import convert_neogeo
 
 # rom: file-like object
 # path: string (filesystem path)
@@ -260,40 +261,52 @@ class RomExtractor(object):
 		return extracted
 
 	def extractrom_neogeo(self, arc, filenameWithoutExtension):
+		outputFolderName = filenameWithoutExtension
+
+		if not os.path.lexists(outputFolderName):
+			os.makedirs(outputFolderName)
+
 		foundRom = False
 		for file in arc.files:
 			#print file.name
-			if file.name == "game.bin":
-				rom = arc.getfile(file.path)
-				writerom(rom, filenameWithoutExtension + "." + file.name)
-				print 'Got ROM'
-				print "Sorry, no save file support for Neo Geo games yet."
-				foundRom = True
-			if file.name == "game.bin.z":
-				rom = arc.getfile(file.path)
-				firstByte = rom.read(1)
-				if firstByte == '\x78': # zlib compression
-					rom.seek(0)
-					writerom(StringIO(zlib.decompress(rom.read())), filenameWithoutExtension + ".game.bin")
-				elif firstByte == '\x43':
-					writerom(rom, filenameWithoutExtension + ".cr." + file.name)
-				else:
-					writerom(rom, filenameWithoutExtension + "." + file.name)
+			if file.name == "game.bin" or file.name == "game.bin.z":
 
-				print 'Got ROM'
+				rom = arc.getfile(file.path)
+
+				if file.name == "game.bin":
+					outputFileName = file.name
+				elif file.name == "game.bin.z":
+					firstByte = rom.read(1)
+					if firstByte == '\x78': # zlib compression
+						outputFileName = "game.bin"
+						rom.seek(0)
+						rom = StringIO(zlib.decompress(rom.read()))
+					elif firstByte == '\x43':
+						print "Sorry, this Neo Geo ROM is encrypted."
+						outputFileName = "game.bin.cr00"
+					else:
+						print "Sorry, this Neo Geo ROM is compressed or encrypted using unknown algorithm."
+						outputFileName = file.name
+
+
+				if convert_neogeo(rom, self.id, outputFolderName):
+					print "Converted ROM files to MAME compatible format (except BIOS!)"
+				else:
+					print "Unfamiliar game, not converted, further processing required"
+					writerom(rom, os.path.join(outputFolderName, outputFileName))
+
 				print "Sorry, no save file support for Neo Geo games yet."
 				foundRom = True
+
 			elif file.name == "memcard.dat":
 				rom = arc.getfile(file.path)
 				print 'Got default save data'
-				writerom(rom, filenameWithoutExtension + ".memcard.dat")
+				writerom(rom, os.path.join(outputFolderName, "memcard.default.dat"))
 			elif file.name == "config.dat":
 				rom = arc.getfile(file.path)
 				print 'Got config.dat'
-				writerom(rom, filenameWithoutExtension + ".config.dat")
+				writerom(rom, os.path.join(outputFolderName, "config.dat"))
 		
-		if foundRom:
-			print "Warning: Exported format not compatible with emulators"
 		
 		return foundRom
 	
