@@ -7,6 +7,8 @@ MEGABYTE = 1024*1024
 KILOBYTE = 1024
 NEOGEO_BIOS_LENGTH = 128*KILOBYTE
 
+#invaluable source: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
+
 
 
 # inputFile must be a game.bin file, which is NOT compressed or encrypted.
@@ -15,16 +17,37 @@ NEOGEO_BIOS_LENGTH = 128*KILOBYTE
 # returns True if the file was understood.
 def convert_neogeo(inputFile, wiiGameId, outputFolder):
 
-    if wiiGameId == '45415245':
-        convert_turfmast(inputFile, outputFolder)
+    supportedGames = {
+        '45414f45': convert_kotm,
+        '45415245': convert_turfmast
+    }
+
+    if supportedGames.has_key(wiiGameId):
+        supportedGames[wiiGameId](inputFile, outputFolder)
         return True
     else:
         return False
 
 
+def convert_kotm(inputFile, outputFolder):
+    
+    # mame wants 128kb file for p2, but the second half is just 0xFF
+    # not sure whether this should be kotm (arcade version) or kotmh (Home version).
+    # only diff is in name and content of p1/hp1, but the one from Wii has different CRC than both of them.
+    process_file(inputFile, [ \
+        header_region(), \
+        game_file_region(512*KILOBYTE, True, "p1"), \
+        game_file_region(64*KILOBYTE, True, "p2"), \
+        game_file_region(128*KILOBYTE, False, "m1"), \
+        game_file_region(1*MEGABYTE, False, "v1"), \
+        game_file_region(1*MEGABYTE, False, "v2"), \
+        game_file_region(128*KILOBYTE, False, "s1"), \
+        game_merged_bitplaine_file_region(2*MEGABYTE, ["c1", "c2"]), \
+        game_merged_bitplaine_file_region(2*MEGABYTE, ["c3", "c4"]), \
+        bios_file_region() \
+        ], outputFolder, "kotm", "016")
+
 def convert_turfmast(inputFile, outputFolder):
-
-
     process_file(inputFile, [ \
         header_region(), \
         game_reverse_banked_file_region(2*MEGABYTE, 2, True, False, "p1"), \
@@ -36,12 +59,7 @@ def convert_turfmast(inputFile, outputFolder):
         game_file_region(128*KILOBYTE, False, "s1"), \
         game_merged_bitplaine_file_region(8*MEGABYTE, ["c1", "c2"]), \
         bios_file_region() \
-        ], outputFolder, "turfmast", 200)
-
-        #need to treat c1 and c2 as one large, and
-        #split the data into two files. 2 first bytes to c1, 2 second bytes to c2.
-        #p1 makes it crash, why?
-        #s1 or m1 may also be sm1?
+        ], outputFolder, "turfmast", "200")
 
 
 class region(object):
@@ -82,7 +100,7 @@ class file_region(region):
                 filePath = os.path.join(outputFolder, "bios", name)
             else:
                 folderPath = os.path.join(outputFolder, mameGameShortName)
-                filePath = os.path.join(outputFolder, mameGameShortName, str(ngh) + "-" + name + "." + name)
+                filePath = os.path.join(outputFolder, mameGameShortName, ngh + "-" + name + "." + name)
 
             if not os.path.lexists(folderPath):
                 os.makedirs(folderPath)
@@ -114,8 +132,8 @@ class file_region(region):
         # other roms will just do one iteration
         bankLength = self.length / self.reversedBankCount
         for i in xrange(self.reversedBankCount-1, -1, -1):
-            inputFile.seek(position + i*bankLength)
 
+            inputFile.seek(position + i*bankLength)
             fileData = inputFile.read(bankLength)
             assert len(fileData) == bankLength # make sure not trying to read past the file
             
