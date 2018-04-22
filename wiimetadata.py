@@ -269,13 +269,13 @@ class RomExtractor(object):
 		foundRom = False
 		for file in arc.files:
 			#print file.name
-			if file.name == "game.bin" or file.name == "game.bin.z":
+			if file.name == "game.bin" or file.name == "game.bin.z" or file.name == "game.bin.xz":
 
 				rom = arc.getfile(file.path)
 
 				if file.name == "game.bin":
 					outputFileName = file.name
-				elif file.name == "game.bin.z":
+				elif file.name == "game.bin.z" or file.name == "game.bin.xz":
 					firstByte = rom.read(1)
 					if firstByte == '\x78': # zlib compression
 						outputFileName = "game.bin"
@@ -287,7 +287,6 @@ class RomExtractor(object):
 					else:
 						print "Sorry, this Neo Geo ROM is compressed or encrypted using unknown algorithm."
 						outputFileName = file.name
-
 
 				if convert_neogeo(rom, self.id, outputFolderName):
 					print "Converted ROM files to MAME compatible format (except BIOS!)"
