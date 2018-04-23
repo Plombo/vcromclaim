@@ -19,6 +19,7 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
         '45414345': (convert_maglordh, "maglordh", "005"),
         '45414f45': (convert_kotmh, "kotmh", "016"),
         '45415245': (convert_turfmast, "turfmast", "200"),
+        '45414a45': (convert_mslug, "mslug", "201"),
         '45413245': (convert_mslug2, "mslug2", "241")
     }
 
@@ -30,6 +31,30 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
         return True
     else:
         return False
+
+
+#PATTERN ANALYSIS:
+# P M V S C BIOS  (most games)
+#   P:
+#       always byteswap
+#       if 2 x 1024, swap the two 1024kb banks
+#       
+#   M: various
+#   V: splint into equally sized parts
+#       probably in the order they are addressed by the audio CPU.
+#   S: 128k
+#   C:
+#       game.bin appears to contain all of the bytes "de-striped" and in the order they are addressed by the neogeo CPU.
+# OR
+# S C V BIOS P M  (ROM0?)
+
+# It appears for P, M and C that they files are stored in game.bin the same order as the NeoGeo CPUs would address them
+# This means there would be no reason for the VC emulator to know the the rom configuration of the cart, just the total amount of CROM.
+# For exporting to MAME, we need to know the ROM sizes etc... Probably have to hard code it :(
+
+#MVS or AES?
+#At least one game is definitly the AES version.
+#The rest have the same ROMs for AES/MVS, or has different ROMs but neither match the ones from VC.
 
 
 def convert_maglordh(input, output):
@@ -120,15 +145,41 @@ def convert_turfmast(input, output):
 
     output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
 
+
+def convert_mslug(input, output):
+
+    # Same ROM for MVS/AES
+    # CRC is incorrect for p1, otherwise all CRCs match
+
+    output.createFile("p1.p1", byteSwap(
+        input.getRegion(1024, 1024)
+        + input.getRegion(0, 1024)))
+
+    output.createFile("m1.m1", input.getRegion(2*1024, 128))
+
+    output.createFile("v1.v1", input.getNextRegion(4*1024))
+    output.createFile("v2.v2", input.getNextRegion(4*1024))
+
+    output.createFile("s1.s1", input.getNextRegion(128))
+
+    region = input.getNextRegion(8*1024)
+    output.createFile("c1.c1", getStripes(region,[0,2]))
+    output.createFile("c2.c2", getStripes(region,[1,3]))
+
+    region = input.getNextRegion(8*1024)
+    output.createFile("c3.c3", getStripes(region,[0,2]))
+    output.createFile("c4.c4", getStripes(region,[1,3]))
+
+    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
+
+   
+
+
+
 def convert_mslug2(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p*, otherwise all CRCs match
-
-    # 52 4F 4D 30  00 00 00 00  00 00 00 00  00 02 00 00
-    # 02 00 00 00  00 80 00 00  00 00 00 00  00 02 00 00
-    # 00 30 00 00  00 02 00 00  00 00 00 00  00 00 00 00
-    # 00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
 
     output.createFile("s1.s1", input.getNextRegion(128))
 
