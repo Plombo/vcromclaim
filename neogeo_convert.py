@@ -18,7 +18,8 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
     supportedGames = {
         '45414345': (convert_maglordh, "maglordh", "005"),
         '45414f45': (convert_kotmh, "kotmh", "016"),
-        '45415245': (convert_turfmast, "turfmast", "200")
+        '45415245': (convert_turfmast, "turfmast", "200"),
+        '45413245': (convert_mslug2, "mslug2", "241")
     }
 
     if supportedGames.has_key(wiiGameId):
@@ -92,7 +93,7 @@ def convert_kotmh(input, output):
     output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
 
    
-
+ 
 
 def convert_turfmast(input, output):
 
@@ -118,6 +119,37 @@ def convert_turfmast(input, output):
     output.createFile("c2.c2", getStripes(region,[1,3]))
 
     output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
+
+def convert_mslug2(input, output):
+
+    # Same ROM for MVS/AES
+    # CRC is incorrect for p*, otherwise all CRCs match
+
+    # 52 4F 4D 30  00 00 00 00  00 00 00 00  00 02 00 00
+    # 02 00 00 00  00 80 00 00  00 00 00 00  00 02 00 00
+    # 00 30 00 00  00 02 00 00  00 00 00 00  00 00 00 00
+    # 00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00
+
+    output.createFile("s1.s1", input.getNextRegion(128))
+
+    region = input.getNextRegion(16*1024)
+    output.createFile("c1.c1", getStripes(region,[0,2]))
+    output.createFile("c2.c2", getStripes(region,[1,3]))
+
+    region = input.getNextRegion(16*1024)
+    output.createFile("c3.c3", getStripes(region,[0,2]))
+    output.createFile("c4.c4", getStripes(region,[1,3]))
+
+    output.createFile("v1.v1", input.getNextRegion(4*1024))
+    output.createFile("v2.v2", input.getNextRegion(4*1024))
+
+    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
+
+    output.createFile("p1.p1", byteSwap(input.getNextRegion(1024)))
+    output.createFile("p2.sp2", byteSwap(input.getNextRegion(2048)))
+    
+    output.createFile("m1.m1", input.getNextRegion(128))
+
 
 
 
