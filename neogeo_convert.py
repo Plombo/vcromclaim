@@ -20,6 +20,7 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
         '45414f45': (convert_kotmh, "kotmh", "016"),
         '45415245': (convert_turfmast, "turfmast", "200"),
         '45414a45': (convert_mslug, "mslug", "201"),
+        '45424445': (convert_magdrop3, "magdrop3", "233"),
         '45413245': (convert_mslug2, "mslug2", "241")
     }
 
@@ -139,7 +140,23 @@ def convert_mslug(input, output):
     output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,8*1024),[0,2]))
     output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,8*1024),[1,3]))
 
-   
+def convert_magdrop3(input, output):
+
+    # Same ROM for MVS/AES
+    # CRC is incorrect for p1 and v2, otherwise all CRCs match.
+
+    p = input.regions['P'].data
+    output.createFile("p1.p1", input.regions['P'].data)
+
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1*512))
+
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,8*1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,8*1024),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,8*1024),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,8*1024),[1,3]))
 
 def convert_mslug2(input, output):
 
