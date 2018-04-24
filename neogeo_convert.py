@@ -28,33 +28,25 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
         mameShortName = supportedGames[wiiGameId][1]
         ngh = supportedGames[wiiGameId][2]
         func(input_processor(inputFile), output_processor(outputFolder, mameShortName, ngh))
+        convert_common(input_processor(inputFile), output_processor(outputFolder, mameShortName, ngh))
         return True
     else:
         return False
 
 
-#PATTERN ANALYSIS:
-# P M V S C BIOS  (most games)
-#   P:
-#       always byteswap
-#       if 2 x 1024, swap the two 1024kb banks
-#       
-#   M: various
-#   V: splint into equally sized parts
-#       probably in the order they are addressed by the audio CPU.
-#   S: 128k
-#   C:
-#       game.bin appears to contain all of the bytes "de-striped" and in the order they are addressed by the neogeo CPU.
-# OR
-# S C V BIOS P M  (ROM0?)
 
-# It appears for P, M and C that they files are stored in game.bin the same order as the NeoGeo CPUs would address them
-# This means there would be no reason for the VC emulator to know the the rom configuration of the cart, just the total amount of CROM.
-# For exporting to MAME, we need to know the ROM sizes etc... Probably have to hard code it :(
+
+
+# Perhaps, if we can get the region size and some game ID from the VC files somehow, we can automatically
+# parse this https://github.com/mamedev/mame/blob/master/hash/neogeo.xml to retrieve the appropriate filenames?
 
 #MVS or AES?
-#At least one game is definitly the AES version.
+#At least one game is definitly the AES version (Magician Lord)
 #The rest have the same ROMs for AES/MVS, or has different ROMs but neither match the ones from VC.
+#On the Wii, the games run in AES mode.
+
+
+
 
 
 def convert_maglordh(input, output):
@@ -62,34 +54,24 @@ def convert_maglordh(input, output):
     # maglordh: CRC of all files match
     # maglord: CRC of all files match except p1
 
-    output.createFile("p1.p1", byteSwap(input.getNextRegion(512)))
+    output.createFile("p1.p1", input.regions['P'].data)
     
-    output.createFile("m1.m1",
-        input.getRegion(512+0*64, 64)
-        + input.getRegion(512+2*64, 64) # padding
-        + input.getRegion(512+1*64, 64)
-        + input.getRegion(512+2*64, 64)) # padding
+    m = input.regions['M'].data
+    output.createFile("m1.m1", getPart(m, 0,64) + getPart(m, 2, 64) + getPart(m, 1, 64) + getPart(m, 2, 64))
 
-    output.createFile("v11.v11", input.getNextRegion(512))
-    output.createFile("v21.v21", input.getNextRegion(512))
-    output.createFile("v22.v22", input.getNextRegion(512))
+    output.createFile("v11.v11", input.regions['V1'].data)
+    output.createFile("v21.v21", getPart(input.regions['V2'].data,0,512))
+    output.createFile("v22.v22", getPart(input.regions['V2'].data,1,512))
 
-    output.createFile("s1.s1", input.getNextRegion(128))
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,1024),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,1024),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,1024),[1,3]))
+    output.createFile("c5.c5", getStripes(getPart(input.regions['C'].data,2,1024),[0,2]))
+    output.createFile("c6.c6", getStripes(getPart(input.regions['C'].data,2,1024),[1,3]))
 
-    region = input.getNextRegion(1024)
-    output.createFile("c1.c1", getStripes(region,[0,2]))
-    output.createFile("c2.c2", getStripes(region,[1,3]))
 
-    region = input.getNextRegion(1024)
-    output.createFile("c3.c3", getStripes(region,[0,2]))
-    output.createFile("c4.c4", getStripes(region,[1,3]))
-
-    region = input.getNextRegion(1024)
-    output.createFile("c5.c5", getStripes(region,[0,2]))
-    output.createFile("c6.c6", getStripes(region,[1,3]))
-
-    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
-    
+   
 
 def convert_kotmh(input, output):
 
@@ -97,25 +79,18 @@ def convert_kotmh(input, output):
     #kotm: CRC of all files except P1 match
     #kotmh: CRC of all files except P1 match
 
-    output.createFile("hp1.p1", byteSwap(input.getNextRegion(512)))
-    output.createFile("p2.p2", pad(byteSwap(input.getNextRegion(64)),128))
-    
-    output.createFile("m1.m1", input.getNextRegion(128))
+    output.createFile("hp1.p1", getAssymetricPart(input.regions['P'].data, 0, 512))
+    output.createFile("p2.p2", pad(getAssymetricPart(input.regions['P'].data, 512, 64), 128))
 
-    output.createFile("v1.v1", input.getNextRegion(1024))
-    output.createFile("v2.v2", input.getNextRegion(1024))
+    output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("s1.s1", input.getNextRegion(128))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 1024))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1024))
 
-    region = input.getNextRegion(2048)
-    output.createFile("c1.c1", getStripes(region,[0,2]))
-    output.createFile("c2.c2", getStripes(region,[1,3]))
-
-    region = input.getNextRegion(2048)
-    output.createFile("c3.c3", getStripes(region,[0,2]))
-    output.createFile("c4.c4", getStripes(region,[1,3]))
-
-    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,2048),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,2048),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,2048),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,2048),[1,3]))
 
    
  
@@ -125,25 +100,23 @@ def convert_turfmast(input, output):
     # Same ROM for MVS/AES
     # CRC is incorrect for v4, otherwise all CRCs match
 
+
     # banks are in reverse order
-    output.createFile("p1.p1", byteSwap(
-        input.getRegion(1024, 1024)
-        + input.getRegion(0, 1024)))
+    p = input.regions['P'].data
+    output.createFile("p1.p1", 
+        getPart(input.regions['P'].data, 1, 1024)
+        + getPart(input.regions['P'].data, 0, 1024))
     
-    output.createFile("m1.m1", input.getRegion(2*1024, 128))
+    output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", input.getNextRegion(2048))
-    output.createFile("v2.v2", input.getNextRegion(2048))
-    output.createFile("v3.v3", input.getNextRegion(2048))
-    output.createFile("v4.v4", input.getNextRegion(2048))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 2048))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 2048))
+    output.createFile("v3.v3", getPart(input.regions['V1'].data, 2, 2048))
+    output.createFile("v4.v4", getPart(input.regions['V1'].data, 3, 2048))
 
-    output.createFile("s1.s1", input.getNextRegion(128))
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,8*1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,8*1024),[1,3]))
 
-    region = input.getNextRegion(8*1024)
-    output.createFile("c1.c1", getStripes(region,[0,2]))
-    output.createFile("c2.c2", getStripes(region,[1,3]))
-
-    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
 
 
 def convert_mslug(input, output):
@@ -151,56 +124,46 @@ def convert_mslug(input, output):
     # Same ROM for MVS/AES
     # CRC is incorrect for p1, otherwise all CRCs match
 
-    output.createFile("p1.p1", byteSwap(
-        input.getRegion(1024, 1024)
-        + input.getRegion(0, 1024)))
+    p = input.regions['P'].data
+    output.createFile("p1.p1", 
+        getPart(input.regions['P'].data, 1, 1024)
+        + getPart(input.regions['P'].data, 0, 1024))
 
-    output.createFile("m1.m1", input.getRegion(2*1024, 128))
+    output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", input.getNextRegion(4*1024))
-    output.createFile("v2.v2", input.getNextRegion(4*1024))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
 
-    output.createFile("s1.s1", input.getNextRegion(128))
-
-    region = input.getNextRegion(8*1024)
-    output.createFile("c1.c1", getStripes(region,[0,2]))
-    output.createFile("c2.c2", getStripes(region,[1,3]))
-
-    region = input.getNextRegion(8*1024)
-    output.createFile("c3.c3", getStripes(region,[0,2]))
-    output.createFile("c4.c4", getStripes(region,[1,3]))
-
-    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,8*1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,8*1024),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,8*1024),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,8*1024),[1,3]))
 
    
-
-
 
 def convert_mslug2(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p*, otherwise all CRCs match
 
-    output.createFile("s1.s1", input.getNextRegion(128))
+    output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 1024))
+    output.createFile("p2.sp2", getAssymetricPart(input.regions['P'].data, 1024, 2*1024))
 
-    region = input.getNextRegion(16*1024)
-    output.createFile("c1.c1", getStripes(region,[0,2]))
-    output.createFile("c2.c2", getStripes(region,[1,3]))
+    output.createFile("m1.m1", input.regions['M'].data)
 
-    region = input.getNextRegion(16*1024)
-    output.createFile("c3.c3", getStripes(region,[0,2]))
-    output.createFile("c4.c4", getStripes(region,[1,3]))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
 
-    output.createFile("v1.v1", input.getNextRegion(4*1024))
-    output.createFile("v2.v2", input.getNextRegion(4*1024))
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,16*1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,16*1024),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,16*1024),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,16*1024),[1,3]))
 
-    output.createFile("bios.bin", byteSwap(input.getNextRegion(128)), shared = True)
 
-    output.createFile("p1.p1", byteSwap(input.getNextRegion(1024)))
-    output.createFile("p2.sp2", byteSwap(input.getNextRegion(2048)))
-    
-    output.createFile("m1.m1", input.getNextRegion(128))
 
+def convert_common(input, output):
+    output.createFile("s1.s1", input.regions['S'].data)
+    output.createFile("bios.bin", input.regions['BIOS'].data, shared = True)
 
 
 
@@ -208,24 +171,117 @@ def convert_mslug2(input, output):
 
 ## input/output processors
 
+#ABOUT GAME.BIN
+#After decompression, the file can have two different formats.
+#Both formats contain all of the ROMs, prepended by a 40-byte header.
+
+# ROM0-header:
+# If the first four bytes of the header is "ROM0",
+# The game.bin header contains up to 15 values, each representing the size of a ROM in bytes, as a four byte little-endian integer.
+
+# The 15 vales define the size of the ROMs in this order:
+# (HEADER) X X S C V X BIOS P M X X X X X X
+# X is unused or unknown (maybe som ROM type unused in some game?)
+# The game.bin contains the ROMs in the same order as they are listed above. (S C V BIOS P M)
+
+# If the first four bytes are NOT 'ROM0',
+# The game.bin header contains 8 pairs of 2 values, where each value is a four byte little-endian integer.
+# The first value of each pair is the position of the ROM type (including the header, i.e. the first ROM within game.bin is at position 40).
+# The second value of each pair is the size of the ROM in bytes.
+
+# The pairs denote the position and size of the ROMs in this order.
+# P M V1 V2 X S C BIOS
+# X is unknown and 0 for both position and length - maybe some ROM type only used in some games?
+
+
+
+
+
+
+
+class region(object):
+    #indexInOldHeader: The index of the position-length pair in the old style header.
+    #indexInRom0Header: The index of the length value in the new style header.
+    def __init__(self, parentInputProcessor, indexInOldHeader, indexInRom0Header, byteSwappedRegion = False):
+        self.indexInOldHeader = indexInOldHeader
+        self.indexInRom0Header = indexInRom0Header
+        (position, length) = parentInputProcessor.getRegionPositionAndLength(indexInOldHeader,indexInRom0Header)
+        
+        data = parentInputProcessor.getRegionData(position, length)
+        
+        if byteSwappedRegion:
+            data = byteSwap(data)
+        
+        self.data = data
+
+
+
+
+
 class input_processor(object):
+
+
     def __init__(self, inputFile):
         self.inputFile = inputFile
-        self.lastPosition = HEADER_LENGTH
 
-    def getActualRegion(self, actualStartPosition, actualLength):
+        self.regions = {
+            'S': region(self, 5, 2),
+            'C': region(self, 6, 3),
+
+            # V1 becomes v1.v1, v2.v2, etc OR v11.v11, v12.v12, etc
+            'V1': region(self, 2, 4),
+            # V2 becomes v21.v21, v22.v22, etc.
+            'V2': region(self, 3, 5),
+
+            'BIOS': region(self, 7, 6, True),
+            'P': region(self, 0, 7, True),
+            'M': region(self, 1, 8),
+
+            # unknown or unused should always be 0 or we are missing something
+            'X1': region(self, 4, -1),
+            'X2': region(self, -1, 9),
+            'X3': region(self, -1, 10),
+            'X4': region(self, -1, 11),
+            'X5': region(self, -1, 12),
+            'X6': region(self, -1, 13),
+            'X7': region(self, -1, 14)
+        }
+
+
+    # returns the start position of the region (in bytes, including header offset) and the length of it, according to the header.
+    def getRegionPositionAndLength(self, indexInOldHeader, indexInRom0Header):
+
+        self.inputFile.seek(0)
+        if (self.inputFile.read(4) == 'ROM0'):
+            if indexInRom0Header >= 0:
+                position = HEADER_LENGTH
+                for i in xrange(0, indexInRom0Header):
+                    position += struct.unpack('>I', self.inputFile.read(4)) [0]
+                length = struct.unpack('>I', self.inputFile.read(4)) [0]
+                return (position, length)
+            else:
+                return (0,0)
+        else:
+            if indexInOldHeader >= 0:
+                assert indexInOldHeader >= 0
+                self.inputFile.seek(indexInOldHeader * 8)
+                pair = struct.unpack('>2I', self.inputFile.read(8))
+                position = pair[0]
+                length = pair[1]
+                return (position, length)
+            else:
+                return (0,0)
+
+        
+
+    def getRegionData(self, actualStartPosition, actualLength):
         self.inputFile.seek(actualStartPosition)
         regionData = self.inputFile.read(actualLength)
         assert len(regionData) == actualLength
-        self.lastPosition = actualStartPosition + actualLength
         return regionData
 
-    # position should NOT include the header offset (64 byte for all files)
-    def getRegion(self, startPositionInKilobytes, lengthInKilobytes):
-        return self.getActualRegion(HEADER_LENGTH + startPositionInKilobytes * 1024, lengthInKilobytes * KILOBYTE)
 
-    def getNextRegion(self, lengthInKilobytes):
-        return self.getActualRegion(self.lastPosition, lengthInKilobytes * KILOBYTE)
+
 
 
 class output_processor(object):
@@ -254,6 +310,22 @@ class output_processor(object):
 
 
 
+
+#Utilities
+
+def getAssymetricPart(fileData, startInKb, lengthInKb):
+    retVal = fileData[ startInKb*KILOBYTE : (startInKb+lengthInKb)*KILOBYTE ]
+    assert len(retVal) == lengthInKb*KILOBYTE
+    return retVal
+
+
+# e.g. if file data is 4 mb, and lengthInKb = 1024, then index 2 would retrieve the third mb of the region
+def getPart(fileData, index, lengthInKb):
+    retVal = fileData[ index*lengthInKb*KILOBYTE : index*lengthInKb*KILOBYTE + lengthInKb*KILOBYTE ]
+    assert len(retVal) == lengthInKb*KILOBYTE
+    return retVal
+
+
 #stripes = [0] = get byte 0, 4, 8 etc
 #stripes = [0,1] = get byte 0,1,4,5,8,9 etc
 #stripes = [0,2] = get byte 0,2,4,6,8,10 etc
@@ -275,10 +347,6 @@ def pad(fileData, totalLengthInKilobytes):
     actualTotalLength = totalLengthInKilobytes * KILOBYTE
     assert actualTotalLength >= len(fileData)
     return fileData + '\xFF'*(actualTotalLength-len(fileData))
-
-
-
-
 
 
 
