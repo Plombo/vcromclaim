@@ -156,7 +156,6 @@ def convert_mslug(input, output):
     # Same ROM for MVS/AES
     # CRC is incorrect for p1, otherwise all CRCs match
 
-    p = input.regions['P'].data
     output.createFile("p1.p1", 
         getPart(input.regions['P'].data, 1, 1024)
         + getPart(input.regions['P'].data, 0, 1024))
@@ -322,25 +321,20 @@ class input_processor(object):
     def getRegionPositionAndLength(self, indexInOldHeader, indexInRom0Header):
 
         self.inputFile.seek(0)
-        if (self.inputFile.read(4) == 'ROM0'):
-            if indexInRom0Header >= 0:
-                position = HEADER_LENGTH
-                for i in xrange(0, indexInRom0Header):
-                    position += struct.unpack('>I', self.inputFile.read(4)) [0]
-                length = struct.unpack('>I', self.inputFile.read(4)) [0]
-                return (position, length)
-            else:
-                return (0,0)
+        if (self.inputFile.read(4) == 'ROM0') and (indexInRom0Header >= 0):
+            position = HEADER_LENGTH
+            for i in xrange(0, indexInRom0Header):
+                position += struct.unpack('>I', self.inputFile.read(4)) [0]
+            length = struct.unpack('>I', self.inputFile.read(4)) [0]
+            return (position, length)
+        elif indexInOldHeader >= 0:
+            self.inputFile.seek(indexInOldHeader * 8)
+            pair = struct.unpack('>2I', self.inputFile.read(8))
+            position = pair[0]
+            length = pair[1]
+            return (position, length)
         else:
-            if indexInOldHeader >= 0:
-                assert indexInOldHeader >= 0
-                self.inputFile.seek(indexInOldHeader * 8)
-                pair = struct.unpack('>2I', self.inputFile.read(8))
-                position = pair[0]
-                length = pair[1]
-                return (position, length)
-            else:
-                return (0,0)
+            return (0,0)
 
         
 
