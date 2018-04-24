@@ -16,22 +16,28 @@ KILOBYTE = 1024
 def convert_neogeo(inputFile, wiiGameId, outputFolder):
 
     supportedGames = {
-        '45414345': (convert_maglordh, "maglordh", "005"),
-        '45414f45': (convert_kotmh, "kotmh", "016"),
-        '45424645': (convert_spinmast, "spinmast", "062"),
-        '45415245': (convert_turfmast, "turfmast", "200"),
-        '45414a45': (convert_mslug, "mslug", "201"),
-        #'45423245': (convert_rbffspec, "rbffspec", "223"), #encrypted game
-        '45424445': (convert_magdrop3, "magdrop3", "233"),
-        '45413245': (convert_mslug2, "mslug2", "241")
+        '45414345': (convert_maglordh, "maglordh"),
+        '45414f45': (convert_kotmh, "kotmh"),
+        '45424645': (convert_spinmast, "spinmast"),
+        '45415245': (convert_turfmast, "turfmast"),
+        '45414a45': (convert_mslug, "mslug"),
+        #'45423245': (convert_rbffspec, "rbffspec"), #encrypted game
+        '45424445': (convert_magdrop3, "magdrop3"),
+        '45413245': (convert_mslug2, "mslug2")
     }
 
     if supportedGames.has_key(wiiGameId):
-        func = supportedGames[wiiGameId][0]
+
         mameShortName = supportedGames[wiiGameId][1]
-        ngh = supportedGames[wiiGameId][2]
-        func(input_processor(inputFile), output_processor(outputFolder, mameShortName, ngh))
-        convert_common(input_processor(inputFile), output_processor(outputFolder, mameShortName, ngh))
+
+        inputProcessor = input_processor(inputFile)
+        ngh = getNgh(inputProcessor)
+        outputProcessor = output_processor(outputFolder, mameShortName, ngh)
+        func = supportedGames[wiiGameId][0]
+
+        func(inputProcessor, outputProcessor)
+        convert_common(inputProcessor, outputProcessor)
+
         return True
     else:
         return False
@@ -413,5 +419,12 @@ def pad(fileData, totalLengthInKilobytes):
     return fileData + '\xFF'*(actualTotalLength-len(fileData))
 
 
-
-
+# Returns the three character code unique to each game, used in ROM file names
+def getNgh(inputProcessor):
+    # PROM: 0x108 = 0x62, 0x109 = 0x00 --> return value = "062"
+    
+    data = inputProcessor.regions['P'].data[0x108:0x10A] # = str of length 2
+    assert len(data) == 2
+    intData = struct.unpack('<H', data)[0] # = integer representing the value
+    hexString = "00" + str(hex(intData))[2:] # string. Values: "000"-00FFFF"
+    return hexString[-3:] # string. Values: "0"-"FFF" (most significant digit is cut)
