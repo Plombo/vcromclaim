@@ -29,25 +29,16 @@ def convert_neogeo(inputFile, outputFolder):
     }
 
     if supportedGames.has_key(ngh):
-
         mameShortName = supportedGames[ngh][1]
-
-        outputProcessor = output_processor(outputFolder, mameShortName, ngh)
         func = supportedGames[ngh][0]
-
-        func(inputProcessor, outputProcessor)
-        convert_common(inputProcessor, outputProcessor)
-
     else:
-
-        outputProcessor = output_processor(outputFolder, "NGH-" + ngh, ngh)
-
         print "Game is unknown. You will have to rename the folder and probably have to split or merge the ROM files."
+        mameShortName = "NGH-" + ngh
+        func = convert_generic_guess
 
-        convert_generic_guess(inputProcessor, outputProcessor)
-        convert_common(inputProcessor, outputProcessor)
-
-        return False
+    outputProcessor = output_processor(outputFolder, mameShortName, ngh)
+    func(inputProcessor, outputProcessor)
+    convert_common(inputProcessor, outputProcessor)
 
 
 
