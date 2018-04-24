@@ -18,8 +18,10 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
     supportedGames = {
         '45414345': (convert_maglordh, "maglordh", "005"),
         '45414f45': (convert_kotmh, "kotmh", "016"),
+        '45424645': (convert_spinmast, "spinmast", "062"),
         '45415245': (convert_turfmast, "turfmast", "200"),
         '45414a45': (convert_mslug, "mslug", "201"),
+        #'45423245': (convert_rbffspec, "rbffspec", "223"), #encrypted game
         '45424445': (convert_magdrop3, "magdrop3", "233"),
         '45413245': (convert_mslug2, "mslug2", "241")
     }
@@ -37,6 +39,7 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
 
 
 
+# Game specific conversion functions below.
 
 # Perhaps, if we can get the region size and some game ID from the VC files somehow, we can automatically
 # parse this https://github.com/mamedev/mame/blob/master/hash/neogeo.xml to retrieve the appropriate filenames?
@@ -46,6 +49,12 @@ def convert_neogeo(inputFile, wiiGameId, outputFolder):
 #The rest have the same ROMs for AES/MVS, or has different ROMs but neither match the ones from VC.
 #On the Wii, the games run in AES mode.
 
+# C = Characters = most of the sprites. If graphic is completely garbled, one or more of these files are not correctly exported.
+# P = Program = If you get grid covering the screen, instead of Neo Geo intro, this one is probably incorrect
+# S = Sprites = The smaller static sprites, such as overlay texts
+# V = Audio data
+# M = Music program
+# BIOS = System Program = Probably an AES BIOS, since games run in home console mode on VC. Haven't gotten this to run in MAME yet.
 
 
 
@@ -93,17 +102,33 @@ def convert_kotmh(input, output):
     output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,2048),[0,2]))
     output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,2048),[1,3]))
 
-   
- 
+def convert_spinmast(input, output):
+
+    # Same ROM for MVS/AES
+    # CRC is incorrect for p*, otherwise all CRCs match
+
+    output.createFile("p1.p1", getPart(input.regions['P'].data, 0, 1024))
+    output.createFile("p2.sp2", getPart(input.regions['P'].data, 1, 1024))
+
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    output.createFile("v1.v1", input.regions['V1'].data)
+
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,2*1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,2*1024),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,2*1024),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,2*1024),[1,3]))
+    output.createFile("c5.c5", getStripes(getPart(input.regions['C'].data,2,2*1024),[0,2]))
+    output.createFile("c6.c6", getStripes(getPart(input.regions['C'].data,2,2*1024),[1,3]))
+    output.createFile("c7.c7", getStripes(getPart(input.regions['C'].data,3,2*1024),[0,2]))
+    output.createFile("c8.c8", getStripes(getPart(input.regions['C'].data,3,2*1024),[1,3]))
 
 def convert_turfmast(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for v4, otherwise all CRCs match
 
-
     # banks are in reverse order
-    p = input.regions['P'].data
     output.createFile("p1.p1", 
         getPart(input.regions['P'].data, 1, 1024)
         + getPart(input.regions['P'].data, 0, 1024))
@@ -140,12 +165,34 @@ def convert_mslug(input, output):
     output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,8*1024),[0,2]))
     output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,8*1024),[1,3]))
 
+def convert_rbffspec(input, output):
+
+    # Same ROM for MVS/AES
+    # NOT TESTED, becaues the game.bin is encrypted
+
+    output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 1024))
+    output.createFile("p2.sp2", getAssymetricPart(input.regions['P'].data, 1024, 4*1024))
+
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
+    output.createFile("v3.v3", getPart(input.regions['V1'].data, 1, 4*1024))
+
+    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,4*1024),[0,2]))
+    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,4*1024),[1,3]))
+    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,4*1024),[0,2]))
+    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,4*1024),[1,3]))
+    output.createFile("c5.c5", getStripes(getPart(input.regions['C'].data,2,4*1024),[0,2]))
+    output.createFile("c6.c6", getStripes(getPart(input.regions['C'].data,2,4*1024),[1,3]))
+    output.createFile("c7.c7", getStripes(getPart(input.regions['C'].data,3,4*1024),[0,2]))
+    output.createFile("c8.c8", getStripes(getPart(input.regions['C'].data,3,4*1024),[1,3]))
+
 def convert_magdrop3(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p1 and v2, otherwise all CRCs match.
 
-    p = input.regions['P'].data
     output.createFile("p1.p1", input.regions['P'].data)
 
     output.createFile("m1.m1", input.regions['M'].data)
@@ -364,6 +411,7 @@ def pad(fileData, totalLengthInKilobytes):
     actualTotalLength = totalLengthInKilobytes * KILOBYTE
     assert actualTotalLength >= len(fileData)
     return fileData + '\xFF'*(actualTotalLength-len(fileData))
+
 
 
 
