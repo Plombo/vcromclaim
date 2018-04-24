@@ -13,33 +13,40 @@ KILOBYTE = 1024
 # wiiGameId is the game Id (8 character string). Hopefully once more games have been analyzed this can be replaced by something else - config.bin? using the header?
 # outputFolder should exist and be empty.
 # returns True if the file was understood.
-def convert_neogeo(inputFile, wiiGameId, outputFolder):
+def convert_neogeo(inputFile, outputFolder):
+
+    inputProcessor = input_processor(inputFile)
+    ngh = getNgh(inputProcessor)
 
     supportedGames = {
-        '45414345': (convert_maglordh, "maglordh"),
-        '45414f45': (convert_kotmh, "kotmh"),
-        '45424645': (convert_spinmast, "spinmast"),
-        '45415245': (convert_turfmast, "turfmast"),
-        '45414a45': (convert_mslug, "mslug"),
-        #'45423245': (convert_rbffspec, "rbffspec"), #encrypted game
-        '45424445': (convert_magdrop3, "magdrop3"),
-        '45413245': (convert_mslug2, "mslug2")
+        '005': (convert_maglordh, "maglordh"),
+        '016': (convert_kotmh, "kotmh"),
+        '062': (convert_spinmast, "spinmast"),
+        '200': (convert_turfmast, "turfmast"),
+        '201': (convert_mslug, "mslug"),
+        '233': (convert_magdrop3, "magdrop3"),
+        '241': (convert_mslug2, "mslug2")
     }
 
-    if supportedGames.has_key(wiiGameId):
+    if supportedGames.has_key(ngh):
 
-        mameShortName = supportedGames[wiiGameId][1]
+        mameShortName = supportedGames[ngh][1]
 
-        inputProcessor = input_processor(inputFile)
-        ngh = getNgh(inputProcessor)
         outputProcessor = output_processor(outputFolder, mameShortName, ngh)
-        func = supportedGames[wiiGameId][0]
+        func = supportedGames[ngh][0]
 
         func(inputProcessor, outputProcessor)
         convert_common(inputProcessor, outputProcessor)
 
-        return True
     else:
+
+        outputProcessor = output_processor(outputFolder, "NGH-" + ngh, ngh)
+
+        print "Game is unknown. You will have to rename the folder and probably have to split or merge the ROM files."
+
+        convert_generic_guess(inputProcessor, outputProcessor)
+        convert_common(inputProcessor, outputProcessor)
+
         return False
 
 
@@ -227,6 +234,20 @@ def convert_mslug2(input, output):
     output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,16*1024),[1,3]))
     output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,16*1024),[0,2]))
     output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,16*1024),[1,3]))
+
+
+def convert_generic_guess(input, output):
+    output.createFile("p1.p1", input.regions['P'].data)
+    output.createFile("m1.m1", input.regions['M'].data)
+    
+    if len(input.regions['V2'].data) == 0:
+        output.createFile("v1.v1", input.regions['V1'].data)
+    else:
+        output.createFile("v11.v11", input.regions['V1'].data)
+        output.createFile("v21.v21", input.regions['V2'].data)
+
+    output.createFile("c1.c1", getStripes(input.regions['C'].data,[0,2]))
+    output.createFile("c2.c2", getStripes(input.regions['C'].data,[1,3]))
 
 
 

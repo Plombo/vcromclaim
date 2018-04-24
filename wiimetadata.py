@@ -273,25 +273,32 @@ class RomExtractor(object):
 
 				rom = arc.getfile(file.path)
 
+				tryToConvert = False
+
 				if file.name == "game.bin":
 					outputFileName = file.name
+					tryToConvert = True
 				elif file.name == "game.bin.z" or file.name == "game.bin.xz":
 					firstByte = rom.read(1)
 					if firstByte == '\x78': # zlib compression
 						outputFileName = "game.bin"
 						rom.seek(0)
 						rom = StringIO(zlib.decompress(rom.read()))
+						tryToConvert = True
 					elif firstByte == '\x43':
 						print "Sorry, this Neo Geo ROM is encrypted."
 						outputFileName = "game.bin.cr00"
+						tryToConvert = False
 					else:
 						print "Sorry, this Neo Geo ROM is compressed or encrypted using unknown algorithm."
 						outputFileName = file.name
+						tryToConvert = False
 
-				if convert_neogeo(rom, self.id, outputFolderName):
+				if tryToConvert:
+					convert_neogeo(rom, outputFolderName)
 					print "Converted ROM files to MAME compatible format (except BIOS!)"
 				else:
-					print "Unfamiliar game, not converted, further processing required"
+					print "Game extracted but further processing is required."
 					writerom(rom, os.path.join(outputFolderName, outputFileName))
 
 				print "Sorry, no save file support for Neo Geo games yet."
