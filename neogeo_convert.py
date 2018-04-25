@@ -16,7 +16,7 @@ KILOBYTE = 1024
 def convert_neogeo(inputFile, outputFolder):
 
     inputProcessor = input_processor(inputFile)
-    ngh = getNgh(inputProcessor)
+    ngh = inputProcessor.getNgh()
 
     supportedGames = {
         '005': (convert_maglordh, "maglordh"),
@@ -379,6 +379,18 @@ class input_processor(object):
 
 
 
+    # Returns the three character code unique to each game, used in ROM file names
+    def getNgh(self):
+        # PROM: 0x108 = 0x62, 0x109 = 0x00 --> return value = "062", which is the NGH code that uniquely identify each game.
+        # Official games does not seem to use A-F or the most significant digit.
+    
+        data = self.regions['P'].data[0x108:0x10A] # = str of length 2
+        assert len(data) == 2
+        intData = struct.unpack('<H', data)[0] # = integer representing the value
+        hexString = "00" + str(hex(intData))[2:] # string. Values: "000"-00FFFF"
+        return hexString[-3:] # string. Values: "0"-"FFF" (most significant digit is cut)
+
+
 
 
 class output_processor(object):
@@ -461,13 +473,3 @@ def pad(fileData, totalLengthInKilobytes):
     return fileData + '\xFF'*(actualTotalLength-len(fileData))
 
 
-# Returns the three character code unique to each game, used in ROM file names
-def getNgh(inputProcessor):
-    # PROM: 0x108 = 0x62, 0x109 = 0x00 --> return value = "062", which is the NGH code that uniquely identify each game.
-    # Official games does not seem to use A-F or the most significant digit.
-    
-    data = inputProcessor.regions['P'].data[0x108:0x10A] # = str of length 2
-    assert len(data) == 2
-    intData = struct.unpack('<H', data)[0] # = integer representing the value
-    hexString = "00" + str(hex(intData))[2:] # string. Values: "000"-00FFFF"
-    return hexString[-3:] # string. Values: "0"-"FFF" (most significant digit is cut)
