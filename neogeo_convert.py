@@ -77,12 +77,7 @@ def convert_maglordh(input, output):
     output.createFile("v21.v21", getPart(input.regions['V2'].data,0,512))
     output.createFile("v22.v22", getPart(input.regions['V2'].data,1,512))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,1024),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,1024),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,1024),[1,3]))
-    output.createFile("c5.c5", getStripes(getPart(input.regions['C'].data,2,1024),[0,2]))
-    output.createFile("c6.c6", getStripes(getPart(input.regions['C'].data,2,1024),[1,3]))
+    convert_common_c(input, output, 2, 3)
 
 
    
@@ -101,10 +96,7 @@ def convert_kotmh(input, output):
     output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 1024))
     output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1024))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,2048),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,2048),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,2048),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,2048),[1,3]))
+    convert_common_c(input, output, 2, 2)
 
 def convert_spinmast(input, output):
 
@@ -118,14 +110,7 @@ def convert_spinmast(input, output):
 
     output.createFile("v1.v1", input.regions['V1'].data)
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,2*1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,2*1024),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,2*1024),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,2*1024),[1,3]))
-    output.createFile("c5.c5", getStripes(getPart(input.regions['C'].data,2,2*1024),[0,2]))
-    output.createFile("c6.c6", getStripes(getPart(input.regions['C'].data,2,2*1024),[1,3]))
-    output.createFile("c7.c7", getStripes(getPart(input.regions['C'].data,3,2*1024),[0,2]))
-    output.createFile("c8.c8", getStripes(getPart(input.regions['C'].data,3,2*1024),[1,3]))
+    convert_common_c(input, output, 2, 4)
 
 def convert_turfmast(input, output):
 
@@ -144,8 +129,7 @@ def convert_turfmast(input, output):
     output.createFile("v3.v3", getPart(input.regions['V1'].data, 2, 2048))
     output.createFile("v4.v4", getPart(input.regions['V1'].data, 3, 2048))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,8*1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,8*1024),[1,3]))
+    convert_common_c(input, output, 2, 1)
 
 
 
@@ -163,10 +147,7 @@ def convert_mslug(input, output):
     output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
     output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,8*1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,8*1024),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,8*1024),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,8*1024),[1,3]))
+    convert_common_c(input, output, 2, 2)
 
 def convert_rbffspec(input, output):
 
@@ -182,14 +163,7 @@ def convert_rbffspec(input, output):
     output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
     output.createFile("v3.v3", getPart(input.regions['V1'].data, 1, 4*1024))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,4*1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,4*1024),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,4*1024),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,4*1024),[1,3]))
-    output.createFile("c5.c5", getStripes(getPart(input.regions['C'].data,2,4*1024),[0,2]))
-    output.createFile("c6.c6", getStripes(getPart(input.regions['C'].data,2,4*1024),[1,3]))
-    output.createFile("c7.c7", getStripes(getPart(input.regions['C'].data,3,4*1024),[0,2]))
-    output.createFile("c8.c8", getStripes(getPart(input.regions['C'].data,3,4*1024),[1,3]))
+    convert_common_c(input, output, 2, 4)
 
 def convert_magdrop3(input, output):
 
@@ -203,10 +177,7 @@ def convert_magdrop3(input, output):
     output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
     output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1*512))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,8*1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,8*1024),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,8*1024),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,8*1024),[1,3]))
+    convert_common_c(input, output, 2, 2)
 
 def convert_mslug2(input, output):
 
@@ -221,10 +192,7 @@ def convert_mslug2(input, output):
     output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
     output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
 
-    output.createFile("c1.c1", getStripes(getPart(input.regions['C'].data,0,16*1024),[0,2]))
-    output.createFile("c2.c2", getStripes(getPart(input.regions['C'].data,0,16*1024),[1,3]))
-    output.createFile("c3.c3", getStripes(getPart(input.regions['C'].data,1,16*1024),[0,2]))
-    output.createFile("c4.c4", getStripes(getPart(input.regions['C'].data,1,16*1024),[1,3]))
+    convert_common_c(input, output, 2, 2)
 
 
 def convert_generic_guess(input, output):
@@ -237,8 +205,7 @@ def convert_generic_guess(input, output):
         output.createFile("v11.v11", input.regions['V1'].data)
         output.createFile("v21.v21", input.regions['V2'].data)
 
-    output.createFile("c1.c1", getStripes(input.regions['C'].data,[0,2]))
-    output.createFile("c2.c2", getStripes(input.regions['C'].data,[1,3]))
+    convert_common_c(input, output, 2, 2)
 
 
 
@@ -246,6 +213,26 @@ def convert_common(input, output):
     output.createFile("s1.s1", input.regions['S'].data)
     output.createFile("bios.bin", input.regions['BIOS'].data, shared = True)
 
+# converts the C data region to several NNN-cN.cN-files. width and length varies between games.
+# width = must be 1, 2 or 4. Number of "stripes" the original data was divided into (and which we need to recreate).
+# length = the number of striped blocks (must be 1 or more - 1,2,3,4 are common).
+# number of roms will be length*width
+# size per rom will be size of C region / (length*width)
+def convert_common_c(input, output, width, length):
+
+    assert width == 1 or width == 2 or width == 4
+    assert length > 0
+
+    for i in xrange(0, length):
+        
+        fileIndex = i*width + 1
+        dataPart =  getPartByDivision(input.regions['C'].data, i, length)
+
+        for j in xrange(0,width):
+            output.createFile(
+                "c" + str(fileIndex + j) + ".c" + str(fileIndex + j),
+                getStripes(dataPart, range(j, 4, width))
+            )
 
 
 
@@ -401,11 +388,28 @@ def getPart(fileData, index, lengthInKb):
     assert len(retVal) == lengthInKb*KILOBYTE
     return retVal
 
+# E.g. to get the first half of a ROM, call with partIndex = 0, partCount = 2. To get second half, call partIndex 1, partCount = 2.
+# fileData = the file data of the region.
+# partIndex = the part to retrieve. (0-based index)
+# partCount = the total number of parts.
+# The size of the returned value will be len(fileData) / partCount.
+def getPartByDivision(fileData, partIndex, partCount):
+    assert partCount > 0
+    assert partIndex >= 0
+    assert partIndex < partCount
+
+    partSize = len(fileData) / partCount
+    
+    retVal = fileData[ partIndex*partSize : partIndex*partSize + partSize ]
+    assert len(retVal) == partSize
+    return retVal
+
 
 #stripes = [0] = get byte 0, 4, 8 etc
 #stripes = [0,1] = get byte 0,1,4,5,8,9 etc
 #stripes = [0,2] = get byte 0,2,4,6,8,10 etc
 #stripes = [1,3] = get byte 1,3,5,7,9,11 etc
+#stripes = [1,2,3,4] = get all bytes
 def getStripes(fileData, stripes):
     retVal = ''
     for i in xrange(0, len(fileData), 4):
@@ -427,7 +431,8 @@ def pad(fileData, totalLengthInKilobytes):
 
 # Returns the three character code unique to each game, used in ROM file names
 def getNgh(inputProcessor):
-    # PROM: 0x108 = 0x62, 0x109 = 0x00 --> return value = "062"
+    # PROM: 0x108 = 0x62, 0x109 = 0x00 --> return value = "062", which is the NGH code that uniquely identify each game.
+    # Official games does not seem to use A-F or the most significant digit.
     
     data = inputProcessor.regions['P'].data[0x108:0x10A] # = str of length 2
     assert len(data) == 2
