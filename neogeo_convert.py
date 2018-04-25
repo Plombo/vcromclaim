@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import struct, os
+import struct, os, hashlib
 
 HEADER_LENGTH = 64
 KILOBYTE = 1024
@@ -20,7 +20,7 @@ def convert_neogeo(inputFile, outputFolder):
 
     supportedGames = {
         '005': (convert_maglordh, "maglordh"),
-        '016': (convert_kotmh, "kotmh"),
+        '016': (convert_kotm, "kotm"),
         '062': (convert_spinmast, "spinmast"),
         '200': (convert_turfmast, "turfmast"),
         '201': (convert_mslug, "mslug"),
@@ -67,6 +67,7 @@ def convert_maglordh(input, output):
     
     # maglordh: CRC of all files match
     # maglord: CRC of all files match except p1
+    # shipped with MVS BIOS
 
     output.createFile("p1.p1", input.regions['P'].data)
     
@@ -82,11 +83,12 @@ def convert_maglordh(input, output):
 
    
 
-def convert_kotmh(input, output):
+def convert_kotm(input, output):
 
     #Not sure if this is actually kotm (MVS) or kotmh (AES) version.
     #kotm: CRC of all files except P1 match
     #kotmh: CRC of all files except P1 match
+    # shipped with MVS BIOS
 
     output.createFile("hp1.p1", getAssymetricPart(input.regions['P'].data, 0, 512))
     output.createFile("p2.p2", pad(getAssymetricPart(input.regions['P'].data, 512, 64), 128))
@@ -102,6 +104,7 @@ def convert_spinmast(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p*, otherwise all CRCs match
+    # Shipped with AES BIOS
 
     output.createFile("p1.p1", getPart(input.regions['P'].data, 0, 1024))
     output.createFile("p2.sp2", getPart(input.regions['P'].data, 1, 1024))
@@ -116,6 +119,7 @@ def convert_turfmast(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for v4, otherwise all CRCs match
+    # Shipped with MVS BIOS
 
     # banks are in reverse order
     output.createFile("p1.p1", 
@@ -137,6 +141,7 @@ def convert_mslug(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p1, otherwise all CRCs match
+    # Shipped with MVS BIOS
 
     output.createFile("p1.p1", 
         getPart(input.regions['P'].data, 1, 1024)
@@ -169,6 +174,7 @@ def convert_magdrop3(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p1 and v2, otherwise all CRCs match.
+    # Shipped with AES BIOS
 
     output.createFile("p1.p1", input.regions['P'].data)
 
@@ -183,6 +189,7 @@ def convert_mslug2(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p*, otherwise all CRCs match
+    # Shipped with MVS BIOS
 
     output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 1024))
     output.createFile("p2.sp2", getAssymetricPart(input.regions['P'].data, 1024, 2*1024))
@@ -209,10 +216,6 @@ def convert_generic_guess(input, output):
 
 
 
-def convert_common(input, output):
-    output.createFile("s1.s1", input.regions['S'].data)
-    output.createFile("bios.bin", input.regions['BIOS'].data, shared = True)
-
 # converts the C data region to several NNN-cN.cN-files. width and length varies between games.
 # width = must be 1, 2 or 4. Number of "stripes" the original data was divided into (and which we need to recreate).
 # length = the number of striped blocks (must be 1 or more - 1,2,3,4 are common).
@@ -234,6 +237,27 @@ def convert_common_c(input, output, width, length):
                 getStripes(dataPart, range(j, 4, width))
             )
 
+
+def convert_common(input, output):
+    output.createFile("s1.s1", input.regions['S'].data)
+
+    # different games come with different BIOS, for some reason
+    # use SHA1 to identify it
+
+    # These are the same hashes as on: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
+    biosFileNames = {
+        "e92910e20092577a4523a6b39d578a71d4de7085": "japan-j3.bin", #Japan MVS (J3)
+        "4e4a440cae46f3889d20234aebd7f8d5f522e22c": "neo-po.bin" #Japan AES
+    }
+
+    hexDigest = input.regions['BIOS'].getSha1HexDigest()
+    if biosFileNames.has_key(hexDigest):
+        biosFileName = biosFileNames[hexDigest]
+    else:
+        print "Warning: The included BIOS is not recognized. SHA1 hash: " + hexDigest
+        biosFileName = "unknown-bios-" + hexDigest + ".bin"
+
+    output.createFile(biosFileName, input.regions['BIOS'].data, shared = True)
 
 
 
@@ -281,6 +305,11 @@ class region(object):
             data = byteSwap(data)
         
         self.data = data
+
+
+    def getSha1HexDigest(self):
+        return hashlib.sha1(self.data).hexdigest()    
+        
 
 
 
