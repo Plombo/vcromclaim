@@ -301,6 +301,7 @@ class RomExtractor(object):
 				if tryToConvert:
 					convert_neogeo(rom, outputFolderName)
 					print "Converted ROM files to MAME compatible format (some BIOS files may be missing)"
+					#writerom(rom, os.path.join(outputFolderName, outputFileName))
 				else:
 					print "Game extracted but further processing is required."
 					writerom(rom, os.path.join(outputFolderName, outputFileName))

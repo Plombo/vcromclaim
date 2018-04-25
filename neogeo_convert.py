@@ -239,7 +239,12 @@ def convert_common_c(input, output, width, length):
 
 
 def convert_common(input, output):
+
+    #S1: same on all carts (so far)
     output.createFile("s1.s1", input.regions['S'].data)
+
+
+    #BIOS - all games so far comes with either an MVS or an AES BIOS.
 
     # different games come with different BIOS, for some reason
     # use SHA1 to identify it
@@ -258,6 +263,17 @@ def convert_common(input, output):
         biosFileName = "unknown-bios-" + hexDigest + ".bin"
 
     output.createFile(biosFileName, input.regions['BIOS'].data, shared = True)
+
+
+    #UNKNOWN DATA. should be zero but we might be missing something
+    for i in xrange(1,8):
+        regionKey = 'X' + str(i)
+        regionData = input.regions[regionKey].data
+        if len(regionData) > 0:
+            print "WARNING: Game contains data which belongs to unknown ROM. Maybe additional system ROMs?"
+            print "SHA1:" + input.regions[regionKey].getSha1HexDigest()
+            output.createFile(regionKey + "." + regionKey, regionData)
+
 
 
 
@@ -354,13 +370,14 @@ class input_processor(object):
     def getRegionPositionAndLength(self, indexInOldHeader, indexInRom0Header):
 
         self.inputFile.seek(0)
-        if (self.inputFile.read(4) == 'ROM0') and (indexInRom0Header >= 0):
+        firstBytesOfHeader = self.inputFile.read(4)
+        if (firstBytesOfHeader == 'ROM0') and (indexInRom0Header >= 0):
             position = HEADER_LENGTH
             for i in xrange(0, indexInRom0Header):
                 position += struct.unpack('>I', self.inputFile.read(4)) [0]
             length = struct.unpack('>I', self.inputFile.read(4)) [0]
             return (position, length)
-        elif indexInOldHeader >= 0:
+        elif (firstBytesOfHeader != 'ROM0') and indexInOldHeader >= 0:
             self.inputFile.seek(indexInOldHeader * 8)
             pair = struct.unpack('>2I', self.inputFile.read(8))
             position = pair[0]
