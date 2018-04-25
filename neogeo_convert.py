@@ -245,8 +245,6 @@ def convert_common(input, output):
 
 
     #BIOS - all games so far comes with either an MVS or an AES BIOS.
-
-    # different games come with different BIOS, for some reason
     # use SHA1 to identify it
 
     # These are the same hashes as on: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
@@ -263,6 +261,11 @@ def convert_common(input, output):
         biosFileName = "unknown-bios-" + hexDigest + ".bin"
 
     output.createFile(biosFileName, input.regions['BIOS'].data, shared = True)
+
+    #NOTE: MAME requires additional BIOS files to run.
+    # For AES, 000-lo.lo is required. Perhaps the VC emulator does higher level emulation that makes that ROM redundant?
+    # For MVS, several other files such as sfix.sfix (sprite data for when game is running without cart present).
+    
 
 
     #UNKNOWN DATA. should be zero but we might be missing something
