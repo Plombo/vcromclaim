@@ -295,6 +295,11 @@ class region(object):
     #indexInOldHeader: The index of the position-length pair in the old style header.
     #indexInRom0Header: The index of the length value in the new style header.
     def __init__(self, parentInputProcessor, indexInOldHeader, indexInRom0Header, byteSwappedRegion = False):
+        
+        def byteSwap(fileData):
+            intdata = struct.unpack('>' + str(len(fileData)/2) + 'H', fileData)
+            return struct.pack('<' + str(len(fileData)/2) + 'H', *intdata)
+        
         self.indexInOldHeader = indexInOldHeader
         self.indexInRom0Header = indexInRom0Header
         (position, length) = parentInputProcessor.getRegionPositionAndLength(indexInOldHeader,indexInRom0Header)
@@ -308,7 +313,7 @@ class region(object):
 
 
     def getSha1HexDigest(self):
-        return hashlib.sha1(self.data).hexdigest()    
+        return hashlib.sha1(self.data).hexdigest()
         
 
 
@@ -447,9 +452,7 @@ def getStripes(fileData, stripes):
     return retVal
 
 
-def byteSwap(fileData):
-    intdata = struct.unpack('>' + str(len(fileData)/2) + 'H', fileData)
-    return struct.pack('<' + str(len(fileData)/2) + 'H', *intdata)
+
 
 
 def pad(fileData, totalLengthInKilobytes):
