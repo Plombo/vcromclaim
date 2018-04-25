@@ -38,7 +38,11 @@ class RomExtractor(object):
 		self.name = name
 		self.channeltype = channeltype
 		self.nand = nand
-	
+
+	def ensure_folder_exists(self, outputFolderName):
+		if not os.path.lexists(outputFolderName):
+			os.makedirs(outputFolderName)
+
 	def extract(self):
 		content = os.path.join(self.nand.path, 'title', '00010001', self.id, 'content')
 		rom_extracted = False
@@ -260,11 +264,11 @@ class RomExtractor(object):
 		
 		return extracted
 
+
 	def extractrom_neogeo(self, arc, filenameWithoutExtension):
 		outputFolderName = filenameWithoutExtension
 
-		if not os.path.lexists(outputFolderName):
-			os.makedirs(outputFolderName)
+		self.ensure_folder_exists(outputFolderName)
 
 		foundRom = False
 		for file in arc.files:
@@ -296,22 +300,32 @@ class RomExtractor(object):
 
 				if tryToConvert:
 					convert_neogeo(rom, outputFolderName)
-					print "Converted ROM files to MAME compatible format (except BIOS!)"
+					print "Converted ROM files to MAME compatible format (some BIOS files may be missing)"
 				else:
 					print "Game extracted but further processing is required."
 					writerom(rom, os.path.join(outputFolderName, outputFileName))
 
-				print "Sorry, no save file support for Neo Geo games yet."
+				if self.extractsave():
+					print "Exported memory card with save file"
+				else:
+					print "No save data found"
+
 				foundRom = True
 
-			elif file.name == "memcard.dat":
-				rom = arc.getfile(file.path)
-				print 'Got default save data'
-				writerom(rom, os.path.join(outputFolderName, "memcard.default.dat"))
-			elif file.name == "config.dat":
-				rom = arc.getfile(file.path)
-				print 'Got config.dat'
-				writerom(rom, os.path.join(outputFolderName, "config.dat"))
+			# This is just the contents of a formatted 2KB memory card without any saves on it. Probably useless to everyone.
+			#elif file.name == "memcard.dat":
+			#	rom = arc.getfile(file.path)
+			#	print 'Got default (empty) save data'
+			#	writerom(rom, os.path.join(outputFolderName, "memcard.empty.dat"))
+
+			#AFAIK this is useless
+			#elif file.name == "config.dat":
+			#	rom = arc.getfile(file.path)
+			#	writerom(rom, os.path.join(outputFolderName, "config.dat"))
+
+			#else: other files are useless
+			#	rom = arc.getfile(file.path)
+			#	writerom(rom, os.path.join(outputFolderName, file.name))
 		
 		
 		return foundRom
@@ -346,6 +360,12 @@ class RomExtractor(object):
 					outpath = self.name + '.srm'
 					gensave.convert(path, outpath)
 					return True
+			if filename == 'savefile.dat' and self.channeltype == 'Neo Geo':
+				# VC Neo Geo saves are memory card images, can be opened as is by mame
+				outputFolderName = self.name
+				self.ensure_folder_exists(outputFolderName)
+				shutil.copy2(path, os.path.join(outputFolderName, "memorycard.bin"))
+				return True
 			elif filename.startswith('EEP_') or filename.startswith('RAM_'):
 				assert self.channeltype == 'Nintendo 64'
 				n64save.convert(path, self.name)
