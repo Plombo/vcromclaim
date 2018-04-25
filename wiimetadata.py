@@ -318,7 +318,7 @@ class RomExtractor(object):
 			#	print 'Got default (empty) save data'
 			#	writerom(rom, os.path.join(outputFolderName, "memcard.empty.dat"))
 
-			#AFAIK this is useless
+			#This probably contains the DIP switch settings of the game, or maybe flags for the emulator
 			#elif file.name == "config.dat":
 			#	rom = arc.getfile(file.path)
 			#	writerom(rom, os.path.join(outputFolderName, "config.dat"))
