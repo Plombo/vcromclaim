@@ -70,9 +70,9 @@ Known Issues
   for the VC emulator. Only a block of about 8-10 bytes of Mario Tennis is
   incorrect. Ogre Battle has incorrect bytes appearing seemingly randomly across
   the file. 
-* TurboGraphx CD, Commodore 64 and VC Arcade games cannot be extracted at this
+* TurboGrafx CD, Commodore 64 and VC Arcade games cannot be extracted at this
   time.
-* Save games for Sega Master System, Turbographx 16/CD, and Famicom Disk System
+* Save games for Sega Master System, Turbografx 16/CD, and Famicom Disk System
   are not extracted at this time.
 
 Credits
