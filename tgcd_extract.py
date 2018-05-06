@@ -30,8 +30,8 @@ def extract_tgcd(u8InputFile, outputFolder):
 
     cueFileContent = StringIO.StringIO()
 
-    saveFile(hcdFileContent, "debug.hcd", outputFolder) #TODO delete me
-    saveFile(extractFile(u8InputFile, "config.ini"), "debug.ini", outputFolder) #TODO delete me
+    #saveFile(hcdFileContent, "debug.hcd", outputFolder)
+    #saveFile(extractFile(u8InputFile, "config.ini"), "debug.ini", outputFolder)
 
     for trackDescription in getTrackDescriptionsFromHcdFile(hcdFileContent):
 
