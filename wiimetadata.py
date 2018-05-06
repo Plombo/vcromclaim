@@ -13,6 +13,7 @@ from ccfarchive import CCFArchive
 from nes_rom_extract import extract_nes_rom, extract_fds_bios_rom
 from snesrestore import restore_brr_samples
 from neogeo_convert import convert_neogeo
+from tgcd_extract import extract_tgcd
 
 # rom: file-like object
 # path: string (filesystem path)
@@ -69,6 +70,7 @@ class RomExtractor(object):
 			'NES': self.extractrom_nes,
 			'SNES': self.extractrom_snes,
 			'TurboGrafx16': self.extractrom_tg16,
+			'TurboGrafxCD': self.extractrom_tgcd,
 			'Neo Geo': self.extractrom_neogeo
 		}
 		
@@ -202,6 +204,15 @@ class RomExtractor(object):
 			print 'Got ROM: %s' % filename
 			return True
 		else: return False
+
+	def extractrom_tgcd(self, arc, filenameWithoutExtension):
+		if (arc.hasfile("config.ini")):
+			outputFolderName = filenameWithoutExtension
+			extract_tgcd(arc,outputFolderName)
+			print "Got TurboGrafx CD image"
+			return True
+		else:
+			return False
 	
 	def extractrom_snes(self, arc, filenameWithoutExtension):
 		filename = filenameWithoutExtension + self.extensions[self.channeltype]
@@ -450,7 +461,7 @@ class NandDump(object):
 		elif ident == 'EB': return 'Neo Geo' #E.g. Spin Master, RFBB Special
 		elif ident == 'EC': return 'Neo Geo' #E.g. Shock Troopers 2, NAM-1975
 		#elif ident[0] == 'E': return 'Arcade' #E.g. E5 = Ghosts'n' Goblins, E6 = Space Harrier
-		#elif ident[0] == 'Q': return 'TurboGrafx CD'
+		elif ident[0] == 'Q': return 'TurboGrafxCD'
 		#elif ident[0] == 'C': return 'Commodore 64'
 		else: return None
 	
