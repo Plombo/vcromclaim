@@ -3,7 +3,7 @@
 import os.path, StringIO, struct, zlib
 
 
-#TODO: audio clearly runs to fast in Mednafen (may cause secondary issues, like music/sound starting at the wrong positions)
+#TODO: audio clearly runs to slow in Mednafen (may cause secondary issues, like music/sound starting at the wrong positions)
 #   Exported audio files are 48khz. Maybe Mednafen probably plays this in 44khz (the CD-A frequency).
 #   Can be worked-around by using any tool to convert the OGG files to CD-A or any other format that Mednafen can support
 #   and updating the Cue sheet accordingly.
