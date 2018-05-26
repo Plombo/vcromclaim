@@ -62,14 +62,15 @@ Known Issues
   (such as the disk swapping screens being removed). For example, when the
   VC version of Bio Miracle Bokutte Upa is played in a "normal" emulator, it
   will display a flashing "Wait" screen when you are supposed to swap disk side.
-* N64: Exported ROMs of Ogre Battle 64 and Mario Tennis 64 are corrupt. Not known
-  at this time whether they are incorrectly exported or whether they are
-  customized for the VC emulator. Only a block of about 8-10 bytes of Mario
-  Tennis is incorrect. Ogre Battle has incorrect bytes appearing seemingly
-  randomly across the file. 
+* Some ROMs have been customized for the VC emulators, and are not playable or
+  have issues in other emulators. This includes:
+  * Bio Miracle Bokutte Upa (FDS) - instead of asking the player to swap disk,
+    the game shows a flashing "Wait" screen.
+  * Mario Tennis (N64) - 8 bytes are different in the middle of the file.
+  * Ogre Battle (N64) - Bytes are different throughout the file.
 * TURBOGRAFX CD: CD audio will play too slow in Mednefaren. Reencodeing the OGG
   files in 44kHz should make them run correctly.
-* TURBOGRAFX CD: Super Air Zonk does not play
+* TURBOGRAFX CD: Super Air Zonk does not play.
 * COMMODORE 64 and ARCADE: games cannot be extracted at this time.
 * Save games for Sega Master System, Turbografx 16/CD, and Famicom Disk System
   are not extracted at this time.
