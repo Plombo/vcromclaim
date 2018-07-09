@@ -21,14 +21,14 @@ Features
 * Extracts several Neo Geo games: Magician Lord, King of the Monsters,
   Spinmaster, Neo Turf Master, Metal Slug, Metal Slug 2, Magical Drop 3, so that
   they are playable in MAME. Support for many other Neo Geo games can be added
-  as long as the game is not encrypted.
+  easily, as long as the game is not encrypted.
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
 * Automatically extracts the built-in manuals in VC games.
-* Automatically extracts saves for NES, SNES, Genesis, Nintendo 64 and Neo Geo
-  games, converting them to the formats used by popular emulators for those
-  platforms.
+* Automatically extracts saves for NES, SNES, Genesis, Master System,
+  Nintendo 64 and Neo Geo games, converting them to the formats used by popular
+  emulators for those platforms.
 * Displays useful debugging information in the extraction process.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
   platform supported by Python.
@@ -58,10 +58,6 @@ Known Issues
 * NEO GEO: The BIOS used for Neo Geo games (MVS verison for some, AES version
   for some) is extracted, but many of the support ROMS (e.g. 000-lo.lo,
   sfix.sfix, etc) are NOT extracted at this time.
-* Extracted Famicom Disk System games are often modified for Virtual Console
-  (such as the disk swapping screens being removed). For example, when the
-  VC version of Bio Miracle Bokutte Upa is played in a "normal" emulator, it
-  will display a flashing "Wait" screen when you are supposed to swap disk side.
 * Some ROMs have been customized for the VC emulators, and are not playable or
   have issues in other emulators. This includes:
   * Bio Miracle Bokutte Upa (FDS) - instead of asking the player to swap disk,
@@ -72,8 +68,8 @@ Known Issues
   files in 44kHz should make them run correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
 * COMMODORE 64 and ARCADE: games cannot be extracted at this time.
-* Save games for Sega Master System, Turbografx 16/CD, and Famicom Disk System
-  are not extracted at this time.
+* Save games for Turbografx 16/CD, and Famicom Disk System are not extracted at
+  this time.
 
 Credits
 -------

@@ -370,7 +370,13 @@ class RomExtractor(object):
 					# VC Genesis saves use a slightly different format from 
 					# the one used by Gens/GS and other emulators
 					outpath = self.name + '.srm'
-					gensave.convert(path, outpath)
+					gensave.convert(path, outpath, True)
+					return True
+				elif self.channeltype == 'Master System':
+					# VC Genesis saves use a slightly different format from 
+					# the one used by Gens/GS and other emulators
+					outpath = self.name + '.ssm'
+					gensave.convert(path, outpath, False)
 					return True
 			if filename == 'savefile.dat' and self.channeltype == 'Neo Geo':
 				# VC Neo Geo saves are memory card images, can be opened as is by mame
