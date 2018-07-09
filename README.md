@@ -64,8 +64,8 @@ Known Issues
     the game shows a flashing "Wait" screen.
   * Mario Tennis (N64) - 8 bytes are different in the middle of the file.
   * Ogre Battle (N64) - Bytes are different throughout the file.
-* TURBOGRAFX CD: CD audio will play too slow in Mednefaren. Reencodeing the OGG
-  files in 44kHz should make them run correctly.
+* TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
+  files to 44.1kHz should make them run correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
 * COMMODORE 64 and ARCADE: games cannot be extracted at this time.
 * Save games for Turbografx 16/CD, and Famicom Disk System are not extracted at
