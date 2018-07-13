@@ -10,7 +10,7 @@ from cStringIO import StringIO
 import romc, gensave, n64save
 from u8archive import U8Archive
 from ccfarchive import CCFArchive
-from nes_rom_extract import extract_nes_rom, extract_fds_bios_rom
+from nes_extract import extract_nes_file_from_app, extract_fds_bios_from_app, convert_nes_save_data
 from snesrestore import restore_brr_samples
 from neogeo_convert import convert_neogeo
 from tgcd_extract import extract_tgcd
@@ -93,14 +93,21 @@ class RomExtractor(object):
 		if not os.path.exists(u8path): return False
 		
 		f = open(u8path, 'rb')
-		result, output = extract_nes_rom(f)
+		result, output = extract_nes_file_from_app(f)
+
+		hasExportedSaveData = False
+		if result == 1 or result == 2:
+			saveFilePath = self.getsavefile('savedata.bin')
+			if saveFilePath != None:
+				hasExportedSaveData = convert_nes_save_data(saveFilePath, self.name, f)
+
 		f.close()
-		
+
 		if result == 1:
 			# nes rom
 
-			# make sure save flag is set if the game has save data
-			if self.extractsave():
+			# make sure save flag is set if the game has save data - not sure which games this is used for?
+			if hasExportedSaveData:
 				if not (ord(output.getvalue()[6]) & 2):
 					output = list(output.getvalue())
 					output[6] = chr(ord(output[6]) | 2)
@@ -113,8 +120,7 @@ class RomExtractor(object):
 
 		elif result == 2:
 			# FDS
-			print "Sorry, no save file support for FDS games yet."
-
+			
 			filename = filenameWithoutExtension + ".fds"
 
 			print 'Got FDS image: %s' % filename
@@ -123,6 +129,10 @@ class RomExtractor(object):
 			return False
 
 		writerom(output, filename)
+
+		if hasExportedSaveData:
+			print 'Extracted save data'
+
 		return True
 	
 	def extractrom_n64(self, arc, filenameWithoutExtension):
@@ -342,6 +352,17 @@ class RomExtractor(object):
 		
 		return foundRom
 	
+
+	def getsavefile(self, expectedFileName):
+		datadir = os.path.join(self.nand.path, 'title', '00010001', self.id, 'data')
+		datafiles = os.listdir(datadir)
+		for filename in datafiles:
+			path = os.path.join(datadir, filename)
+			if filename == expectedFileName:
+				return path
+
+		return None
+
 	# copy save file, doing any necessary conversions to common emulator formats
 	def extractsave(self):
 		datadir = os.path.join(self.nand.path, 'title', '00010001', self.id, 'data')
@@ -355,17 +376,8 @@ class RomExtractor(object):
 					outpath = self.name + '.srm'
 					shutil.copy2(path, outpath)
 					return True
-				elif self.channeltype == 'NES':
-					# VC NES saves use the same format as FCEUX, except with an
-					# additional 64-byte header
-					outpath = self.name + '.sav'
-					infile = open(path, 'rb')
-					outfile = open(outpath, 'wb')
-					infile.seek(64)
-					outfile.write(infile.read())
-					outfile.close()
-					infile.close()
-					return True
+				#elif self.channeltype == 'NES': #not used because FDS games requires the app file
+				#return convert_nes_save_data(path, self.name)
 				elif self.channeltype == 'Genesis':
 					# VC Genesis saves use a slightly different format from 
 					# the one used by Gens/GS and other emulators
@@ -447,6 +459,7 @@ class NandDump(object):
 	
 	# Returns a string denoting the channel type.  Returns None if it's not a VC game.
 	def channeltype(self, ticket):
+
 		f = open(os.path.join(self.path, 'ticket', '00010001', ticket), 'rb')
 		f.seek(0x1dc)
 		thistype = struct.unpack('>I', f.read(4))[0]

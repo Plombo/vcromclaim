@@ -26,9 +26,8 @@ Features
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
 * Automatically extracts the built-in manuals in VC games.
-* Automatically extracts saves for NES, SNES, Genesis, Master System,
-  Nintendo 64 and Neo Geo games, converting them to the formats used by popular
-  emulators for those platforms.
+* Automatically extracts saves for all formats, except PC Engine / TurboGrafx16
+  / TurboGrafx CD.
 * Displays useful debugging information in the extraction process.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
   platform supported by Python.
@@ -60,10 +59,17 @@ Known Issues
   sfix.sfix, etc) are NOT extracted at this time.
 * Some ROMs have been customized for the VC emulators, and are not playable or
   have issues in other emulators. This includes:
-  * Bio Miracle Bokutte Upa (FDS) - instead of asking the player to swap disk,
-    the game shows a flashing "Wait" screen.
-  * Mario Tennis (N64) - 8 bytes are different in the middle of the file.
-  * Ogre Battle (N64) - Bytes are different throughout the file.
+  * Bio Miracle Bokutte Upa (FDS), Zelda no Densetsu (FDS), and probably most
+    other FDS games on multiple disk sides: The game may glitch when you are
+    supposed to switch disk side. When playing on common emulators, Zelda will
+    ask you to press Start (but nothing happens if you do) and Bokutte Upa will
+    show a flashing "WAIT" message. In both cases, switching disk side will
+    resume game play. This is because the ROMs have been modified for the
+    Virtual Console emulator to automatically switch sides.
+  * Mario Tennis (N64) - 8 bytes are different in the middle of the file, making
+    it unplayable in common emulators.
+  * Ogre Battle (N64) - Bytes are different throughout the file, making it
+    unplayable in common emulators.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
   files to 44.1kHz should make them run correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
