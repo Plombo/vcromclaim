@@ -54,28 +54,28 @@ Known Issues
   decrypting these games. (Though, in theory it should be possible. Worst case,
   one can extract the game as a Wad, run the game in Dolphin's debug mode, dump
   the RAM, and get the ROM data from there.)
-* NEO GEO: The BIOS used for Neo Geo games (MVS verison for some, AES version
+* NEO GEO: The BIOS used for Neo Geo games (MVS version for some, AES version
   for some) is extracted, but many of the support ROMS (e.g. 000-lo.lo,
   sfix.sfix, etc) are NOT extracted at this time.
-* Some ROMs have been customized for the VC emulators, and are not playable or
-  have issues in other emulators. This includes:
-  * Bio Miracle Bokutte Upa (FDS), Zelda no Densetsu (FDS), and probably most
-    other FDS games on multiple disk sides: The game may glitch when you are
-    supposed to switch disk side. When playing on common emulators, Zelda will
-    ask you to press Start (but nothing happens if you do) and Bokutte Upa will
-    show a flashing "WAIT" message. In both cases, switching disk side will
-    resume game play. This is because the ROMs have been modified for the
-    Virtual Console emulator to automatically switch sides.
+* FDS: Many games spanning multiple disk sides will glitch in common emulators
+  when you are supposed to switch side. For example, Bio Miracle Bokutte Upa
+  will show a flashing WAIT message and Zelda no Densetsu will show "Press
+  Start" (but nothing happens if you do). In both these games, just switching
+  disk will continue the game. This is because the ROMs have been modified for
+  the Virtual Console emulator to automatically switch sides.
+* ALL SYSTEMS: Due to reasons unknown, some ROMs are simply different from the
+  real ROMs causing them to glitch or not run in common emulators. Known cases:
   * Mario Tennis (N64) - 8 bytes are different in the middle of the file, making
-    it unplayable in common emulators.
-  * Ogre Battle (N64) - Bytes are different throughout the file, making it
-    unplayable in common emulators.
+    it unplayable.
+  * Ogre Battle (N64) - Many bytes are different throughout the file, making it
+    unplayable.
+  * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
+    glitch and freeze.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
   files to 44.1kHz should make them run correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
+* TURBOGRAFX 16/CD: Save games are not extracted at this time.
 * COMMODORE 64 and ARCADE: games cannot be extracted at this time.
-* Save games for Turbografx 16/CD, and Famicom Disk System are not extracted at
-  this time.
 
 Credits
 -------
