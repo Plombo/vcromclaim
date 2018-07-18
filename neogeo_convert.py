@@ -7,10 +7,15 @@ KILOBYTE = 1024
 
 #invaluable source: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
 
+#to run AES games in mame:
+#   place BIOS files in "roms/aes" folder under mame
+#   place game folder under "roms/<game>" folder under mame
+#   run:
+#       mame64 aes -cart magdrop3 -bios japan
+
 
 
 # inputFile must be a game.bin file, which is NOT compressed or encrypted.
-# wiiGameId is the game Id (8 character string). Hopefully once more games have been analyzed this can be replaced by something else - config.bin? using the header?
 # outputFolder should exist and be empty.
 # returns True if the file was understood.
 def convert_neogeo(inputFile, outputFolder):
@@ -33,7 +38,7 @@ def convert_neogeo(inputFile, outputFolder):
         func = supportedGames[ngh][0]
     else:
         print "Game is unknown. You will have to rename the folder and probably have to split or merge the ROM files."
-        mameShortName = "NGH-" + ngh
+        mameShortName = "NGM-" + ngh
         func = convert_generic_guess
 
     outputProcessor = output_processor(outputFolder, mameShortName, ngh)
@@ -85,12 +90,11 @@ def convert_maglordh(input, output):
 
 def convert_kotm(input, output):
 
-    #Not sure if this is actually kotm (MVS) or kotmh (AES) version.
-    #kotm: CRC of all files except P1 match
-    #kotmh: CRC of all files except P1 match
-    # shipped with MVS BIOS
+    #Not 100% sure this is the MVS version (kotm) or AES version (kotmh).
+    #P1 ROM has wrong checksom for both kotm (p1.p1) and kotmh (hp1.p1). All other files have correct checksum for both.
+    #Shipped with MVS BIOS, so assuming it is the MVS version.
 
-    output.createFile("hp1.p1", getAssymetricPart(input.regions['P'].data, 0, 512))
+    output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 512))
     output.createFile("p2.p2", pad(getAssymetricPart(input.regions['P'].data, 512, 64), 128))
 
     output.createFile("m1.m1", input.regions['M'].data)
