@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os.path, StringIO, struct, zlib
+from configurationfile import getConfiguration 
 
 
 #TODO: audio clearly runs to slow in Mednafen (may cause secondary issues, like music/sound starting at the wrong positions)
@@ -77,11 +78,11 @@ def extractFile(u8InputFile, fileName):
     return u8InputFile.getfile(fileName)
 
 def getHcdFileName(configFileContent):
-    configFileContent.seek(0)
-    for line in configFileContent:
-        if line.startswith('ROM='):
-            return line[len('ROM='):].strip('/\\\"\0\r\n')
-    raise ValueError
+    romname = getConfiguration(configFileContent, "ROM")
+    if romname:
+        return romname
+    else:
+        raise ValueError
 
 def getTrackDescriptionsFromHcdFile(hcdFileContent):
     hcdFileContent.seek(0)
@@ -114,8 +115,8 @@ def decompressBinaryFile(compressedBinaryFileContent):
     return decompressed
 
 
-def getWithOtherFileExtension(path, newFileExteionsion):
-    return os.path.splitext(path)[0] + "." + newFileExteionsion
+def getWithOtherFileExtension(path, newFileExtension):
+    return os.path.splitext(path)[0] + "." + newFileExtension
 
 
 def saveFile(fileContent, fileName, outputFolder):

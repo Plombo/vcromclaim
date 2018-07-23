@@ -57,16 +57,23 @@ class U8Archive(object):
 	# returns True if this archive has a file with the given path
 	def hasfile(self, path):
 		f = self.getfile(path)
-		if f: f.close(); return True
-		else: return False
+		if f:
+			f.close()
+			return True
+		else:
+			return False
 	
 	# returns a file-like object (actually a cStringIO object) for the specified
 	# file; detects and decompresses compressed files (LZ77/Huf8/LZH8) automatically!
 	# path: file name (string) or actual file node, but NOT node path :D
 	def getfile(self, path):
 		for node in self.files:
+			#print "testing one..."
+			#print node
+			#print node.name
 			if node == path or (type(path) == str and node.name.endswith(path)):
-				if node == path: path = node.name
+				if node == path:
+					path = node.name
 				self.file.seek(node.data_offset)
 				file = StringIO(self.file.read(node.size))
 				if path.startswith("LZ77"):
@@ -111,6 +118,7 @@ class U8Archive(object):
 						f2.write(file.read())
 						f2.close()
 						file.close()
+						return None
 				else:
 					return file
 		return None

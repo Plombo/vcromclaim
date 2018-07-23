@@ -85,6 +85,8 @@ Credits
 * [Hector Martin (marcan)](http://marcansoft.com/blog) - original author of the 
   Python LZ77 decompression code, which I heavily modified and expanded for 
   vcromextract.
+* [sepalani](https://github.com/sepalani/librso/blob/master/rvl/rso.py) - author of librso, 
+  with some reverse engineering done for RSO file format
 * [Bregalad](http://www.romhacking.net/community/1067) - author of BRRTools, 
   a Java program on which the BRR encoder in vcromclaim was based.
 * qwikrazor87 - author of PCE CD Tools, of which the TG CD data decompression

@@ -2,8 +2,11 @@
 
 import struct, os, hashlib
 
+from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad
+
 HEADER_LENGTH = 64
 KILOBYTE = 1024
+
 
 #invaluable source: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
 
@@ -77,11 +80,11 @@ def convert_maglordh(input, output):
     output.createFile("p1.p1", input.regions['P'].data)
     
     m = input.regions['M'].data
-    output.createFile("m1.m1", getPart(m, 0,64) + getPart(m, 2, 64) + getPart(m, 1, 64) + getPart(m, 2, 64))
+    output.createFile("m1.m1", getPart(m, 0,64*KILOBYTE) + getPart(m, 2, 64*KILOBYTE) + getPart(m, 1, 64*KILOBYTE) + getPart(m, 2, 64*KILOBYTE))
 
     output.createFile("v11.v11", input.regions['V1'].data)
-    output.createFile("v21.v21", getPart(input.regions['V2'].data,0,512))
-    output.createFile("v22.v22", getPart(input.regions['V2'].data,1,512))
+    output.createFile("v21.v21", getPart(input.regions['V2'].data,0,512*KILOBYTE))
+    output.createFile("v22.v22", getPart(input.regions['V2'].data,1,512*KILOBYTE))
 
     convert_common_c(input, output, 2, 3)
 
@@ -94,13 +97,13 @@ def convert_kotm(input, output):
     #P1 ROM has wrong checksom for both kotm (p1.p1) and kotmh (hp1.p1). All other files have correct checksum for both.
     #Shipped with MVS BIOS, so assuming it is the MVS version.
 
-    output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 512))
-    output.createFile("p2.p2", pad(getAssymetricPart(input.regions['P'].data, 512, 64), 128))
+    output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 512*KILOBYTE))
+    output.createFile("p2.p2", pad(getAsymmetricPart(input.regions['P'].data, 512*KILOBYTE, 64*KILOBYTE), 128*KILOBYTE))
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 1024))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1024))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 1024*KILOBYTE))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1024*KILOBYTE))
 
     convert_common_c(input, output, 2, 2)
 
@@ -110,8 +113,8 @@ def convert_spinmast(input, output):
     # CRC is incorrect for p*, otherwise all CRCs match
     # Shipped with AES BIOS
 
-    output.createFile("p1.p1", getPart(input.regions['P'].data, 0, 1024))
-    output.createFile("p2.sp2", getPart(input.regions['P'].data, 1, 1024))
+    output.createFile("p1.p1", getPart(input.regions['P'].data, 0, 1024*KILOBYTE))
+    output.createFile("p2.sp2", getPart(input.regions['P'].data, 1, 1024*KILOBYTE))
 
     output.createFile("m1.m1", input.regions['M'].data)
 
@@ -127,15 +130,15 @@ def convert_turfmast(input, output):
 
     # banks are in reverse order
     output.createFile("p1.p1", 
-        getPart(input.regions['P'].data, 1, 1024)
-        + getPart(input.regions['P'].data, 0, 1024))
+        getPart(input.regions['P'].data, 1, 1024*KILOBYTE)
+        + getPart(input.regions['P'].data, 0, 1024*KILOBYTE))
     
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 2048))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 2048))
-    output.createFile("v3.v3", getPart(input.regions['V1'].data, 2, 2048))
-    output.createFile("v4.v4", getPart(input.regions['V1'].data, 3, 2048))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 2048*KILOBYTE))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 2048*KILOBYTE))
+    output.createFile("v3.v3", getPart(input.regions['V1'].data, 2, 2048*KILOBYTE))
+    output.createFile("v4.v4", getPart(input.regions['V1'].data, 3, 2048*KILOBYTE))
 
     convert_common_c(input, output, 2, 1)
 
@@ -148,13 +151,13 @@ def convert_mslug(input, output):
     # Shipped with MVS BIOS
 
     output.createFile("p1.p1", 
-        getPart(input.regions['P'].data, 1, 1024)
-        + getPart(input.regions['P'].data, 0, 1024))
+        getPart(input.regions['P'].data, 1, 1024*KILOBYTE)
+        + getPart(input.regions['P'].data, 0, 1024*KILOBYTE))
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
 
     convert_common_c(input, output, 2, 2)
 
@@ -163,14 +166,14 @@ def convert_rbffspec(input, output):
     # Same ROM for MVS/AES
     # NOT TESTED, becaues the game.bin is encrypted
 
-    output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 1024))
-    output.createFile("p2.sp2", getAssymetricPart(input.regions['P'].data, 1024, 4*1024))
+    output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+    output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
-    output.createFile("v3.v3", getPart(input.regions['V1'].data, 1, 4*1024))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
+    output.createFile("v3.v3", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
 
     convert_common_c(input, output, 2, 4)
 
@@ -184,8 +187,8 @@ def convert_magdrop3(input, output):
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1*512))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1*512*KILOBYTE))
 
     convert_common_c(input, output, 2, 2)
 
@@ -195,13 +198,13 @@ def convert_mslug2(input, output):
     # CRC is incorrect for p*, otherwise all CRCs match
     # Shipped with MVS BIOS
 
-    output.createFile("p1.p1", getAssymetricPart(input.regions['P'].data, 0, 1024))
-    output.createFile("p2.sp2", getAssymetricPart(input.regions['P'].data, 1024, 2*1024))
+    output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+    output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 2*1024*KILOBYTE))
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024))
+    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
 
     convert_common_c(input, output, 2, 2)
 
@@ -441,59 +444,5 @@ class output_processor(object):
 
         outputFile.close()
 
-
-
-
-#Utilities
-
-def getAssymetricPart(fileData, startInKb, lengthInKb):
-    retVal = fileData[ startInKb*KILOBYTE : (startInKb+lengthInKb)*KILOBYTE ]
-    assert len(retVal) == lengthInKb*KILOBYTE
-    return retVal
-
-
-# e.g. if file data is 4 mb, and lengthInKb = 1024, then index 2 would retrieve the third mb of the region
-def getPart(fileData, index, lengthInKb):
-    retVal = fileData[ index*lengthInKb*KILOBYTE : index*lengthInKb*KILOBYTE + lengthInKb*KILOBYTE ]
-    assert len(retVal) == lengthInKb*KILOBYTE
-    return retVal
-
-# E.g. to get the first half of a ROM, call with partIndex = 0, partCount = 2. To get second half, call partIndex 1, partCount = 2.
-# fileData = the file data of the region.
-# partIndex = the part to retrieve. (0-based index)
-# partCount = the total number of parts.
-# The size of the returned value will be len(fileData) / partCount.
-def getPartByDivision(fileData, partIndex, partCount):
-    assert partCount > 0
-    assert partIndex >= 0
-    assert partIndex < partCount
-
-    partSize = len(fileData) / partCount
-    
-    retVal = fileData[ partIndex*partSize : partIndex*partSize + partSize ]
-    assert len(retVal) == partSize
-    return retVal
-
-
-#stripes = [0] = get byte 0, 4, 8 etc
-#stripes = [0,1] = get byte 0,1,4,5,8,9 etc
-#stripes = [0,2] = get byte 0,2,4,6,8,10 etc
-#stripes = [1,3] = get byte 1,3,5,7,9,11 etc
-#stripes = [1,2,3,4] = get all bytes
-def getStripes(fileData, stripes):
-    retVal = ''
-    for i in xrange(0, len(fileData), 4):
-        for j in stripes:
-            retVal += fileData[i+j]
-    return retVal
-
-
-
-
-
-def pad(fileData, totalLengthInKilobytes):
-    actualTotalLength = totalLengthInKilobytes * KILOBYTE
-    assert actualTotalLength >= len(fileData)
-    return fileData + '\xFF'*(actualTotalLength-len(fileData))
 
 

@@ -13,7 +13,9 @@ from ccfarchive import CCFArchive
 from nes_extract import extract_nes_file_from_app, extract_fds_bios_from_app, convert_nes_save_data
 from snesrestore import restore_brr_samples
 from neogeo_convert import convert_neogeo
+from arcade_extract import extract_arcade
 from tgcd_extract import extract_tgcd
+from configurationfile import getConfiguration 
 
 # rom: file-like object
 # path: string (filesystem path)
@@ -71,7 +73,8 @@ class RomExtractor(object):
 			'SNES': self.extractrom_snes,
 			'TurboGrafx16': self.extractrom_tg16,
 			'TurboGrafxCD': self.extractrom_tgcd,
-			'Neo Geo': self.extractrom_neogeo
+			'Neo Geo': self.extractrom_neogeo,
+			'Arcade': self.extractrom_arcade
 		}
 		
 		if self.channeltype == 'NES':
@@ -170,20 +173,19 @@ class RomExtractor(object):
 			ccf = CCFArchive(arc.getfile('data.ccf'))
 		
 			if ccf.hasfile('config'):
-				for line in ccf.getfile('config'):
-					if line.startswith('romfile='): romname = line[len('romfile='):].strip('/\\\"\0\r\n')
+				romfilename = getConfiguration(ccf.getfile('config'), 'romfile')
 			else:
-				print 'config not found'
 				return False
-			
-			if romname:
-				print 'Found ROM: %s' % romname
-				rom = ccf.find(romname)
+					
+			if romfilename:
+				rom = ccf.find(romfilename)
 				writerom(rom, filename)
 				print 'Got ROM: %s' % filename
 				
-				if self.extractsave(): print 'Extracted save to %s.srm' % self.name
-				else: print 'No save file found'
+				if self.extractsave():
+					print 'Extracted save to %s.srm' % self.name
+				else:
+					print 'No save file found'
 				
 				return True
 			else:
@@ -191,29 +193,27 @@ class RomExtractor(object):
 				return False
 	
 	def extractrom_tg16(self, arc, filenameWithoutExtension):
-		filename = filenameWithoutExtension + self.extensions[self.channeltype]
+		
 		config = arc.getfile('config.ini')
 		if not config:
 			print 'config.ini not found'
 			return False
-		
-		path = None
-		for line in config:
-			if line.startswith('ROM='):
-				path = line[len('ROM='):].strip('/\\\"\0\r\n')
+
+		path = getConfiguration(config, "ROM")
 		
 		if not path:
 			print 'ROM filename not specified in config.ini'
 			return False
-		
-		print 'Found ROM: %s' % path
+
 		rom = arc.getfile(path)
-	
+
 		if rom:
+			filename = filenameWithoutExtension + self.extensions[self.channeltype]
 			writerom(rom, filename)
 			print 'Got ROM: %s' % filename
 			return True
-		else: return False
+
+		return False
 
 	def extractrom_tgcd(self, arc, filenameWithoutExtension):
 		if (arc.hasfile("config.ini")):
@@ -288,7 +288,6 @@ class RomExtractor(object):
 
 	def extractrom_neogeo(self, arc, filenameWithoutExtension):
 		outputFolderName = filenameWithoutExtension
-
 		self.ensure_folder_exists(outputFolderName)
 
 		foundRom = False
@@ -351,7 +350,35 @@ class RomExtractor(object):
 		
 		
 		return foundRom
-	
+
+	def extractrom_arcade(self, arc, filenameWithoutExtension):
+		outputFolderName = filenameWithoutExtension
+		self.ensure_folder_exists(outputFolderName)
+
+		foundRom = False
+		if arc.hasfile('data.ccf'):
+			ccf = CCFArchive(arc.getfile('data.ccf'))
+
+			if ccf.hasfile('config'):
+				foundRom = extract_arcade(ccf, outputFolderName)
+
+			# debugging...
+			#for ccfFile in ccf.files:
+			#	print ccfFile.name + " from CCF"
+			#	rom = ccf.find(ccfFile.name)
+			#	writerom(rom, os.path.join(outputFolderName, ccfFile.name))
+		#else:
+			# TODO handle files that are not in CCF (not sure how they are packed)
+			#for file in arc.files:
+			#	print file.name + " from ARC"
+			#	rom = arc.getfile(file.name)
+			#	writerom(rom, os.path.join(outputFolderName, file.name))
+
+		if foundRom:
+			print "Got ROMs"
+
+		return foundRom
+
 
 	def getsavefile(self, expectedFileName):
 		datadir = os.path.join(self.nand.path, 'title', '00010001', self.id, 'data')
@@ -470,6 +497,7 @@ class NandDump(object):
 		ident = f.read(2)
 		
 		# TODO: support the commented game types
+		# http://wiibrew.org/wiki/Title_database
 		if ident[0] == 'F': return 'NES'
 		elif ident[0] == 'J': return 'SNES'
 		elif ident[0] == 'L': return 'Master System'
@@ -479,9 +507,10 @@ class NandDump(object):
 		elif ident == 'EA': return 'Neo Geo' #E.g. Neo Turf Master
 		elif ident == 'EB': return 'Neo Geo' #E.g. Spin Master, RFBB Special
 		elif ident == 'EC': return 'Neo Geo' #E.g. Shock Troopers 2, NAM-1975
-		#elif ident[0] == 'E': return 'Arcade' #E.g. E5 = Ghosts'n' Goblins, E6 = Space Harrier
+		elif ident[0] == 'E': return 'Arcade' #E.g. E5 = Ghosts'n' Goblins, E6 = Space Harrier
 		elif ident[0] == 'Q': return 'TurboGrafxCD'
 		#elif ident[0] == 'C': return 'Commodore 64'
+		#elif ident[0] == 'X': return 'MSX'
 		else: return None
 	
 	# Returns the path to the 00.app file containing the game's title
