@@ -10,6 +10,7 @@ from cStringIO import StringIO
 import romc, gensave, n64save
 from u8archive import U8Archive
 from ccfarchive import CCFArchive
+from lz77 import WiiLZ77
 from nes_extract import extract_nes_file_from_app, extract_fds_bios_from_app, convert_nes_save_data
 from snesrestore import restore_brr_samples
 from neogeo_convert import convert_neogeo
@@ -77,17 +78,15 @@ class RomExtractor(object):
 			'Arcade': self.extractrom_arcade
 		}
 		
-		if self.channeltype == 'NES':
-			arc = u8path
+		if self.channeltype == 'NES' or self.channeltype == 'Arcade':
+			u8arc = u8path
 		else:
-			try:
-				arc = U8Archive(u8path)
-				if not arc: return False
-			except AssertionError:
+			u8arc = self.tryGetU8Archive(u8path)
+			if not u8arc:
 				return False
 		
 		if self.channeltype in funcs.keys():
-			return funcs[self.channeltype](arc, self.name)
+			return funcs[self.channeltype](u8arc, self.name)
 		else:
 			return False
 	
@@ -351,34 +350,44 @@ class RomExtractor(object):
 		
 		return foundRom
 
-	def extractrom_arcade(self, arc, filenameWithoutExtension):
+	def extractrom_arcade(self, appFilePath, filenameWithoutExtension):
 		outputFolderName = filenameWithoutExtension
 		self.ensure_folder_exists(outputFolderName)
 
 		foundRom = False
-		if arc.hasfile('data.ccf'):
-			ccf = CCFArchive(arc.getfile('data.ccf'))
 
-			if ccf.hasfile('config'):
-				foundRom = extract_arcade(ccf, outputFolderName)
+		u8arc = self.tryGetU8Archive(appFilePath)
+		if not u8arc:
+			inFile = open(appFilePath, 'rb')
+			if ord((inFile.read(1))[0]) == 0x11:
+				lz77File = WiiLZ77(inFile)
+				data = lz77File.uncompress_11()
+				inFile.close()
+			
+				outFile = open(os.path.join(outputFolderName, "TODO_DECOMPRESSED.BIN"), 'wb')
+				outFile.write(data)
+				outFile.close()
 
-			# debugging...
-			#for ccfFile in ccf.files:
-			#	print ccfFile.name + " from CCF"
-			#	rom = ccf.find(ccfFile.name)
-			#	writerom(rom, os.path.join(outputFolderName, ccfFile.name))
-		#else:
-			# TODO handle files that are not in CCF (not sure how they are packed)
-			#for file in arc.files:
-			#	print file.name + " from ARC"
-			#	rom = arc.getfile(file.name)
-			#	writerom(rom, os.path.join(outputFolderName, file.name))
+		else:
+			if u8arc.hasfile('data.ccf'):
+				ccf = CCFArchive(u8arc.getfile('data.ccf'))
+				if ccf.hasfile('config'):
+					foundRom = extract_arcade(ccf, outputFolderName)
 
 		if foundRom:
 			print "Got ROMs"
 
 		return foundRom
 
+	def tryGetU8Archive(self, path):
+		try:
+			u8arc = U8Archive(path)
+			if not u8arc:
+				return None
+			else:
+				return u8arc
+		except AssertionError:
+			return None
 
 	def getsavefile(self, expectedFileName):
 		datadir = os.path.join(self.nand.path, 'title', '00010001', self.id, 'data')
@@ -432,24 +441,24 @@ class RomExtractor(object):
 	
 	def extractmanual(self, u8path):
 		try:
-			arc = U8Archive(u8path)
-			if not arc: return False
+			u8arc = U8Archive(u8path)
+			if not u8arc: return False
 		except AssertionError: 
 			return False
 	
 		man = None
 		try:
-			if arc.findfile('emanual.arc'):
-				man = U8Archive(arc.getfile(arc.findfile('emanual.arc')))
-			elif arc.findfile('html.arc'):
-				man = U8Archive(arc.getfile(arc.findfile('html.arc')))
-			elif arc.findfile('man.arc'):
-				man = U8Archive(arc.getfile(arc.findfile('man.arc')))
-			elif arc.findfile('data.ccf'):
-				ccf = CCFArchive(arc.getfile(arc.findfile('data.ccf')))
+			if u8arc.findfile('emanual.arc'):
+				man = U8Archive(u8arc.getfile(u8arc.findfile('emanual.arc')))
+			elif u8arc.findfile('html.arc'):
+				man = U8Archive(u8arc.getfile(u8arc.findfile('html.arc')))
+			elif u8arc.findfile('man.arc'):
+				man = U8Archive(u8arc.getfile(u8arc.findfile('man.arc')))
+			elif u8arc.findfile('data.ccf'):
+				ccf = CCFArchive(u8arc.getfile(u8arc.findfile('data.ccf')))
 				man = U8Archive(ccf.getfile('man.arc'))
-			elif arc.findfile('htmlc.arc'):
-				manc = arc.getfile(arc.findfile('htmlc.arc'))
+			elif u8arc.findfile('htmlc.arc'):
+				manc = u8arc.getfile(u8arc.findfile('htmlc.arc'))
 				print 'Decompressing manual: htmlc.arc'
 				man = U8Archive(StringIO(romc.decompress(manc)))
 		except AssertionError: pass

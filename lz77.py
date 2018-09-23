@@ -51,9 +51,14 @@ class BaseLZ77(object):
 	def uncompress_11(self):
 		dout = array('c', '\0'*self.uncompressed_length)
 		offset = 0
-		
-		self.file.seek(self.offset + 0x4)
-		
+
+		self.file.seek(self.offset)
+
+		#skip first 4 bytes, if they are "LZ77"
+		hdr = self.file.read(4)
+		if hdr != "LZ77":
+			self.file.seek(self.offset)
+
 		if not self.uncompressed_length:
 			self.uncompressed_length = struct.unpack("<I", self.file.read(4))[0]
 		
@@ -107,7 +112,7 @@ class WiiLZ77(BaseLZ77):
 		hdr = struct.unpack("<I", self.file.read(4))[0]
 		self.uncompressed_length = hdr>>8
 		self.compression_type = hdr & 0xFF
-		
+
 		#print "Compression type: 0x%02x" % self.compression_type
 		#print "Decompressed size: %d" % self.uncompressed_length
 

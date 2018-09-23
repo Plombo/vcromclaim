@@ -36,6 +36,13 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     moduleFile = ccfArchive.find('sharrier.rso')
     module = rso(moduleFile)
 
+    f = open('sharrier.rso', 'wb')
+    moduleFile.seek(0)
+    f.write(moduleFile.read())
+    f.close()
+    moduleFile.seek(0)
+
+
     #maincpu = 68000 code
     cpu1 = get_rom_file(module, 'sharrier_rom_cpu1', 0x40000)
     save_rom_file(getStripes(getPart(cpu1,0,0x10000),[0,2]), outputFolder, 'epr-7188.ic97')
