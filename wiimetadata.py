@@ -557,8 +557,9 @@ class NandDump(object):
 		title = title.replace(':', ' - ')
 
 		# Replace some characters
-		title = re.sub('!a', 'II', title) # e.g. Zelda II 
-		title = re.sub('!b', 'III', title) # e.g. Ninja Gaiden III
+		title = re.sub('!\x60', 'I', title) # e.g. Ys Book I&II
+		title = re.sub('!\x61', 'II', title) # e.g. Zelda II 
+		title = re.sub('!\x62', 'III', title) # e.g. Ninja Gaiden III
 		title = re.sub(' \x19', '\'', title) # e.g. Indiana Jones' GA
 
 		# Delete any characters that are not known to be safe
