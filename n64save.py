@@ -14,6 +14,8 @@ def convert_sram(src, name, size):
 		ext = '.sra'
 	elif size == 128*1024:
 		ext = '.fla'
+	elif size == 256*1024:
+		ext = '.fla' # this might be the wrong extension, fix if needed
 	
 	# copy original file as a big-endian save file
 	shutil.copy2(src, name+'.be'+ext)
