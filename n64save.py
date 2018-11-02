@@ -55,7 +55,7 @@ def convert(src, name):
 	f.close()
 	
 	if size in (4*1024, 16*1024): convert_eeprom(src, name)
-	elif size in (32*1024, 128*1024): convert_sram(src, name, size)
+	elif size in (32*1024, 128*1024, 256*1024): convert_sram(src, name, size)
 	else: raise ValueError('unknown save type (size=%d bytes)' % size)
 
 if __name__ == '__main__':
