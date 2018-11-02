@@ -24,7 +24,7 @@ for i in xrange(0x1E):
 def main():
 	if len(sys.argv) != 3:
 		sys.stderr.write("romchu %s - romc type 2 decompressor\n" % VERSION)
-		sys.stderr.write("Usage: %s romc out.n64\n", sys.argv[0]);
+		sys.stderr.write("Usage: %s romc out.n64\n", sys.argv[0])
 		sys.exit(1)
 
 	infile = open(sys.argv[1], "rb")
@@ -50,7 +50,7 @@ def decompress(infile):
 	nominal_size |= ord(head_buf[1])
 	nominal_size *= 0x100
 	nominal_size |= ord(head_buf[2])
-	nominal_size *= 0x40;
+	nominal_size *= 0x40
 	nominal_size |= ord(head_buf[3]) >> 2
 	romc_type = ord(head_buf[3]) & 0x3
 
@@ -68,8 +68,8 @@ def decompress(infile):
 	for scale in xrange(1, 6):
 		k = (1<<(scale+2))
 		while k < (1<<(scale+3)):
-			backref_len[i].bits = scale;
-			backref_len[i].base = k;
+			backref_len[i].bits = scale
+			backref_len[i].base = k
 			k += (1<<scale)
 			i += 1
 
@@ -95,8 +95,6 @@ def decompress(infile):
 	out_buf = array('B', '\0' * nominal_size)
 	out_offset = 0
 	
-	start = time.clock()
-
 	# decode each block
 	while True:
 		head_buf = infile.read(4)
@@ -207,7 +205,7 @@ def decompress(infile):
 			#free_bitstream(bs)
 		else: # not compression_flag
 			assert (out_offset + payload_bytes) <= nominal_size # generated too many bytes
-			out_buf[out_offset:out_offset+payload_bytes] = payload_buf[0:payload_bytes]
+			out_buf[out_offset:out_offset+payload_bytes] = array('B', payload_buf[0:payload_bytes])
 			out_offset += payload_bytes
 
 		block_count += 1
