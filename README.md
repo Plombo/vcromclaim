@@ -51,9 +51,9 @@ Known Issues
   supported, it might be trivial to expand neogeo_convert.py to include support
   for your game.
 * NEO GEO: Many Neo Geo games are encrypted. At this time, there is no way of
-  decrypting these games. (Though, in theory it should be possible. Worst case,
-  one can extract the game as a Wad, run the game in Dolphin's debug mode, dump
-  the RAM, and get the ROM data from there.)
+  decrypting these games. (If you are desperate, you can emulate the WAD in
+  Dolphin, and use Dolphin's debug mode to create a ram dump. The ram dumps
+  shoould contain the decrypted roms.)
 * NEO GEO: The BIOS used for Neo Geo games (MVS version for some, AES version
   for some) is extracted, but many of the support ROMS (e.g. 000-lo.lo,
   sfix.sfix, etc) are NOT extracted at this time.
@@ -61,18 +61,20 @@ Known Issues
   when you are supposed to switch side. For example, Bio Miracle Bokutte Upa
   will show a flashing WAIT message and Zelda no Densetsu will show "Press
   Start" (but nothing happens if you do). In both these games, just switching
-  disk will continue the game. This is because the ROMs have been modified for
+  disk will resume the game. This is because the ROMs have been modified for
   the Virtual Console emulator to automatically switch sides.
-* ALL SYSTEMS: Due to reasons unknown, some ROMs are simply different from the
-  real ROMs causing them to glitch or not run in common emulators. Known cases:
+* N64: ROMs that has been modified for VC (such as Mario Tennis and Ogre Battle
+  64) does not have the correct checksums in the internal header, which will
+  cause them to hang or crash on boot. One can use this tool to correct the
+  headers and make them playable: https://pastebin.com/hcRjjTWg
+* ALL SYSTEMS: Some VC ROMs are modified from the original ROMs in ways that
+  causes them to glitch or not run in common emulators. Known cases:
   * Mario Tennis (N64) - 8 bytes are different in the middle of the file, making
-    it unplayable.
-  * Ogre Battle (N64) - Many bytes are different throughout the file, making it
-    unplayable.
+    it crash on boot (even if the checksum is corrected)
   * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
     glitch and freeze.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
-  files to 44.1kHz should make them run correctly.
+  files makes them run correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
 * TURBOGRAFX 16/CD: Save games are not extracted at this time.
 * COMMODORE 64 and ARCADE: games cannot be extracted at this time.
