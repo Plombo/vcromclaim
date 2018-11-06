@@ -101,7 +101,11 @@ class RomExtractor(object):
 		if result == 1 or result == 2:
 			saveFilePath = self.getsavefile('savedata.bin')
 			if saveFilePath != None:
-				hasExportedSaveData = convert_nes_save_data(saveFilePath, self.name, f)
+				try:
+					hasExportedSaveData = convert_nes_save_data(saveFilePath, self.name, f)
+				except:
+					print 'Failed to extract save file(s)' 
+					pass
 
 		f.close()
 
