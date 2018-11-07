@@ -69,8 +69,8 @@ Known Issues
   headers and make them playable: https://pastebin.com/hcRjjTWg
 * ALL SYSTEMS: Some VC ROMs are modified from the original ROMs in ways that
   causes them to glitch or not run in common emulators. Known cases:
-  * Mario Tennis (N64) - 8 bytes are different in the middle of the file, making
-    it crash on boot (even if the checksum is corrected)
+  * Mario Tennis (N64) - 8 bytes are different in the middle of the file,
+    (as well as the CRC checksum in the header) making it crash on boot.
   * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
     glitch and freeze.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
@@ -93,5 +93,6 @@ Credits
   a Java program on which the BRR encoder in vcromclaim was based.
 * qwikrazor87 - author of PCE CD Tools, of which the TG CD data decompression
   was based.
+* ZOINKITY - author of N64.py, containing the cart CRC code
 
 

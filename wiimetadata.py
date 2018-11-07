@@ -17,6 +17,7 @@ from neogeo_convert import convert_neogeo
 from arcade_extract import extract_arcade
 from tgcd_extract import extract_tgcd
 from configurationfile import getConfiguration 
+from n64crc import updateN64Crc
 
 # rom: file-like object
 # path: string (filesystem path)
@@ -145,15 +146,17 @@ class RomExtractor(object):
 		filename = filenameWithoutExtension + self.extensions[self.channeltype]
 		if arc.hasfile('rom'):
 			rom = arc.getfile('rom')
+			outfile = open(filename, 'wb')
+			outfile.write(updateN64Crc(rom.read()))
+			outfile.close()
 			print 'Got ROM: %s' % filename
-			writerom(rom, filename)
 		elif arc.hasfile('romc'):
 			rom = arc.getfile('romc')
 			print 'Decompressing ROM: %s (this could take a minute or two)' % filename
 			try:
 				romdata = romc.decompress(rom)
 				outfile = open(filename, 'wb')
-				outfile.write(romdata)
+				outfile.write(updateN64Crc(romdata))
 				outfile.close()
 				print 'Got ROM: %s' % filename
 			except IndexError: # unknown compression - something besides LZSS and romchu?

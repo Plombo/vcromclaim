@@ -1,1 +1,0 @@
-Fix crash on 256*1024 files
