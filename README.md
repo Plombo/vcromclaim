@@ -63,10 +63,6 @@ Known Issues
   Start" (but nothing happens if you do). In both these games, just switching
   disk will resume the game. This is because the ROMs have been modified for
   the Virtual Console emulator to automatically switch sides.
-* N64: ROMs that has been modified for VC (such as Mario Tennis and Ogre Battle
-  64) does not have the correct checksums in the internal header, which will
-  cause them to hang or crash on boot. One can use this tool to correct the
-  headers and make them playable: https://pastebin.com/hcRjjTWg
 * ALL SYSTEMS: Some VC ROMs are modified from the original ROMs in ways that
   causes them to glitch or not run in common emulators. Known cases:
   * Mario Tennis (N64) - 8 bytes are different in the middle of the file,
