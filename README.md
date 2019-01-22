@@ -9,10 +9,6 @@ and extracting them.  It automatically detects and decompresses compressed ROMs.
 It also extracts the game manual and save files for each Virtual Console game 
 it encounters.
 
-This is a fork of Bryan Cain's original version. This fork fixes a number of
-bugs and adds compatibility with Famicom FDS, TurboGrafx CD, and some Neo Geo
-games. 
-
 Features
 --------
 * Extracts virtually all NES/Famicom/Disk System, SNES, PC Engine /
@@ -78,6 +74,8 @@ Known Issues
 Credits
 -------
 * [Bryan Cain](https://github.com/Plombo) - author of vcromclaim
+* [JanErikGunnar](https://github.com/JanErikGunnar) - fixed a number of bugs and
+  added compatibility with Famicom FDS, TurboGrafx CD, and some Neo Geo games.
 * [hcs](http://hcs64.com) - author of C decompression code for Huf8, LZH8, and 
   romchu, all of which I (Bryan) ported to Python for vcromextract.
 * [Hector Martin (marcan)](http://marcansoft.com/blog) - original author of the 
