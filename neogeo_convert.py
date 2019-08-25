@@ -10,11 +10,14 @@ KILOBYTE = 1024
 
 #invaluable source: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
 
-#to run AES games in mame:
-#   place BIOS files in "roms/aes" folder under mame
-#   place game folder under "roms/<game>" folder under mame
-#   run:
-#       mame64 aes -cart magdrop3 -bios japan
+# To run Neo Geo games in mame, place the two folders (the game folder and the aes/neogeo bios-folder)
+# to the "roms" in the mame folder.
+# You can move the folders from the BIOS folder to the game folder if you want.
+# You can also run an MVS game with AES rom or vice versa. Sometimes this will chagne the game.
+# To run a game such as magdrop3 with an AES rom:
+#       .\mame64 aes -cart magdrop3 -bios japan
+# To run a game such as kotm with an MVS (neogeo) rom:
+#       .\mame64 kotm -bios japan-j3
 
 
 
@@ -255,25 +258,45 @@ def convert_common(input, output):
     # use SHA1 to identify it
 
     # These are the same hashes as on: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
-    biosFileNames = {
-        "e92910e20092577a4523a6b39d578a71d4de7085": "japan-j3.bin", #Japan MVS (J3)
-        "4e4a440cae46f3889d20234aebd7f8d5f522e22c": "neo-po.bin" #Japan AES
+    biosProperties = {
+        "e92910e20092577a4523a6b39d578a71d4de7085": ["neogeo", "japan-j3.bin"], #Japan MVS (J3)
+        "4e4a440cae46f3889d20234aebd7f8d5f522e22c": ["aes", "neo-po.bin"] #Japan AES
     }
 
     hexDigest = input.regions['BIOS'].getSha1HexDigest()
-    if biosFileNames.has_key(hexDigest):
-        biosFileName = biosFileNames[hexDigest]
+    if biosProperties.has_key(hexDigest):
+        subFolder = biosProperties[hexDigest][0]
+        biosFileName = biosProperties[hexDigest][1]
+        if (subFolder == "neogeo"):
+            #It's an MVS ROM. Some support roms are missing, they are not required for the game to run but mame wont run if at least the files doesn't exist.
+
+            # SFIX is only used on arcade machines, contains graphics to use when no cartridge is inserted
+            # A file filled with 0s is interpreted as transparent graphics
+            output.createFile('sfix.sfix', bytearray('\x00' * 0x20000), subFolder = subFolder)
+            # SM1 is only used on arcade machines, contains music program to use when no cartridge is inserted
+            output.createFile('sm1.sm1', bytearray('\x00' * 0x20000), subFolder = subFolder)
+
+            print "This game includes MVS (arcade) ROMs. To run the game, run:"
+            print "   .\\mame64 " + output.mameShortName + " -bios japan-j3"
+        else:
+            # The only support rom is l0 which is created below
+
+            print "This game includes AES (home system) ROMs. To run the game, run:"
+            print "   .\\mame64 aes -cart " + output.mameShortName + " -bios japan"
     else:
         print "Warning: The included BIOS is not recognized. SHA1 hash: " + hexDigest
+        subFolder = "bios"
         biosFileName = "unknown-bios-" + hexDigest + ".bin"
+        output.createFile(biosFileName, input.regions['BIOS'].data, subFolder = subFolder)
 
-    output.createFile(biosFileName, input.regions['BIOS'].data, shared = True)
+    #extract the main BIOS ROM
+    output.createFile(biosFileName, input.regions['BIOS'].data, subFolder = subFolder)
 
-    #NOTE: MAME requires additional BIOS files to run.
-    # For AES, 000-lo.lo is required. Perhaps the VC emulator does higher level emulation that makes that ROM redundant?
-    # For MVS, several other files such as sfix.sfix (sprite data for when game is running without cart present).
+
+    # 000-lo.lo is required for all games.
+    # On VC, the data exists in RAM, not sure if it is generated or decompressed from somewhere.
+    output.createFile('000-lo.lo', get_l0(), subFolder = subFolder)
     
-
 
     #UNKNOWN DATA. should be zero but we might be missing something
     for i in xrange(1,8):
@@ -285,6 +308,33 @@ def convert_common(input, output):
             output.createFile(regionKey + "." + regionKey, regionData)
 
 
+
+def get_l0():
+    # The data is 64 KiB mirrored to 128 KiB
+    l0_half = get_l0_half()
+    return l0_half + l0_half
+
+
+def get_l0_half():
+    # The L0 is a list of FF entries used when horizontally scaling sprites.
+    # The first entry has 1 byte, second has 2, last has FF bytes.
+    # All entries are padded by FFs to total FF bytes length.
+    # Each entry describes which of the FF lines of a sprite to include at a certain scaling point.
+
+    # The L0 table exists in RAM when Mame emulator is running, but I can't find it in files.
+    # I'm guessing it is being generated so we do the same.
+
+    nibbles = [0x08, 0x00, 0x0C, 0x04, 0x0A, 0x02, 0x0E, 0x06, 0x09, 0x01, 0x0D, 0x05, 0x0B, 0x03, 0x0F, 0x07]
+    row = []
+    output = bytearray(b"")
+    for second_nibble in nibbles:
+        for first_nibble in nibbles:
+            byte = first_nibble*0x10 + second_nibble
+            row.append(byte)
+            row.sort()
+            output = output + bytearray(row) + ('\xFF' * (0x100 - len(row)))
+    
+    return output
 
 
 ## input/output processors
@@ -426,13 +476,16 @@ class output_processor(object):
         self.mameShortName = mameShortName
         self.ngh = ngh
 
-    def createFile(self, fileName, fileData, shared = False):
-        if shared:
-            folderPath = os.path.join(self.outputFolder, "bios")
-            filePath = os.path.join(self.outputFolder, "bios", fileName)
-        else:
-            folderPath = os.path.join(self.outputFolder, self.mameShortName)
-            filePath = os.path.join(self.outputFolder, self.mameShortName, self.ngh + "-" + fileName)
+    def createFile(self, fileName, fileData, subFolder = None):
+        if subFolder == None:
+            subFolder = self.mameShortName
+            filePrefix = self.ngh + "-"
+        else:    
+            # keep subFolder
+            filePrefix = ''
+
+        folderPath = os.path.join(self.outputFolder, subFolder)
+        filePath = os.path.join(self.outputFolder, subFolder, filePrefix + fileName)
 
         if not os.path.lexists(folderPath):
             os.makedirs(folderPath)

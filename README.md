@@ -18,10 +18,10 @@ Features
 * Extracts virtually all NES/Famicom/Disk System, SNES, PC Engine /
   TurboGrafx16 / TurboGrafx CD, Mega Drive/Genesis, Master System, and
   Nintendo 64 games without fail!
-* Extracts several Neo Geo games: Magician Lord, King of the Monsters,
-  Spinmaster, Neo Turf Master, Metal Slug, Metal Slug 2, Magical Drop 3, so that
-  they are playable in MAME. Support for many other Neo Geo games can be added
-  easily, as long as the game is not encrypted.
+* Extracts several Neo Geo games, along with the AES/MVS BIOS, so that they are
+  playable in MAME: Magician Lord, King of the Monsters, Spinmaster, Neo Turf
+  Master, Metal Slug, Metal Slug 2, Magical Drop 3. Support for many other Neo
+  Geo games can be added easily, as long as the game is not encrypted.
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
@@ -51,17 +51,19 @@ Known Issues
   supported, it might be trivial to expand neogeo_convert.py to include support
   for your game.
 * NEO GEO: Many Neo Geo games are encrypted. At this time, there is no way of
-  decrypting these games. (If you are desperate, you can emulate the WAD in
+  decryptiny these games. (If you are desperate, you can emulate the WAD in
   Dolphin, and use Dolphin's debug mode to create a ram dump. The ram dumps
-  shoould contain the decrypted roms.)
-* NEO GEO: The BIOS used for Neo Geo games (MVS version for some, AES version
-  for some) is extracted, but many of the support ROMS (e.g. 000-lo.lo,
-  sfix.sfix, etc) are NOT extracted at this time.
+  should contain the decrypted roms.)
+* NEO GEO: The BIOS used for Neo Geo games (MVS or AES depending on game) is
+  included with the VC games and is extracted, but some of the support ROMs
+  (sfix and m1) are missing because are not needed for normal game play.
+  To make the games run in mame, dummy files are created, but some BIOS
+  functionality (such as management menu) is broken.
 * FDS: Many games spanning multiple disk sides will glitch in common emulators
   when you are supposed to switch side. For example, Bio Miracle Bokutte Upa
   will show a flashing WAIT message and Zelda no Densetsu will show "Press
   Start" (but nothing happens if you do). In both these games, just switching
-  disk will resume the game. This is because the ROMs have been modified for
+  disk will resume the game. This is because the games have been customized for
   the Virtual Console emulator to automatically switch sides.
 * ALL SYSTEMS: Some VC ROMs are modified from the original ROMs in ways that
   causes them to glitch or not run in common emulators. Known cases:
