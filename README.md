@@ -8,6 +8,7 @@ It does this by analyzing an extracted Wii NAND filesystem, locating the ROMs,
 and extracting them.  It automatically detects and decompresses compressed ROMs.
 It also extracts the game manual and save files for each Virtual Console game 
 it encounters.
+[![Run on Repl.it](https://repl.it/badge/github/Plombo/vcromclaim)](https://repl.it/github/Plombo/vcromclaim)
 
 Features
 --------
