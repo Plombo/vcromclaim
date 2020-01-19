@@ -56,8 +56,8 @@ class RomExtractor(object):
 		for app in os.listdir(content):
 			if not app.endswith('.app'): continue
 			app = os.path.join(content, app)
-			if self.extractrom(app): rom_extracted = True
-			if self.extractmanual(app): manual_extracted = True
+			if self.extractrom(app, os.path.join(self.channeltype, self.name)): rom_extracted = True
+			if self.extractmanual(app, os.path.join(self.channeltype, self.name, 'manual')): manual_extracted = True
 		
 		if rom_extracted and manual_extracted: return
 		elif rom_extracted: print 'Unable to extract manual.'
@@ -66,7 +66,7 @@ class RomExtractor(object):
 	
 	# Actually extract the ROM
 	# Currently works for almost all NES, SNES, N64, TG16, Master System, and Genesis ROMs.
-	def extractrom(self, u8path):
+	def extractrom(self, u8path, gameOutputPath):
 		funcs = {
 			'Nintendo 64': self.extractrom_n64,
 			'Genesis': self.extractrom_sega,
@@ -86,13 +86,15 @@ class RomExtractor(object):
 			if not u8arc:
 				return False
 		
+		self.ensure_folder_exists(gameOutputPath)
+
 		if self.channeltype in funcs.keys():
-			return funcs[self.channeltype](u8arc, self.name)
+			return funcs[self.channeltype](u8arc, gameOutputPath, self.name)
 		else:
 			return False
 	
 	# FIXME: use string instead of StringIO
-	def extractrom_nes(self, u8path, filenameWithoutExtension):
+	def extractrom_nes(self, u8path, outputPath, filenameWithoutExtension):
 		if not os.path.exists(u8path): return False
 		
 		f = open(u8path, 'rb')
@@ -103,7 +105,7 @@ class RomExtractor(object):
 			saveFilePath = self.getsavefile('savedata.bin')
 			if saveFilePath != None:
 				try:
-					hasExportedSaveData = convert_nes_save_data(saveFilePath, self.name, f)
+					hasExportedSaveData = convert_nes_save_data(saveFilePath, os.path.join(outputPath, self.name), f)
 				except:
 					print 'Failed to extract save file(s)' 
 					pass
@@ -121,14 +123,14 @@ class RomExtractor(object):
 					output = StringIO(''.join(output))
 					print 'Set the save flag to true'
 
-			filename = filenameWithoutExtension + ".nes"
+			filename = os.path.join(outputPath, filenameWithoutExtension + ".nes")
 
 			print 'Got ROM: %s' % filename
 
 		elif result == 2:
 			# FDS
 			
-			filename = filenameWithoutExtension + ".fds"
+			filename = os.path.join(outputPath, filenameWithoutExtension + ".fds")
 
 			print 'Got FDS image: %s' % filename
 
@@ -142,8 +144,8 @@ class RomExtractor(object):
 
 		return True
 	
-	def extractrom_n64(self, arc, filenameWithoutExtension):
-		filename = filenameWithoutExtension + self.extensions[self.channeltype]
+	def extractrom_n64(self, arc, outputPath, filenameWithoutExtension):
+		filename = os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 		if arc.hasfile('rom'):
 			rom = arc.getfile('rom')
 			outfile = open(filename, 'wb')
@@ -167,14 +169,14 @@ class RomExtractor(object):
 		else: return False
 		
 		# extract save file
-		savepath = self.extractsave()
+		savepath = self.extractsave(outputPath)
 		if savepath: print 'Extracted save file(s)'
 		else: print 'Failed to extract save file(s)'
 		
 		return True
 	
-	def extractrom_sega(self, arc, filenameWithoutExtension):
-		filename = filenameWithoutExtension + self.extensions[self.channeltype]
+	def extractrom_sega(self, arc, outputPath, filenameWithoutExtension):
+		filename =  os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 		if arc.hasfile('data.ccf'):
 			ccf = CCFArchive(arc.getfile('data.ccf'))
 		
@@ -188,7 +190,7 @@ class RomExtractor(object):
 				writerom(rom, filename)
 				print 'Got ROM: %s' % filename
 				
-				if self.extractsave():
+				if self.extractsave(outputPath):
 					print 'Extracted save to %s.srm' % self.name
 				else:
 					print 'No save file found'
@@ -198,7 +200,7 @@ class RomExtractor(object):
 				print 'ROM filename not specified in config'
 				return False
 	
-	def extractrom_tg16(self, arc, filenameWithoutExtension):
+	def extractrom_tg16(self, arc, outputPath, filenameWithoutExtension):
 		
 		config = arc.getfile('config.ini')
 		if not config:
@@ -214,24 +216,23 @@ class RomExtractor(object):
 		rom = arc.getfile(path)
 
 		if rom:
-			filename = filenameWithoutExtension + self.extensions[self.channeltype]
+			filename =  os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 			writerom(rom, filename)
 			print 'Got ROM: %s' % filename
 			return True
 
 		return False
 
-	def extractrom_tgcd(self, arc, filenameWithoutExtension):
+	def extractrom_tgcd(self, arc, outputPath, filenameWithoutExtension):
 		if (arc.hasfile("config.ini")):
-			outputFolderName = filenameWithoutExtension
-			extract_tgcd(arc,outputFolderName)
+			extract_tgcd(arc, outputPath)
 			print "Got TurboGrafx CD image"
 			return True
 		else:
 			return False
 	
-	def extractrom_snes(self, arc, filenameWithoutExtension):
-		filename = filenameWithoutExtension + self.extensions[self.channeltype]
+	def extractrom_snes(self, arc, outputPath, filenameWithoutExtension):
+		filename = os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 		extracted = False
 		
 		# try to find the original ROM first
@@ -286,16 +287,13 @@ class RomExtractor(object):
 		if extracted:
 			srm = filename[0:filename.rfind('.smc')] + '.srm'
 			if os.path.lexists(srm): print 'Not overwriting existing save data'
-			elif self.extractsave(): print 'Extracted save data to %s' % srm
+			elif self.extractsave(outputPath): print 'Extracted save data to %s' % srm
 			else: print 'Could not extract save data'
 		
 		return extracted
 
 
-	def extractrom_neogeo(self, arc, filenameWithoutExtension):
-		outputFolderName = filenameWithoutExtension
-		self.ensure_folder_exists(outputFolderName)
-
+	def extractrom_neogeo(self, arc, outputPath, filenameWithoutExtension):
 		foundRom = False
 		for file in arc.files:
 			#print file.name
@@ -325,14 +323,14 @@ class RomExtractor(object):
 						tryToConvert = False
 
 				if tryToConvert:
-					convert_neogeo(rom, outputFolderName)
+					convert_neogeo(rom, outputPath)
 					print "Converted ROM files to MAME compatible format (some BIOS files may be missing)"
-					#writerom(rom, os.path.join(outputFolderName, outputFileName))
+					#writerom(rom, os.path.join(outputPath, outputFileName))
 				else:
 					print "Game extracted but further processing is required."
-					writerom(rom, os.path.join(outputFolderName, outputFileName))
+					writerom(rom, os.path.join(outputPath, outputFileName))
 
-				if self.extractsave():
+				if self.extractsave(outputPath):
 					print "Exported memory card with save file"
 				else:
 					print "No save data found"
@@ -357,10 +355,7 @@ class RomExtractor(object):
 		
 		return foundRom
 
-	def extractrom_arcade(self, appFilePath, filenameWithoutExtension):
-		outputFolderName = filenameWithoutExtension
-		self.ensure_folder_exists(outputFolderName)
-
+	def extractrom_arcade(self, appFilePath, outputPath, filenameWithoutExtension):
 		foundRom = False
 
 		u8arc = self.tryGetU8Archive(appFilePath)
@@ -371,7 +366,7 @@ class RomExtractor(object):
 				data = lz77File.uncompress_11()
 				inFile.close()
 			
-				outFile = open(os.path.join(outputFolderName, "TODO_DECOMPRESSED.BIN"), 'wb')
+				outFile = open(os.path.join(outputPath, "TODO_DECOMPRESSED.BIN"), 'wb')
 				outFile.write(data)
 				outFile.close()
 
@@ -379,7 +374,7 @@ class RomExtractor(object):
 			if u8arc.hasfile('data.ccf'):
 				ccf = CCFArchive(u8arc.getfile('data.ccf'))
 				if ccf.hasfile('config'):
-					foundRom = extract_arcade(ccf, outputFolderName)
+					foundRom = extract_arcade(ccf, outputPath)
 
 		if foundRom:
 			print "Got ROMs"
@@ -407,7 +402,7 @@ class RomExtractor(object):
 		return None
 
 	# copy save file, doing any necessary conversions to common emulator formats
-	def extractsave(self):
+	def extractsave(self, outputPath):
 		datadir = os.path.join(self.nand.path, 'title', '00010001', self.id, 'data')
 		datafiles = os.listdir(datadir)
 		
@@ -416,7 +411,7 @@ class RomExtractor(object):
 			if filename == 'savedata.bin':
 				if self.channeltype == 'SNES':
 					# VC SNES saves are standard SRM files
-					outpath = self.name + '.srm'
+					outpath = os.path.join(outputPath, self.name + '.srm')
 					shutil.copy2(path, outpath)
 					return True
 				#elif self.channeltype == 'NES': #not used because FDS games requires the app file
@@ -424,29 +419,29 @@ class RomExtractor(object):
 				elif self.channeltype == 'Genesis':
 					# VC Genesis saves use a slightly different format from 
 					# the one used by Gens/GS and other emulators
-					outpath = self.name + '.srm'
+					outpath = os.path.join(outputPath, self.name + '.srm')
 					gensave.convert(path, outpath, True)
 					return True
 				elif self.channeltype == 'Master System':
 					# VC Genesis saves use a slightly different format from 
 					# the one used by Gens/GS and other emulators
-					outpath = self.name + '.ssm'
+					outpath = os.path.join(outputPath, self.name + '.ssm')
 					gensave.convert(path, outpath, False)
 					return True
 			if filename == 'savefile.dat' and self.channeltype == 'Neo Geo':
 				# VC Neo Geo saves are memory card images, can be opened as is by mame
-				outputFolderName = self.name
+				outputFolderName = os.path.join(outputPath, self.name)
 				self.ensure_folder_exists(outputFolderName)
 				shutil.copy2(path, os.path.join(outputFolderName, "memorycard.bin"))
 				return True
 			elif filename.startswith('EEP_') or filename.startswith('RAM_'):
 				assert self.channeltype == 'Nintendo 64'
-				n64save.convert(path, self.name)
+				n64save.convert(path, os.path.join(outputPath, self.name))
 				return True
 		
 		return False
 	
-	def extractmanual(self, u8path):
+	def extractmanual(self, u8path, manualOutputPath):
 		try:
 			u8arc = U8Archive(u8path)
 			if not u8arc: return False
@@ -471,8 +466,9 @@ class RomExtractor(object):
 		except AssertionError: pass
 	
 		if man:
-			man.extract(os.path.join('manuals', self.name))
-			print 'Extracted manual to ' + os.path.join('manuals', self.name)
+			self.ensure_folder_exists(manualOutputPath)
+			man.extract(manualOutputPath)
+			print 'Extracted manual to ' + manualOutputPath
 			return True
 	
 		return False
