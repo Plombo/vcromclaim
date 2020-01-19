@@ -184,6 +184,9 @@ def convert_magdrop3(input, output):
 
     # Same ROM for MVS/AES
     # CRC is incorrect for p1 and v2, otherwise all CRCs match.
+    # In p1, there are only a few bytes changed. The differences are around 0x71120.
+    # For the VC version, some of the frames of the Tower character's flashing
+    # lightning strike animation has been removed.
     # Shipped with AES BIOS
 
     output.createFile("p1.p1", input.regions['P'].data)
@@ -273,6 +276,7 @@ def convert_common(input, output):
             # SFIX is only used on arcade machines, contains graphics to use when no cartridge is inserted
             # A file filled with 0s is interpreted as transparent graphics
             output.createFile('sfix.sfix', bytearray('\x00' * 0x20000), subFolder = subFolder)
+            # output.createFile('sfix.sfix', bytearray('\x11\x00\x10\x01\x01\x10\x00\x11\x11\x11\x10\x10\x10\x10\x11\x11\x11\x11\x01\x01\x01\x01\x11\x11\x11\x00\x01\x10\x10\x01\x00\x11' * (0x20000 / 32)), subFolder = subFolder)
             # SM1 is only used on arcade machines, contains music program to use when no cartridge is inserted
             output.createFile('sm1.sm1', bytearray('\x00' * 0x20000), subFolder = subFolder)
 

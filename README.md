@@ -59,18 +59,22 @@ Known Issues
   (sfix and m1) are missing because are not needed for normal game play.
   To make the games run in mame, dummy files are created, but some BIOS
   functionality (such as management menu) is broken.
-* FDS: Many games spanning multiple disk sides will glitch in common emulators
-  when you are supposed to switch side. For example, Bio Miracle Bokutte Upa
-  will show a flashing WAIT message and Zelda no Densetsu will show "Press
-  Start" (but nothing happens if you do). In both these games, just switching
-  disk will resume the game. This is because the games have been customized for
-  the Virtual Console emulator to automatically switch sides.
-* ALL SYSTEMS: Some VC ROMs are modified from the original ROMs in ways that
-  causes them to glitch or not run in common emulators. Known cases:
-  * Mario Tennis (N64) - 8 bytes are different in the middle of the file,
-    (as well as the CRC checksum in the header) making it crash on boot.
-  * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
-    glitch and freeze.
+* A lot of games have simply been modified for VC.
+  * For some games, the changes are minimal, for example the removal of flashing
+    graphics. Known examples:
+    * In Magical Drop 3, Tower character's flashing animation has been removed.
+  * FDS games have been customized to let the emulator automatically switch disk
+    side, which regular emulators does not support. You might get strange
+    behaviour when it's time to switch disk. Just switching disk let's you bypass
+    it in these known examples:
+    * Bio Miracle Bokutte Upa: Flashing "wait" screen
+    * Zelda no Densetsu: "Press start" is shown, nothing happens if you do
+  * Some games are completely broken when played in regular emulators, known
+    cases:
+    * Mario Tennis (N64) - 8 bytes are different in the middle of the file,
+      (as well as the CRC checksum in the header) making it crash on boot.
+    * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
+      glitch and freeze.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
   files makes them run correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
@@ -91,6 +95,8 @@ Credits
   a Java program on which the BRR encoder in vcromclaim was based.
 * qwikrazor87 - author of PCE CD Tools, of which the TG CD data decompression
   was based.
-* ZOINKITY - author of N64.py, containing the cart CRC code
+* [blastar](http://www.yaronet.com/topics/185388-ngfx-neogeoneogeocd-graphicseditor) - author of NGFX,
+  a very good Neo Geo graphics editor that was useful in creating the open SFIX substitute.
+* [ZOINKITY](https://pastebin.com/hcRjjTWg) - author of N64.py, containing the cart CRC code
 
 
