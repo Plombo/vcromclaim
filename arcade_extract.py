@@ -14,6 +14,8 @@ def extract_arcade(ccfArchive, outputFolder):
 
     if architecture == 'sharrier':
         extract_SHARRIER(ccfArchive, create_rom_folder(outputFolder,'sharrier1'))
+        #print 'Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game. Showing possible keys...'
+        #print_metadata(ccfArchive, config)
         return True
     else: 
         print 'Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game. Showing possible keys...'
@@ -36,7 +38,7 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     moduleFile = ccfArchive.find('sharrier.rso')
     module = rso(moduleFile)
 
-    f = open('sharrier.rso', 'wb')
+    f = open(os.path.join(outputFolder, 'sharrier.rso'), 'wb')
     moduleFile.seek(0)
     f.write(moduleFile.read())
     f.close()

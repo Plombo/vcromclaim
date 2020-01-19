@@ -120,9 +120,9 @@ def decompress(infile):
 	lz77obj = WiiLZ77(infile)
 	return StringIO(lz77obj.uncompress())
 
-def romc_decode(infile):
-	dec = RomcLZ77()
-	return dec.uncompress()
+#def romc_decode(infile):
+#	dec = RomcLZ77()
+#	return dec.uncompress()
 
 if __name__ == '__main__':
 	import time

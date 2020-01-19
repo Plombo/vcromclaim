@@ -463,6 +463,23 @@ class RomExtractor(object):
 				manc = u8arc.getfile(u8arc.findfile('htmlc.arc'))
 				print 'Decompressing manual: htmlc.arc'
 				man = U8Archive(StringIO(romc.decompress(manc)))
+			#Below code works, but don't know how to parse the decompressed archive
+			#elif u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'):
+				# E.g. makaimura_manual_usa.arc.lz77 (Arcade Ghosts n Goblins)
+				#manc = u8arc.getfile(u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'))
+
+				#print 'Manual is in unknown format, decompressing it...'
+				# NOTE: it's some kind of uncompressed archive, similar to the roms
+
+				#lz77File = WiiLZ77(manc)
+				#data = lz77File.uncompress_11()
+				#manc.close()
+			
+				#outFile = open("MANUAL_DECOMPRESSED", 'wb')
+				#outFile.write(data)
+				#outFile.close()
+
+				#what to do with it?
 		except AssertionError: pass
 	
 		if man:

@@ -6,6 +6,7 @@
 import os, struct, posixpath
 from cStringIO import StringIO
 import lz77, huf8, lzh8
+import re
 
 class U8Archive(object):
 	# archive can be a string (filesystem path) or file-like object
@@ -129,7 +130,12 @@ class U8Archive(object):
 			names = (name, "LZ77"+name, "LZ77_"+name, "Huf8"+name, "Huf8_"+name, "LZH8"+name, "LZH8_"+name)
 			if f.name in names: return f.name
 		return None
-	
+
+	def findfilebyregex(self, reExpression):
+		for f in self.files:
+			if re.match(reExpression, f.name): return f.name
+		return None
+
 	def extract(self, dest):
 		if not os.path.lexists(dest): os.makedirs(dest)
 		for node in self.files:
