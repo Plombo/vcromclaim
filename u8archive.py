@@ -69,7 +69,6 @@ class U8Archive(object):
 	# path: file name (string) or actual file node, but NOT node path :D
 	def getfile(self, path):
 		for node in self.files:
-			#print "testing one..."
 			#print node
 			#print node.name
 			if node == path or (type(path) == str and node.name.endswith(path)):
@@ -79,7 +78,7 @@ class U8Archive(object):
 				file = StringIO(self.file.read(node.size))
 				if path.startswith("LZ77"):
 					try:
-						decompressed_file = lz77.decompress(file)
+						decompressed_file = StringIO(lz77.decompress_nonN64(file))
 						file.close()
 						return decompressed_file
 					except ValueError, IndexError:

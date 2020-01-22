@@ -21,43 +21,35 @@ for i in xrange(0x1D):
 for i in xrange(0x1E):
 	backref_disp.append(backref())
 
-def main():
-	if len(sys.argv) != 3:
-		sys.stderr.write("romchu %s - romc type 2 decompressor\n" % VERSION)
-		sys.stderr.write("Usage: %s romc out.n64\n", sys.argv[0])
-		sys.exit(1)
+#easiest to call through lz77.py
+def decompress(infile, inputOffset, nominal_size):
+	#print "Decompressing Romchu"
 
-	infile = open(sys.argv[1], "rb")
-	outfile = open(sys.argv[2], "wb")
-	
-	outfile.write(decompress(infile))
-	outfile.close()
-	infile.close()
-	print "ok!"
-
-def decompress(infile):
-	block_mult = 0x10000
+	#block_mult = 0x10000 - unused
 	block_count = 0
 	out_offset = 0
 	
+	#header parsing moved to lz77.py
 	# read header
-	infile.seek(0)
-	head_buf = infile.read(4)
+	#infile.seek(0)
+	#head_buf = infile.read(4)
 	#bs = init_bitstream(head_buf, 0, 4*8)
 
-	nominal_size = ord(head_buf[0])
-	nominal_size *= 0x100
-	nominal_size |= ord(head_buf[1])
-	nominal_size *= 0x100
-	nominal_size |= ord(head_buf[2])
-	nominal_size *= 0x40
-	nominal_size |= ord(head_buf[3]) >> 2
-	romc_type = ord(head_buf[3]) & 0x3
+	#nominal_size = ord(head_buf[0])
+	#nominal_size *= 0x100
+	#nominal_size |= ord(head_buf[1])
+	#nominal_size *= 0x100
+	#nominal_size |= ord(head_buf[2])
+	#nominal_size *= 0x40
+	#nominal_size |= ord(head_buf[3]) >> 2
+	#romc_type = ord(head_buf[3]) & 0x3
 
-	if romc_type != 2:
-		raise ValueError("Expected type 2 romc, got %d\n" % romc_type)
+	#if romc_type != 2:
+	#	raise ValueError("Expected type 2 romc, got %d\n" % romc_type)
 
 	#free_bitstream(bs)
+
+	infile.seek(inputOffset)
 
 	# initialize backreference lookup tables
 	for i in xrange(8):
@@ -417,11 +409,4 @@ def huf_lookup(bs, ht):
 
 	return ht.t[cur].symbol
 
-# void free_table(struct huftable *ht)
-def free_table(ht):
-	pass
-
-
-if __name__ == "__main__":
-	main()
 

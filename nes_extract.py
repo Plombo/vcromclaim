@@ -6,7 +6,7 @@ import sys, struct, hashlib
 import copy
 from array import array
 from cStringIO import StringIO
-from lz77 import WiiLZ77
+import lz77
 
 
 NES_HEADER_MAGIC_WORD = 'NES\x1a'
@@ -44,9 +44,8 @@ def extract_fds_bios_from_app(app1, tryLZ77 = True):
 		return StringIO(fileData)
 	
 	if tryLZ77:
-		unc = WiiLZ77(app1)
 		try:
-			return extract_fds_bios_from_app(StringIO(unc.uncompress_11()), False)
+			return extract_fds_bios_from_app(StringIO(lz77.decompress_lz77_11(app1, 4, 5 * 1024 * 1024)), False)
 		except IndexError:
 			return None
 
@@ -70,12 +69,23 @@ def extract_nes_file_from_app(app1, tryLZ77 = True):
 	# some app files are compressed. decompress the entire file.
 	# it seems the ROMs are decompressed properly even if we do not start the decompression at the ROM's start position.
 	if tryLZ77:
-		unc = WiiLZ77(app1)
+		#f = open('compressed-NES', 'wb')
+		#app1.seek(0)
+		#f.write(app1.read())
+		#app1.seek(0)
+		#f.close()
+		
 		try:
-			(result, output) = extract_nes_file_from_app(StringIO(unc.uncompress_11()), False)
+			#try to autodetect format
+			(result, output) = extract_nes_file_from_app(StringIO(lz77.decompress_nonN64(app1)), False)
 			return (result, output)
-		except IndexError:
-			return (0,None)
+		except ValueError:
+			try:
+				#try brutally decompressing the entire file
+				(result, output) = extract_nes_file_from_app(StringIO(lz77.decompress_lz77_11(app1, 4, 5 * 1024 * 1024)), False)
+				return (result, output)
+			except IndexError:
+				return (0,None)
 			
 	else:
 		return (0,None)

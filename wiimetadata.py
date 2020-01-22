@@ -7,10 +7,10 @@
 
 import os, os.path, struct, shutil, re, zlib
 from cStringIO import StringIO
-import romc, gensave, n64save
+import gensave, n64save
 from u8archive import U8Archive
 from ccfarchive import CCFArchive
-from lz77 import WiiLZ77
+import lz77
 from nes_extract import extract_nes_file_from_app, extract_fds_bios_from_app, convert_nes_save_data
 from snesrestore import restore_brr_samples
 from neogeo_convert import convert_neogeo
@@ -79,7 +79,15 @@ class RomExtractor(object):
 			'Arcade': self.extractrom_arcade
 		}
 		
-		if self.channeltype == 'NES' or self.channeltype == 'Arcade':
+		if self.channeltype == 'NES':
+			#NES roms are NOT packages in U8 archives.
+			u8arc = self.tryGetU8Archive(u8path)
+			if u8arc:
+				return False
+			else:
+				u8arc = u8path
+		elif self.channeltype == 'Arcade':
+			#SOME arcade games are packed in U8 arcives
 			u8arc = u8path
 		else:
 			u8arc = self.tryGetU8Archive(u8path)
@@ -156,7 +164,7 @@ class RomExtractor(object):
 			rom = arc.getfile('romc')
 			print 'Decompressing ROM: %s (this could take a minute or two)' % filename
 			try:
-				romdata = romc.decompress(rom)
+				romdata = lz77.decompress_n64(rom)
 				outfile = open(filename, 'wb')
 				outfile.write(updateN64Crc(romdata))
 				outfile.close()
@@ -362,10 +370,10 @@ class RomExtractor(object):
 		if not u8arc:
 			inFile = open(appFilePath, 'rb')
 			if ord((inFile.read(1))[0]) == 0x11:
-				lz77File = WiiLZ77(inFile)
-				data = lz77File.uncompress_11()
+				data = lz77.decompress_nonN64(inFile)
 				inFile.close()
 			
+				#!!! NOTE !!! This will be done multiple time for each game, overwriting the previous one
 				outFile = open(os.path.join(outputPath, "TODO_DECOMPRESSED.BIN"), 'wb')
 				outFile.write(data)
 				outFile.close()
@@ -462,24 +470,12 @@ class RomExtractor(object):
 			elif u8arc.findfile('htmlc.arc'):
 				manc = u8arc.getfile(u8arc.findfile('htmlc.arc'))
 				print 'Decompressing manual: htmlc.arc'
-				man = U8Archive(StringIO(romc.decompress(manc)))
-			#Below code works, but don't know how to parse the decompressed archive
-			#elif u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'):
+				man = U8Archive(StringIO(lz77.decompress_n64(manc)))
+			elif u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'):
 				# E.g. makaimura_manual_usa.arc.lz77 (Arcade Ghosts n Goblins)
-				#manc = u8arc.getfile(u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'))
-
-				#print 'Manual is in unknown format, decompressing it...'
-				# NOTE: it's some kind of uncompressed archive, similar to the roms
-
-				#lz77File = WiiLZ77(manc)
-				#data = lz77File.uncompress_11()
-				#manc.close()
-			
-				#outFile = open("MANUAL_DECOMPRESSED", 'wb')
-				#outFile.write(data)
-				#outFile.close()
-
-				#what to do with it?
+				manc = u8arc.getfile(u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'))
+				man = U8Archive(StringIO(lz77.decompress_nonN64(manc)))
+				manc.close()
 		except AssertionError: pass
 	
 		if man:
