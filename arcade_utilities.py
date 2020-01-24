@@ -1,3 +1,5 @@
+import struct
+
 # Functions to split and splice ROMs.
 
 
@@ -45,8 +47,27 @@ def getStripes(fileData, stripes):
             retVal += fileData[i+j]
     return retVal
 
+def getBitStripe(fileData, romIndex):
+    # Lots of help from mame source code to figure this out
+    
+    retVal = ''
+    #fileData is 4x the size of the striped roms.
+    for i in xrange(0, len(fileData), 4):
+        fourByteInteger = struct.unpack('>I', fileData[i:i+4])[0]
+        singleOutputByte = 0
 
+        for j in xrange(0,8):
+            #outputByte = bit x1, x10, x100, x1000 for rom 1, x2, x20, x200 for rom 2, etc
+            #bit x8, x80 etc are always 0 so stripe 4 can be skipped
 
+            if (fourByteInteger & ((0x1+romIndex) << j*4)) > 0:
+                singleOutputByte |= (0x80 >> j)
+
+        assert singleOutputByte <= 0xFF
+
+        retVal += struct.pack('>B', singleOutputByte)[0]
+    return retVal
+    
 
 
 def pad(fileData, totalLength):

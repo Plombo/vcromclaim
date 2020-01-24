@@ -366,19 +366,40 @@ class RomExtractor(object):
 	def extractrom_arcade(self, appFilePath, outputPath, filenameWithoutExtension):
 		foundRom = False
 
+		#print "file in app:" + appFilePath
+
 		u8arc = self.tryGetU8Archive(appFilePath)
 		if not u8arc:
+			#print "It is NOT a U8 archive! First bytes:"
 			inFile = open(appFilePath, 'rb')
+			#print ord((inFile.read(1))[0])
+			#print ord((inFile.read(1))[0])
+			#print ord((inFile.read(1))[0])
+			#print ord((inFile.read(1))[0])
+			inFile.seek(0)
 			if ord((inFile.read(1))[0]) == 0x11:
+				#print "The first byte is 11 so it is probably compressed LZ77"
 				data = lz77.decompress_nonN64(inFile)
 				inFile.close()
 			
 				#!!! NOTE !!! This will be done multiple time for each game, overwriting the previous one
+				# For ghosts n goblins, this is the only file that might contain the roms!
 				outFile = open(os.path.join(outputPath, "TODO_DECOMPRESSED.BIN"), 'wb')
 				outFile.write(data)
 				outFile.close()
+			#else:
+				#print "The first byte is unknown, don't know what to do with this file, dumping it as DERP"
+				#inFile.seek(0)
+				#outFile = open(os.path.join(outputPath, "DERP_output" + appFilePath[(len(appFilePath)-7):]), 'wb')
+				#outFile.write(inFile.read())
+				#outFile.close()
 
 		else:
+			#print "It IS a U8 archive! Content:"
+
+			#for file in u8arc.files:
+			#	print file.path
+
 			if u8arc.hasfile('data.ccf'):
 				ccf = CCFArchive(u8arc.getfile('data.ccf'))
 				if ccf.hasfile('config'):

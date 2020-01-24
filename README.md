@@ -21,6 +21,7 @@ Features
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
+* Can extract most, but not all, of Space Harrier (Arcade).
 * Automatically extracts the built-in manuals in VC games.
 * Automatically extracts saves for all formats, except PC Engine / TurboGrafx16
   / TurboGrafx CD.
@@ -96,5 +97,7 @@ Credits
 * [blastar](http://www.yaronet.com/topics/185388-ngfx-neogeoneogeocd-graphicseditor) - author of NGFX,
   a very good Neo Geo graphics editor that was useful in creating the open SFIX substitute.
 * [ZOINKITY](https://pastebin.com/hcRjjTWg) - author of N64.py, containing the cart CRC code
+* [MAME](https://www.mamedev.org/) - the source code was very useful in extracting
+  arcade and Neo Geo roms
 
 

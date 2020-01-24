@@ -5,7 +5,7 @@ import os, os.path
 
 from configurationfile import getConfiguration
 from rso import rso
-from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad
+from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad, getBitStripe
 
 def extract_arcade(ccfArchive, outputFolder):
     config = ccfArchive.find('config')
@@ -29,11 +29,10 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     # The separate ROM files has been merged, we need to splice them so that MAME can load them.
     # Basically this is doing the reverse of what MAME does when loading the ROMs
 
-    #TODO: fix gfx1 and gfx3
-    #   the reference copies are wrong?
-    #   the differences in binary files means the data is expected to look different?
-    #   they are interlaced somehow?
-    #   (RSO extraction error? NO - then I should have found it in raw RSO.)
+    #TODO: GFX3 (road), sharrier/sharrier1?
+
+    #TODO: fix gfx3 - road graphics, the wii version is probably unpacked vs the
+    #   original roms.
 
     moduleFile = ccfArchive.find('sharrier.rso')
     module = rso(moduleFile)
@@ -44,6 +43,8 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     f.close()
     moduleFile.seek(0)
 
+    #for export in module.getAllExports():
+    #    print " -- Export " + export
 
     #maincpu = 68000 code
     cpu1 = get_rom_file(module, 'sharrier_rom_cpu1', 0x40000)
@@ -61,11 +62,18 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     save_rom_file(getStripes(cpu2,[0,2]), outputFolder, 'epr-7182.ic54')
     save_rom_file(getStripes(cpu2,[1,3]), outputFolder, 'epr-7183.ic67')
 
-    #gfx1 = tiles - BROKEN!
-    gfx1 = get_rom_file(module, 'sharrier_rom_grp1', 0x18000)
-    save_rom_file(getPart(gfx1,2,0x08000), outputFolder, 'epr-7196.ic31')
-    save_rom_file(getPart(gfx1,1,0x08000), outputFolder, 'epr-7197.ic46')
-    save_rom_file(getPart(gfx1,0,0x08000), outputFolder, 'epr-7198.ic60')
+    #gfx1 = tiles
+    # These are 3 bits per pixel. one bit is in each rom.
+    # Then the hardware or emulator read from the three separate roms to build every pixel.
+    # To speed things up on the Wii, the three roms has been merged into one linear rom.
+    # We need to split them up again with getBitStripe
+    # Lots of help from MAME source code to figure this out
+    gfx1 = get_rom_file(module, 'sharrier_rom_grp1', 0x20000)
+    save_rom_file(getBitStripe(gfx1, 0), outputFolder, 'epr-7196.ic31')
+    save_rom_file(getBitStripe(gfx1, 1), outputFolder, 'epr-7197.ic46')
+    save_rom_file(getBitStripe(gfx1, 3), outputFolder, 'epr-7198.ic60')
+    #This has data, not sure what it is though
+    #save_rom_file(getBitStripe(gfx1, 2), outputFolder, 'should-be-empty-but-is-not')
 
     #sprites
     sprites = get_rom_file(module, 'sharrier_rom_grp2', 0x100000)
