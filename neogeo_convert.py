@@ -37,6 +37,7 @@ def convert_neogeo(inputFile, outputFolder):
         '201': (convert_mslug, "mslug"),
         '233': (convert_magdrop3, "magdrop3"),
         '241': (convert_mslug2, "mslug2"),
+        '250': (convert_mslugx, "mslugx"),
         '256': (convert_mslug3, "mslug3")
     }
 
@@ -222,6 +223,27 @@ def convert_mslug2(input, output):
 
     convert_common_c(input, output, 2, 2)
 
+def convert_mslugx(input, output):
+
+    # Same ROMs for MVS/AES
+
+    # wrong checksum
+    output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+
+    # correct CRC
+    output.createFile("p2.ep1", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("m1.m1", input.regions['M'].data)
+    output.createFile("v1.v1", getAsymmetricPart(input.regions['V1'].data, 0*1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getAsymmetricPart(input.regions['V1'].data, 4*1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("v3.v3", getAsymmetricPart(input.regions['V1'].data, 8*1024*KILOBYTE, 2*1024*KILOBYTE))
+    output.createFile("s1.s1", input.regions['S'].data)
+
+
+    # TODO: in the real cart, the rom is exactly 48 MB (6x8 MB). The Wii version is 27.4 MB, has a different structured content and header that starts with "ACM".
+    # Some kind of compression?
+    output.createFile("ctest.ctest", input.regions['C'].data)
+    # convert_common_c(input, output, 2, 3)
+
 def convert_mslug3(input, output):
 
     # Comes with AES bios
@@ -256,7 +278,7 @@ def convert_mslug3(input, output):
 
     # TODO: this gives incorrect files - they are decrypted, mame expects encrypted files, and they are too small, missing the S data at the end
     convert_common_c(input, output, 2, 4)
-    #output.createFile("Ctest.ctest", input.regions['C'].data)
+    output.createFile("Ctest.ctest", input.regions['C'].data)
 
     print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
 
@@ -303,6 +325,7 @@ def convert_common_c(input, output, width, length):
 
     assert width == 1 or width == 2 or width == 4
     assert length > 0
+    #assert len(input.regions['C'].data) % 4 == 0
 
     for i in xrange(0, length):
         
