@@ -98,8 +98,10 @@ Credits
 * [blastar](http://www.yaronet.com/topics/185388-ngfx-neogeoneogeocd-graphicseditor) - author of NGFX,
   a very good Neo Geo graphics editor that was useful in creating the open SFIX substitute.
 * [ZOINKITY](https://pastebin.com/hcRjjTWg) - author of N64.py, containing the cart CRC code
+* [The Neo Geo Development Wiki](https://wiki.neogeodev.org) - very useful for extracting Neo Geo roms
 * [MAME](https://www.mamedev.org/) - the source code was very useful in extracting
   arcade and Neo Geo roms
 * [HxD](https://mh-nexus.de/en/hxd/) - great, free hex editor
+* [WiiBrew](https://wiibrew.org) - WiiBrew - invaluable for any Wii development
 
 
