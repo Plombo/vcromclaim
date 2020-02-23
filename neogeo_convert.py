@@ -36,7 +36,8 @@ def convert_neogeo(inputFile, outputFolder):
         '200': (convert_turfmast, "turfmast"),
         '201': (convert_mslug, "mslug"),
         '233': (convert_magdrop3, "magdrop3"),
-        '241': (convert_mslug2, "mslug2")
+        '241': (convert_mslug2, "mslug2"),
+        '256': (convert_mslug3, "mslug3")
     }
 
     if supportedGames.has_key(ngh):
@@ -85,9 +86,10 @@ def convert_maglordh(input, output):
     m = input.regions['M'].data
     output.createFile("m1.m1", getPart(m, 0,64*KILOBYTE) + getPart(m, 2, 64*KILOBYTE) + getPart(m, 1, 64*KILOBYTE) + getPart(m, 2, 64*KILOBYTE))
 
-    output.createFile("v11.v11", input.regions['V1'].data)
-    output.createFile("v21.v21", getPart(input.regions['V2'].data,0,512*KILOBYTE))
-    output.createFile("v22.v22", getPart(input.regions['V2'].data,1,512*KILOBYTE))
+    split_region(input, output, 'V1', ['v11.v11'])
+    split_region(input, output, 'V2', ['v21.v21', 'v22.v22'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 3)
 
@@ -105,8 +107,9 @@ def convert_kotm(input, output):
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 1024*KILOBYTE))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1024*KILOBYTE))
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 2)
 
@@ -121,7 +124,9 @@ def convert_spinmast(input, output):
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", input.regions['V1'].data)
+    split_region(input, output, 'V1', ['v1.v1'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 4)
 
@@ -138,10 +143,9 @@ def convert_turfmast(input, output):
     
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 2048*KILOBYTE))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 2048*KILOBYTE))
-    output.createFile("v3.v3", getPart(input.regions['V1'].data, 2, 2048*KILOBYTE))
-    output.createFile("v4.v4", getPart(input.regions['V1'].data, 3, 2048*KILOBYTE))
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 1)
 
@@ -159,8 +163,9 @@ def convert_mslug(input, output):
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 2)
 
@@ -174,9 +179,9 @@ def convert_rbffspec(input, output):
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
-    output.createFile("v3.v3", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 4)
 
@@ -196,6 +201,8 @@ def convert_magdrop3(input, output):
     output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
     output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 1*512*KILOBYTE))
 
+    output.createFile("s1.s1", input.regions['S'].data)
+
     convert_common_c(input, output, 2, 2)
 
 def convert_mslug2(input, output):
@@ -209,10 +216,49 @@ def convert_mslug2(input, output):
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    output.createFile("v1.v1", getPart(input.regions['V1'].data, 0, 4*1024*KILOBYTE))
-    output.createFile("v2.v2", getPart(input.regions['V1'].data, 1, 4*1024*KILOBYTE))
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 2)
+
+def convert_mslug3(input, output):
+
+    # Comes with AES bios
+
+    # TODO:
+    # - The original game's C rom is encrypted, the Virtual Console version is not encrypted. Do we have to encrypt the bugger to get it playable in mame??
+    # - The P roms are different (9 MB in Wii version, 4 MB + 4 MB + 256 KB in arcade versions, 1 MB + 4 MB in home version)
+
+    # - In original game (as MAME expects it), the C rom is 64 MB and encrypted, and contains both C rom data (graphics) and S data (sprites).
+    # - In Wii version, the C rom is 28.5 MB and the S rom is separate at 512 KB.
+
+    # TODO: mame does not use this
+    output.createFile("p1.p1", input.regions['P'].data)
+
+    # TODO: mame does not use this
+    output.createFile("s1.s1", input.regions['S'].data)
+
+    #v1 and m1 hash matches mslug3, mslug3a, mslug3h.
+    output.createFile("m1.m1", input.regions['M'].data)
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
+
+    #correct checksum for a rom only found in "mslug3"
+    output.createFile("green.neo-sma", getAsymmetricPart(input.regions['P'].data, 3*256*KILOBYTE, 256*KILOBYTE), None, False)
+    
+    # not correct - game does not run, bad crcs. probably mame wants the encrypted file, the VC versions are decrypted
+    output.createFile("pg1.p1", getAsymmetricPart(input.regions['P'].data, 1*1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("pg2.p2", getAsymmetricPart(input.regions['P'].data, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
+
+    # if ran as mslug3h, the game kind of starts, but reboots after main menu
+    #output.createFile("ph1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+    #output.createFile("ph2.sp2", getAsymmetricPart(input.regions['P'].data, 5504*KILOBYTE, 4*1024*KILOBYTE))
+
+    # TODO: this gives incorrect files - they are decrypted, mame expects encrypted files, and they are too small, missing the S data at the end
+    convert_common_c(input, output, 2, 4)
+    #output.createFile("Ctest.ctest", input.regions['C'].data)
+
+    print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
 
 
 def convert_generic_guess(input, output):
@@ -220,13 +266,32 @@ def convert_generic_guess(input, output):
     output.createFile("m1.m1", input.regions['M'].data)
     
     if len(input.regions['V2'].data) == 0:
-        output.createFile("v1.v1", input.regions['V1'].data)
+        split_region(input, output, 'V1', ['v1.v1'])
     else:
-        output.createFile("v11.v11", input.regions['V1'].data)
-        output.createFile("v21.v21", input.regions['V2'].data)
+        split_region(input, output, 'V1', ['v11.v11'])
+        split_region(input, output, 'V2', ['v21.v21'])
 
     convert_common_c(input, output, 2, 2)
 
+
+
+
+
+
+
+
+
+
+# end of game specific code
+
+
+
+def split_region(input, output, regionName, outputNameList):
+    sizePerPart = len(input.regions[regionName].data) / len(outputNameList)
+    i = 0
+    for outputName in outputNameList:
+        output.createFile(outputName, getPart(input.regions[regionName].data, i, sizePerPart))
+        i = i+1
 
 
 # converts the C data region to several NNN-cN.cN-files. width and length varies between games.
@@ -253,10 +318,6 @@ def convert_common_c(input, output, width, length):
 
 def convert_common(input, output):
 
-    #S1: same on all carts (so far)
-    output.createFile("s1.s1", input.regions['S'].data)
-
-
     #BIOS - all games so far comes with either an MVS or an AES BIOS.
     # use SHA1 to identify it
 
@@ -280,12 +341,12 @@ def convert_common(input, output):
             # SM1 is only used on arcade machines, contains music program to use when no cartridge is inserted
             output.createFile('sm1.sm1', bytearray('\x00' * 0x20000), subFolder = subFolder)
 
-            print "This game includes MVS (arcade) ROMs. To run the game, run:"
-            print "   .\\mame64 " + output.mameShortName + " -bios japan-j3"
+            print "This game includes MVS (arcade) BIOS ROMs. To run the game with this BIOS, run:"
+            print "   .\\mame64 " + output.mameShortName + " -bios japan-mv1b"
         else:
             # The only support rom is l0 which is created below
 
-            print "This game includes AES (home system) ROMs. To run the game, run:"
+            print "This game includes AES (home system) BIOS ROMs. To run the game with this BIOS, run:"
             print "   .\\mame64 aes -cart " + output.mameShortName + " -bios japan"
     else:
         print "Warning: The included BIOS is not recognized. SHA1 hash: " + hexDigest
@@ -480,10 +541,13 @@ class output_processor(object):
         self.mameShortName = mameShortName
         self.ngh = ngh
 
-    def createFile(self, fileName, fileData, subFolder = None):
+    def createFile(self, fileName, fileData, subFolder = None, usePrefix = True):
         if subFolder == None:
             subFolder = self.mameShortName
-            filePrefix = self.ngh + "-"
+            if usePrefix:
+                filePrefix = self.ngh + "-"
+            else:
+                filePrefix = ''
         else:    
             # keep subFolder
             filePrefix = ''
