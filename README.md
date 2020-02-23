@@ -102,6 +102,6 @@ Credits
 * [MAME](https://www.mamedev.org/) - the source code was very useful in extracting
   arcade and Neo Geo roms
 * [HxD](https://mh-nexus.de/en/hxd/) - great, free hex editor
-* [WiiBrew](https://wiibrew.org) - WiiBrew - invaluable for any Wii development
+* [WiiBrew](https://wiibrew.org) - invaluable for any Wii development
 
 
