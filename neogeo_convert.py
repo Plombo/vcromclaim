@@ -43,7 +43,7 @@ def convert_neogeo(inputFile, outputFolder):
         mameShortName = supportedGames[ngh][1]
         func = supportedGames[ngh][0]
     else:
-        print "Game is unknown. You will have to rename the folder and probably have to split or merge the ROM files."
+        print "Game is unknown. You will have to rename the folder and probably have to split, merge and/or byteswap the ROM files."
         mameShortName = "NGM-" + ngh
         func = convert_generic_guess
 

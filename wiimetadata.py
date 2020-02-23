@@ -13,6 +13,7 @@ from ccfarchive import CCFArchive
 import lz77
 from nes_extract import extract_nes_file_from_app, extract_fds_bios_from_app, convert_nes_save_data
 from snesrestore import restore_brr_samples
+from neogeo_decrypt import decrypt_neogeo
 from neogeo_convert import convert_neogeo
 from arcade_extract import extract_arcade
 from tgcd_extract import extract_tgcd
@@ -56,7 +57,7 @@ class RomExtractor(object):
 		for app in os.listdir(content):
 			if not app.endswith('.app'): continue
 			app = os.path.join(content, app)
-			if self.extractrom(app, os.path.join(self.channeltype, self.name)): rom_extracted = True
+			if self.extractrom(app, os.path.join(self.channeltype, self.name), app[-10:]): rom_extracted = True
 			if self.extractmanual(app, os.path.join(self.channeltype, self.name, 'manual')): manual_extracted = True
 		
 		if rom_extracted and manual_extracted: return
@@ -66,7 +67,7 @@ class RomExtractor(object):
 	
 	# Actually extract the ROM
 	# Currently works for almost all NES, SNES, N64, TG16, Master System, and Genesis ROMs.
-	def extractrom(self, u8path, gameOutputPath):
+	def extractrom(self, u8path, gameOutputPath, name):
 		funcs = {
 			'Nintendo 64': self.extractrom_n64,
 			'Genesis': self.extractrom_sega,
@@ -87,10 +88,17 @@ class RomExtractor(object):
 			else:
 				u8arc = u8path
 		elif self.channeltype == 'Arcade':
-			#SOME arcade games are packed in U8 arcives
+			#SOME arcade games are packed in U8 archives
 			u8arc = u8path
 		else:
 			u8arc = self.tryGetU8Archive(u8path)
+
+			#x = open(u8path, 'rb')
+			#self.ensure_folder_exists(gameOutputPath)
+			#f = open(os.path.join(gameOutputPath, 'file_' + name),'wb')
+			#f.write(x.read())
+			#f.close()
+
 			if not u8arc:
 				return False
 		
@@ -305,38 +313,61 @@ class RomExtractor(object):
 		foundRom = False
 		for file in arc.files:
 			#print file.name
+
+			#arcFile = arc.getfile(file.path)
+			#f = open(os.path.join(outputPath, 'arc_' + file.name),'wb')
+			#f.write(arcFile.read())
+			#f.close()
+
+			#PROBABLY. game.bin = not compressed, .z = zlib compressed, .xz = LZMA/XZ compressed
+			#encryption may be applied on any file, and is applied after compression (decrypt before decompressing)
 			if file.name == "game.bin" or file.name == "game.bin.z" or file.name == "game.bin.xz":
 
 				rom = arc.getfile(file.path)
+				rom.seek(0)
+				entireFile = rom.read()
 
-				tryToConvert = False
+				giveUp = False
 
-				if file.name == "game.bin":
-					outputFileName = file.name
-					tryToConvert = True
-				elif file.name == "game.bin.z" or file.name == "game.bin.xz":
-					firstByte = rom.read(1)
-					if firstByte == '\x78': # zlib compression
-						outputFileName = "game.bin"
-						rom.seek(0)
-						rom = StringIO(zlib.decompress(rom.read()))
-						tryToConvert = True
-					elif firstByte == '\x43':
-						print "Sorry, this Neo Geo ROM is encrypted."
-						outputFileName = "game.bin.cr00"
-						tryToConvert = False
-					else:
-						print "Sorry, this Neo Geo ROM is compressed or encrypted using unknown algorithm."
-						outputFileName = file.name
-						tryToConvert = False
+				if file.name == "game.bin.z" or file.name == "game.bin.xz":
+					if (entireFile[0:4] == 'CR00'):
+						#f = open(os.path.join(outputPath, 'encrypted_' + file.name),'wb')
+						#f.write(entireFile)
+						#f.close()
 
-				if tryToConvert:
-					convert_neogeo(rom, outputPath)
-					print "Converted ROM files to MAME compatible format (some BIOS files may be missing)"
-					#writerom(rom, os.path.join(outputPath, outputFileName))
+						(success, output) = decrypt_neogeo(self.id, entireFile)
+						entireFile = output
+
+						if not success:
+							outputFileName = "game.bin.encrypted"
+							print "Exporting encrypted ROMs without decrypting them"
+							giveUp = True
+
+					#encrypted files can be compressed after being decrypted
+					if entireFile[0] == '\x78': # zlib compression (both encrypted and non-encrypted games can be compressed)
+						entireFile = zlib.decompress(entireFile)
+
+					#encrypted files can be compressed after being decrypted
+					if entireFile[0:4] == '\x5D\x00\x00\x80': # zlib compression (both encrypted and non-encrypted games can be compressed)
+						print "LZMA (xz) compressed - not supported yet"
+						outputFileName = "game.bin.xz"
+						giveUp = True
+				elif file.name != "game.bin":
+					#game.bin = unencrypted, uncompress game
+					#any other file name: do nothing
+					giveUp = True
+
+
+				if not giveUp:
+					#f = open(os.path.join(outputPath, 'decrypted_' + file.name),'wb')
+					#f.write(entireFile)
+					#f.close()
+
+					convert_neogeo(StringIO(entireFile), outputPath)
+					print "Extracted ROM files (some BIOS files may be missing)"
 				else:
-					print "Game extracted but further processing is required."
-					writerom(rom, os.path.join(outputPath, outputFileName))
+					writerom(StringIO(entireFile), os.path.join(outputPath, outputFileName))
+					print "Files extracted but further processing is required."
 
 				if self.extractsave(outputPath):
 					print "Exported memory card with save file"
@@ -356,11 +387,11 @@ class RomExtractor(object):
 			#	rom = arc.getfile(file.path)
 			#	writerom(rom, os.path.join(outputFolderName, "config.dat"))
 
-			#else: other files are useless
+			#else: other files are probably useless
 			#	rom = arc.getfile(file.path)
 			#	writerom(rom, os.path.join(outputFolderName, file.name))
-		
-		
+	
+
 		return foundRom
 
 	def extractrom_arcade(self, appFilePath, outputPath, filenameWithoutExtension):

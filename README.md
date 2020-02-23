@@ -17,7 +17,8 @@ Features
 * Extracts several Neo Geo games, along with the AES/MVS BIOS, so that they are
   playable in MAME: Magician Lord, King of the Monsters, Spinmaster, Neo Turf
   Master, Metal Slug, Metal Slug 2, Magical Drop 3. Support for many other Neo
-  Geo games can be added easily, as long as the game is not encrypted.
+  Geo games can be added easily. Even encrypted games can be extracted, although
+  extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
@@ -47,10 +48,10 @@ Known Issues
   process has to be hardcoded separately for each game. If your game is not
   supported, it might be trivial to expand neogeo_convert.py to include support
   for your game.
-* NEO GEO: Many Neo Geo games are encrypted. At this time, there is no way of
-  decryptiny these games. (If you are desperate, you can emulate the WAD in
-  Dolphin, and use Dolphin's debug mode to create a ram dump. The ram dumps
-  should contain the decrypted roms.)
+* NEO GEO: Many Neo Geo games are encrypted. These can be decrypted, but requires
+  a lot of extra manual steps. See [neogeo_reame.txt](neogeo_readme.txt)
+* NEO GEO: A few Neo geo games are compressed using LZMA. At this time, these
+  cannot be decompressed.
 * NEO GEO: The BIOS used for Neo Geo games (MVS or AES depending on game) is
   included with the VC games and is extracted, but some of the support ROMs
   (sfix and m1) are missing because are not needed for normal game play.
@@ -99,5 +100,6 @@ Credits
 * [ZOINKITY](https://pastebin.com/hcRjjTWg) - author of N64.py, containing the cart CRC code
 * [MAME](https://www.mamedev.org/) - the source code was very useful in extracting
   arcade and Neo Geo roms
+* [HxD](https://mh-nexus.de/en/hxd/) - great, free hex editor
 
 
