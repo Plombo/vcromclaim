@@ -38,7 +38,8 @@ def convert_neogeo(inputFile, outputFolder):
         '233': (convert_magdrop3, "magdrop3"),
         '241': (convert_mslug2, "mslug2"),
         '250': (convert_mslugx, "mslugx"),
-        '256': (convert_mslug3, "mslug3")
+        '256': (convert_mslug3, "mslug3"),
+        '263': (convert_mslug4, "mslug4")
     }
 
     if supportedGames.has_key(ngh):
@@ -282,6 +283,27 @@ def convert_mslug3(input, output):
 
     print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
 
+
+def convert_mslug4(input, output):
+
+    # wrong checksum for both MVS and AES, but seems to work
+    output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+
+    # correct CRC for MVS version, not for AES version
+    output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
+
+    # TODO: M, V and S all have bad CRCs and garbled graphics and missing sound. Probably due to encryption.
+
+    output.createFile("m1.m1", input.regions['M'].data)
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
+    
+    # TODO: real cart does not have s1 rom
+    output.createFile("s1test.s1test", input.regions['S'].data)
+
+    # TODO: in the real cart, the rom is exactly 48 MB (6x8 MB). The Wii version is much smaller, has a different structured content and header that starts with "ACM".
+    # Some kind of compression?
+    output.createFile("ctest.ctest", input.regions['C'].data)
+    # convert_common_c(input, output, 2, 3)
 
 def convert_generic_guess(input, output):
     output.createFile("p1.p1", input.regions['P'].data)
