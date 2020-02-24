@@ -17,7 +17,7 @@ KILOBYTE = 1024
 # To run a game such as magdrop3 with an AES rom:
 #       .\mame64 aes -cart magdrop3 -bios japan
 # To run a game such as kotm with an MVS (neogeo) rom:
-#       .\mame64 kotm -bios japan-j3
+#       .\mame64 kotm -bios japan-mv1b
 
 
 
@@ -30,6 +30,7 @@ def convert_neogeo(inputFile, outputFolder):
     ngh = inputProcessor.getNgh()
 
     supportedGames = {
+        '001': (convert_nam1975, "nam1975"),
         '005': (convert_maglordh, "maglordh"),
         '016': (convert_kotm, "kotm"),
         '062': (convert_spinmast, "spinmast"),
@@ -75,6 +76,22 @@ def convert_neogeo(inputFile, outputFolder):
 # BIOS = System Program = Probably an AES BIOS, since games run in home console mode on VC. Haven't gotten this to run in MAME yet.
 
 
+
+
+def convert_nam1975(input, output):
+    
+    # same for both MVS and AES
+    # All ROMs have correct CRC according to mame.
+
+    output.createFile("p1.p1", input.regions['P'].data)
+    output.createFile("m1.m1", input.regions['M'].data + input.regions['M'].data + input.regions['M'].data + input.regions['M'].data)
+
+    split_region(input, output, 'V1', ['v11.v11'])
+    split_region(input, output, 'V2', ['v21.v21', 'v22.v22', 'v23.v23'])
+
+    output.createFile("s1.s1", pad(input.regions['S'].data, 128*KILOBYTE))
+
+    convert_common_c(input, output, 2, 3)
 
 
 def convert_maglordh(input, output):

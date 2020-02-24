@@ -15,10 +15,17 @@ Features
   TurboGrafx16 / TurboGrafx CD, Mega Drive/Genesis, Master System, and
   Nintendo 64 games without fail!
 * Extracts several Neo Geo games, along with the AES/MVS BIOS, so that they are
-  playable in MAME: Magician Lord, King of the Monsters, Spinmaster, Neo Turf
-  Master, Metal Slug, Metal Slug 2, Magical Drop 3. Support for many other Neo
-  Geo games can be added easily. Even encrypted games can be extracted, although
-  extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
+  playable in MAME:
+  * NAM-1975 (encrypted - requires extra steps)
+  * Magician Lord
+  * King of the Monsters
+  * Spinmaster
+  * Neo Turf Master
+  * Metal Slug
+  * Metal Slug 2
+  * Magical Drop 3
+  * Support for many other Neo Geo games can be added easily. Even encrypted games
+  can be extracted, although extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
