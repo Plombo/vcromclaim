@@ -25,6 +25,7 @@ Features
   * Real Bout Fatal Fury Special
   * Metal Slug 2
   * Magical Drop 3
+  * Shock Troopers
   * Support for many other Neo Geo games can be added easily. Even encrypted games
   can be extracted, although extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
 * Can recreate a playable replica of the original ROM for SNES games where the 

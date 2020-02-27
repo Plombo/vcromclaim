@@ -38,6 +38,7 @@ def convert_neogeo(inputFile, outputFolder):
         '201': (convert_mslug, "mslug"),
         '223': (convert_rbffspec, "rbffspec"),
         '233': (convert_magdrop3, "magdrop3"),
+        '238': (convert_shocktro, 'shocktro'),
         '241': (convert_mslug2, "mslug2"),
         '250': (convert_mslugx, "mslugx"),
         '256': (convert_mslug3, "mslug3"),
@@ -224,6 +225,26 @@ def convert_magdrop3(input, output):
     output.createFile("s1.s1", input.regions['S'].data)
 
     convert_common_c(input, output, 2, 2)
+
+def convert_shocktro(input, output):
+
+    # Shipped with AES BIOS
+    # All file except pg1.p1 has correct CRC.
+    # The AES and MVS original has different P1s, the VC version matches none of them,
+    # so not sure if the VC version is based of the MVS or AES version.
+
+    output.createFile("pg1.p1", getAsymmetricPart(input.regions['P'].data, 0, 1*1024*KILOBYTE))
+    
+    output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
+
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    output.createFile("v1.v1", getAsymmetricPart(input.regions['V1'].data, 0*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getAsymmetricPart(input.regions['V1'].data, 4*1024*KILOBYTE, 2*1024*KILOBYTE))
+
+    output.createFile("s1.s1", input.regions['S'].data)
+
+    convert_common_c(input, output, 2, 4)
 
 def convert_mslug2(input, output):
 
