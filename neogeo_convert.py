@@ -40,6 +40,7 @@ def convert_neogeo(inputFile, outputFolder):
         '233': (convert_magdrop3, "magdrop3"),
         '238': (convert_shocktro, 'shocktro'),
         '241': (convert_mslug2, "mslug2"),
+        '243': (convert_lastbld2, "lastbld2"),
         '250': (convert_mslugx, "mslugx"),
         '256': (convert_mslug3, "mslug3"),
         '263': (convert_mslug4, "mslug4")
@@ -263,6 +264,27 @@ def convert_mslug2(input, output):
 
     convert_common_c(input, output, 2, 2)
 
+def convert_lastbld2(input, output):
+
+    # Same ROM for MVS/AES
+    # CRC is incorrect for p*, otherwise all CRCs match
+    # Shipped with AES BIOS
+
+    # All roms except PG1 and C have correct checksums
+
+    output.createFile("pg1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+    output.createFile("pg2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
+
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
+
+    # TODO: the C roms are replaced by ACM format
+    convert_common_c(input, output, 2, 3)
+    print "This game is NOT correctly exported yet (C roms are incorrect)"
+
 def convert_mslugx(input, output):
 
     # Same ROMs for MVS/AES
@@ -283,6 +305,7 @@ def convert_mslugx(input, output):
     # Some kind of compression?
     output.createFile("ctest.ctest", input.regions['C'].data)
     # convert_common_c(input, output, 2, 3)
+    print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
 
 def convert_mslug3(input, output):
 
@@ -343,6 +366,7 @@ def convert_mslug4(input, output):
     # Some kind of compression?
     output.createFile("ctest.ctest", input.regions['C'].data)
     # convert_common_c(input, output, 2, 3)
+    print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
 
 def convert_generic_guess(input, output):
     output.createFile("p1.p1", input.regions['P'].data)
