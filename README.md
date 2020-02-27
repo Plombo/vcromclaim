@@ -22,6 +22,7 @@ Features
   * Spinmaster
   * Neo Turf Master
   * Metal Slug
+  * Real Bout Fatal Fury Special
   * Metal Slug 2
   * Magical Drop 3
   * Support for many other Neo Geo games can be added easily. Even encrypted games

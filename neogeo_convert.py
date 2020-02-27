@@ -36,6 +36,7 @@ def convert_neogeo(inputFile, outputFolder):
         '062': (convert_spinmast, "spinmast"),
         '200': (convert_turfmast, "turfmast"),
         '201': (convert_mslug, "mslug"),
+        '223': (convert_rbffspec, "rbffspec"),
         '233': (convert_magdrop3, "magdrop3"),
         '241': (convert_mslug2, "mslug2"),
         '250': (convert_mslugx, "mslugx"),
@@ -191,7 +192,7 @@ def convert_mslug(input, output):
 def convert_rbffspec(input, output):
 
     # Same ROM for MVS/AES
-    # NOT TESTED, becaues the game.bin is encrypted
+    # p1 rom has wrong checksum, all others have correct checksum
 
     output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
     output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
