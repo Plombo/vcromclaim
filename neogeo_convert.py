@@ -317,11 +317,7 @@ def convert_mslugx(input, output):
     output.createFile("v2.v2", getAsymmetricPart(input.regions['V1'].data, 4*1024*KILOBYTE, 4*1024*KILOBYTE))
     output.createFile("v3.v3", getAsymmetricPart(input.regions['V1'].data, 8*1024*KILOBYTE, 2*1024*KILOBYTE))
     output.createFile("s1.s1", input.regions['S'].data)
-
-    # C files are not correct, they are decrypted but mame expects encrypted version.
     convert_common_c(input, output, 3)
-
-    print "This game is NOT correctly exported yet"
 
 def convert_mslug3(input, output):
 

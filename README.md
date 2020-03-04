@@ -28,6 +28,7 @@ Features
   * Metal Slug 2
   * The Last Blade 2
   * Shock Troopers 2
+  * Metal Slug X
   * Support for many other Neo Geo games can be added easily. Encrypted games
   can be extracted, although extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
 * Can recreate a playable replica of the original ROM for SNES games where the 
