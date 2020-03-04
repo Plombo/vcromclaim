@@ -282,26 +282,26 @@ def convert_lastbld2(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_acm_c(input, output, 3)
+    convert_common_c(input, output, 3)
     
 def convert_shocktr2(input, output):
 
     # Same ROM for MVS/AES
     # Shipped with AES roms
-    # All roms except P2 and C has correct checksum
+    # All roms except P2 has correct checksum
 
     output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
     output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
 
     output.createFile("m1.m1", input.regions['M'].data)
 
-    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3'])
+    output.createFile("v1.v1", getAsymmetricPart(input.regions['V1'].data, 0*1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("v2.v2", getAsymmetricPart(input.regions['V1'].data, 4*1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("v3.v3", getAsymmetricPart(input.regions['V1'].data, 8*1024*KILOBYTE, 2*1024*KILOBYTE))
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    # TODO: the C roms are replaced by ACM format
-    output.createFile("ctest.ctest", input.regions['C'].data)
-    print "This game is NOT correctly exported yet (C roms are incorrect)"    
+    convert_common_c(input, output, 3)
 
 def convert_mslugx(input, output):
 
@@ -424,15 +424,10 @@ def split_region(input, output, regionName, outputNameList):
 # number of roms will be length*2
 # size per rom will be size of C region / (length*2)
 def convert_common_c(input, output, length):
-    convert_c(input.regions['C'].data, output, length, [[0,2],[1,3]])
-
-
-# converts the C data region to several NNN-cN.cN-files. length varies between games.
-# length = the number of striped blocks (must be 1 or more - 1,2,3,4 are common).
-# number of roms will be length*2
-# size per rom will be size of C region / (length*2)
-def convert_acm_c(input, output, length):
-    convert_c(neogeo_acm.decompressAcm(input.regions['C'].data), output, length, [[0,1],[2,3]])
+    if input.regions['C'].data[0:3] == 'ACM':
+        convert_c(neogeo_acm.decompressAcm(input.regions['C'].data), output, length, [[0,1],[2,3]])
+    else:
+        convert_c(input.regions['C'].data, output, length, [[0,2],[1,3]])
 
 
 
