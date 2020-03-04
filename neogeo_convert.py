@@ -307,7 +307,7 @@ def convert_mslugx(input, output):
 
     # Same ROMs for MVS/AES
 
-    # wrong checksum
+    # wrong CRC
     output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
 
     # correct CRC
@@ -318,12 +318,10 @@ def convert_mslugx(input, output):
     output.createFile("v3.v3", getAsymmetricPart(input.regions['V1'].data, 8*1024*KILOBYTE, 2*1024*KILOBYTE))
     output.createFile("s1.s1", input.regions['S'].data)
 
+    # C files are not correct, they are decrypted but mame expects encrypted version.
+    convert_common_c(input, output, 3)
 
-    # TODO: in the real cart, the rom is exactly 48 MB (6x8 MB). The Wii version is 27.4 MB, has a different structured content and header that starts with "ACM".
-    # Some kind of compression?
-    output.createFile("ctest.ctest", input.regions['C'].data)
-    # convert_common_c(input, output, 2, 3)
-    print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
+    print "This game is NOT correctly exported yet"
 
 def convert_mslug3(input, output):
 
@@ -333,10 +331,7 @@ def convert_mslug3(input, output):
     # - The original game's C rom is encrypted, the Virtual Console version is not encrypted. Do we have to encrypt the bugger to get it playable in mame??
     # - The P roms are different (9 MB in Wii version, 4 MB + 4 MB + 256 KB in arcade versions, 1 MB + 4 MB in home version)
 
-    # - In original game (as MAME expects it), the C rom is 64 MB and encrypted, and contains both C rom data (graphics) and S data (sprites).
-    # - In Wii version, the C rom is 28.5 MB and the S rom is separate at 512 KB.
-
-    # TODO: mame does not use this
+    # TODO: mame does not use this.
     output.createFile("p1.p1", input.regions['P'].data)
 
     # TODO: mame does not use this
@@ -346,22 +341,22 @@ def convert_mslug3(input, output):
     output.createFile("m1.m1", input.regions['M'].data)
     split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
 
-    #correct checksum for a rom only found in "mslug3"
+    #correct checksum for a rom only found in "mslug3", file not used in home version
     output.createFile("green.neo-sma", getAsymmetricPart(input.regions['P'].data, 3*256*KILOBYTE, 256*KILOBYTE), None, False)
     
     # not correct - game does not run, bad crcs. probably mame wants the encrypted file, the VC versions are decrypted
     output.createFile("pg1.p1", getAsymmetricPart(input.regions['P'].data, 1*1024*KILOBYTE, 4*1024*KILOBYTE))
     output.createFile("pg2.p2", getAsymmetricPart(input.regions['P'].data, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
 
-    # if ran as mslug3h, the game kind of starts, but reboots after main menu
-    #output.createFile("ph1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
-    #output.createFile("ph2.sp2", getAsymmetricPart(input.regions['P'].data, 5504*KILOBYTE, 4*1024*KILOBYTE))
+    # if ran as mslug3h (home version), the game kind of starts, but reboots after main menu. home version
+    # Note, home version only has 1+4MB P, while arcade has 4+4 mb + the green file. The VC version has 9 MB P ROM.
+    output.createFile("ph1.p1", getAsymmetricPart(input.regions['P'].data, 1*1024*KILOBYTE, 1*1024*KILOBYTE))
+    output.createFile("ph2.sp2", getAsymmetricPart(input.regions['P'].data, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
 
-    # TODO: this gives incorrect files - they are decrypted, mame expects encrypted files, and they are too small, missing the S data at the end
+    # C files are not correct, they are decrypted but mame expects encrypted version.
     convert_common_c(input, output, 4)
-    output.createFile("Ctest.ctest", input.regions['C'].data)
 
-    print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
+    print "This game is NOT correctly exported yet"
 
 
 def convert_mslug4(input, output):
@@ -372,7 +367,7 @@ def convert_mslug4(input, output):
     # correct CRC for MVS version, not for AES version
     output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
 
-    # TODO: M, V and S all have bad CRCs and garbled graphics and missing sound. Probably due to encryption.
+    # TODO: M, V and C all have bad CRCs and garbled graphics and missing sound. Probably due to encryption.
 
     output.createFile("m1.m1", input.regions['M'].data)
     split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
@@ -380,11 +375,10 @@ def convert_mslug4(input, output):
     # TODO: real cart does not have s1 rom
     output.createFile("s1test.s1test", input.regions['S'].data)
 
-    # TODO: in the real cart, the rom is exactly 48 MB (6x8 MB). The Wii version is much smaller, has a different structured content and header that starts with "ACM".
-    # Some kind of compression?
-    output.createFile("ctest.ctest", input.regions['C'].data)
-    # convert_common_c(input, output, 2, 3)
-    print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
+    # C files are not correct, they are decrypted but mame expects encrypted version. They do have crap at the end that is probably the S1 data1, encrypted or not.
+    convert_common_c(input, output, 3)
+
+    print "This game is NOT correctly exported yet"
 
 def convert_generic_guess(input, output):
     output.createFile("p1.p1", input.regions['P'].data)
