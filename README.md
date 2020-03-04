@@ -16,17 +16,18 @@ Features
   Nintendo 64 games without fail!
 * Extracts several Neo Geo games, along with the AES/MVS BIOS, so that they are
   playable in MAME:
-  * NAM-1975 (encrypted - requires extra steps)
+  * NAM-1975
   * Magician Lord
   * King of the Monsters
   * Spinmaster
   * Neo Turf Master
   * Metal Slug
   * Real Bout Fatal Fury Special
-  * Metal Slug 2
   * Magical Drop 3
   * Shock Troopers
-  * Support for many other Neo Geo games can be added easily. Even encrypted games
+  * Metal Slug 2
+  * The Last Blade 2
+  * Support for many other Neo Geo games can be added easily. Encrypted games
   can be extracted, although extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 

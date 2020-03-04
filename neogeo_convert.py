@@ -2,6 +2,7 @@
 
 import struct, os, hashlib
 
+import neogeo_acm
 from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad
 
 HEADER_LENGTH = 64
@@ -41,6 +42,7 @@ def convert_neogeo(inputFile, outputFolder):
         '238': (convert_shocktro, 'shocktro'),
         '241': (convert_mslug2, "mslug2"),
         '243': (convert_lastbld2, "lastbld2"),
+        '246': (convert_shocktr2, "shocktr2"),
         '250': (convert_mslugx, "mslugx"),
         '256': (convert_mslug3, "mslug3"),
         '263': (convert_mslug4, "mslug4")
@@ -94,7 +96,7 @@ def convert_nam1975(input, output):
 
     output.createFile("s1.s1", pad(input.regions['S'].data, 128*KILOBYTE))
 
-    convert_common_c(input, output, 2, 3)
+    convert_common_c(input, output, 3)
 
 
 def convert_maglordh(input, output):
@@ -113,7 +115,7 @@ def convert_maglordh(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 3)
+    convert_common_c(input, output, 3)
 
 
    
@@ -133,7 +135,7 @@ def convert_kotm(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 2)
+    convert_common_c(input, output, 2)
 
 def convert_spinmast(input, output):
 
@@ -150,7 +152,7 @@ def convert_spinmast(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 4)
+    convert_common_c(input, output, 4)
 
 def convert_turfmast(input, output):
 
@@ -169,7 +171,7 @@ def convert_turfmast(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 1)
+    convert_common_c(input, output, 1)
 
 
 
@@ -189,7 +191,7 @@ def convert_mslug(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 2)
+    convert_common_c(input, output, 2)
 
 def convert_rbffspec(input, output):
 
@@ -205,7 +207,7 @@ def convert_rbffspec(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 4)
+    convert_common_c(input, output, 4)
 
 def convert_magdrop3(input, output):
 
@@ -225,7 +227,7 @@ def convert_magdrop3(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 2)
+    convert_common_c(input, output, 2)
 
 def convert_shocktro(input, output):
 
@@ -245,7 +247,7 @@ def convert_shocktro(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 4)
+    convert_common_c(input, output, 4)
 
 def convert_mslug2(input, output):
 
@@ -262,15 +264,14 @@ def convert_mslug2(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
-    convert_common_c(input, output, 2, 2)
+    convert_common_c(input, output, 2)
 
 def convert_lastbld2(input, output):
 
     # Same ROM for MVS/AES
-    # CRC is incorrect for p*, otherwise all CRCs match
     # Shipped with AES BIOS
 
-    # All roms except PG1 and C have correct checksums
+    # All roms except PG1 have correct checksums
 
     output.createFile("pg1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
     output.createFile("pg2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
@@ -281,9 +282,26 @@ def convert_lastbld2(input, output):
 
     output.createFile("s1.s1", input.regions['S'].data)
 
+    convert_acm_c(input, output, 3)
+    
+def convert_shocktr2(input, output):
+
+    # Same ROM for MVS/AES
+    # Shipped with AES roms
+    # All roms except P2 and C has correct checksum
+
+    output.createFile("p1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+    output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
+
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
+
     # TODO: the C roms are replaced by ACM format
-    convert_common_c(input, output, 2, 3)
-    print "This game is NOT correctly exported yet (C roms are incorrect)"
+    output.createFile("ctest.ctest", input.regions['C'].data)
+    print "This game is NOT correctly exported yet (C roms are incorrect)"    
 
 def convert_mslugx(input, output):
 
@@ -340,7 +358,7 @@ def convert_mslug3(input, output):
     #output.createFile("ph2.sp2", getAsymmetricPart(input.regions['P'].data, 5504*KILOBYTE, 4*1024*KILOBYTE))
 
     # TODO: this gives incorrect files - they are decrypted, mame expects encrypted files, and they are too small, missing the S data at the end
-    convert_common_c(input, output, 2, 4)
+    convert_common_c(input, output, 4)
     output.createFile("Ctest.ctest", input.regions['C'].data)
 
     print "This game is NOT correctly exported yet (P, C and S roms are incorrect)"
@@ -378,7 +396,7 @@ def convert_generic_guess(input, output):
         split_region(input, output, 'V1', ['v11.v11'])
         split_region(input, output, 'V2', ['v21.v21'])
 
-    convert_common_c(input, output, 2, 2)
+    convert_common_c(input, output, 2)
 
 
 
@@ -401,26 +419,47 @@ def split_region(input, output, regionName, outputNameList):
         i = i+1
 
 
-# converts the C data region to several NNN-cN.cN-files. width and length varies between games.
-# width = must be 1, 2 or 4. Number of "stripes" the original data was divided into (and which we need to recreate).
+# converts the C data region to several NNN-cN.cN-files. length varies between games.
 # length = the number of striped blocks (must be 1 or more - 1,2,3,4 are common).
-# number of roms will be length*width
-# size per rom will be size of C region / (length*width)
-def convert_common_c(input, output, width, length):
+# number of roms will be length*2
+# size per rom will be size of C region / (length*2)
+def convert_common_c(input, output, length):
+    convert_c(input.regions['C'].data, output, length, [[0,2],[1,3]])
 
-    assert width == 1 or width == 2 or width == 4
+
+# converts the C data region to several NNN-cN.cN-files. length varies between games.
+# length = the number of striped blocks (must be 1 or more - 1,2,3,4 are common).
+# number of roms will be length*2
+# size per rom will be size of C region / (length*2)
+def convert_acm_c(input, output, length):
+    convert_c(neogeo_acm.decompressAcm(input.regions['C'].data), output, length, [[0,1],[2,3]])
+
+
+
+
+# converts the C data to several NNN-cN.cN-files. length varies between games.
+# length = the number of striped blocks (must be 1 or more - 1,2,3,4 are common).
+# stripeMap - An array with two items. Each item must be an array of two items. The four items must be 0,1,2,3.
+#   The stripes in the first array will placed in the odd C-roms, the second array in even C-roms.
+# number of roms will be length*2
+# size per rom will be size of C region / (length*2)
+def convert_c(data, output, length, stripeMap):
+
     assert length > 0
-    #assert len(input.regions['C'].data) % 4 == 0
+    width = 2
 
     for i in xrange(0, length):
         
         fileIndex = i*width + 1
-        dataPart =  getPartByDivision(input.regions['C'].data, i, length)
+        dataPart =  getPartByDivision(data, i, length)
+
+        # In original ROMs, bitplane 0 and 1 is in odd roms, and 1 and 2 is in even roms.
+        # In the VC large C data area, they are stored as bitplane 0, bitplane 2, bitplane 1, bitplane 4.
 
         for j in xrange(0,width):
             output.createFile(
                 "c" + str(fileIndex + j) + ".c" + str(fileIndex + j),
-                getStripes(dataPart, range(j, 4, width))
+                getStripes(dataPart, stripeMap[j])
             )
 
 
