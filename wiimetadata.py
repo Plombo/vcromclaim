@@ -235,6 +235,7 @@ class RomExtractor(object):
 			filename =  os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 			writerom(rom, filename)
 			print 'Got ROM: %s' % filename
+			#self.extractsave(outputPath)
 			return True
 
 		return False
@@ -243,6 +244,7 @@ class RomExtractor(object):
 		if (arc.hasfile("config.ini")):
 			extract_tgcd(arc, outputPath)
 			print "Got TurboGrafx CD image"
+			#self.extractsave(outputPath)
 			return True
 		else:
 			return False
@@ -468,6 +470,8 @@ class RomExtractor(object):
 		
 		for filename in datafiles:
 			path = os.path.join(datadir, filename)
+			#if self.channeltype == 'TurboGrafxCD' and filename != 'nocopy':
+			#	shutil.copy2(path, os.path.join(outputPath, filename))
 			if filename == 'savedata.bin':
 				if self.channeltype == 'SNES':
 					# VC SNES saves are standard SRM files
@@ -490,9 +494,7 @@ class RomExtractor(object):
 					return True
 			if filename == 'savefile.dat' and self.channeltype == 'Neo Geo':
 				# VC Neo Geo saves are memory card images, can be opened as is by mame
-				outputFolderName = os.path.join(outputPath, self.name)
-				self.ensure_folder_exists(outputFolderName)
-				shutil.copy2(path, os.path.join(outputFolderName, "memorycard.bin"))
+				shutil.copy2(path, os.path.join(outputPath, "memorycard.bin"))
 				return True
 			elif filename.startswith('EEP_') or filename.startswith('RAM_'):
 				assert self.channeltype == 'Nintendo 64'

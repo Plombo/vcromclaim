@@ -46,91 +46,96 @@ import struct
 def decompressAcm(inputAcmStr):
 
     def translateValue(byteValue):
+        translationtableEntryPos = TRANSLATION_TABLE_POS + (byteValue << 2)
+        char0 = inputArray[translationtableEntryPos+0]
+        char1 = inputArray[translationtableEntryPos+1]
+        char2 = inputArray[translationtableEntryPos+2]
+        char3 = inputArray[translationtableEntryPos+3]
 
-        translationtableEntryPos = TRANSLATION_TABLE_POS + (struct.unpack('B',byteValue)[0] << 2)
-        char0 = inputAcmStr[translationtableEntryPos+0]
-        char1 = inputAcmStr[translationtableEntryPos+1]
-        char2 = inputAcmStr[translationtableEntryPos+2]
-        char3 = inputAcmStr[translationtableEntryPos+3]
-
-        if char0 == '\x01':
-            retVal1 = translateValue(char1)
-
-        elif char0 == '\x00':
-
-            retVal1 = char1
+        if char0 == 0x1:
+            retVal = translateValue(char1)
+        elif char0 == 0x0:
+            retVal = bytearray([char1])
         else:
             raise ValueError(char0)
 
-        if char2 == '\x01':
-            retVal2 = translateValue(char3)
-        elif char2 == '\x00':
-            retVal2 = char3
+        if char2 == 0x1:
+            retVal.extend(translateValue(char3))
+        elif char2 == 0x0:
+            retVal.append(char3)
         else:
             raise ValueError(char2)
 
-        return retVal1 + retVal2
+        return retVal
 
     print "Decompressing ACM (this will take some time)..."
 
-    outputStr = ''
+    #assert(inputAcmStr[0:4] == 'ACM\x00')
 
-    assert(inputAcmStr[0:4] == 'ACM\x00')
+    inputArray = bytearray(inputAcmStr)
+    outputPosition = 0
 
-    blockCount = struct.unpack('>I', inputAcmStr[0x10:0x14])[0]
-    assert(inputAcmStr[0x14:0x18] == '\x00\x01\x00\x00')
+    blockCount = struct.unpack('>I', str(inputArray[0x10:0x14]))[0]
+
+    outputArray = bytearray(blockCount * 0x10000)
     TRANSLATION_TABLE_POS = 0x20
     BLOCK_TABLE_POS = 0x420
     BLOCK_TABLE_ENTRY_SIZE = 0x8
 
 
+    #perform translations all at once for faster processing of the compressed data
+    translations = [translateValue(i) for i in xrange(0x00,0x100)]
+
     for blockIndex in xrange(0, blockCount):
         assert blockIndex < blockCount
         
         blockTableEntryPos = BLOCK_TABLE_POS + BLOCK_TABLE_ENTRY_SIZE*blockIndex
-        blockTableEntry = struct.unpack('>IHxx', inputAcmStr[blockTableEntryPos:blockTableEntryPos+8])
+        blockTableEntry = struct.unpack('>IHxx', str(inputArray[blockTableEntryPos:blockTableEntryPos+8]))
         compressedDataStart = blockTableEntry[0]
         compressedDataLength = blockTableEntry[1]
         flagStart = compressedDataStart + compressedDataLength
 
-        newOutputStr = ''
-
         for compressedDataIndex in xrange(0, compressedDataLength):
+            
+            # read the flag after the compressed data
             useTranslation = (
                 (
                     (
                         (
                             (
-                                struct.unpack(
-                                    'B',
-                                    inputAcmStr[flagStart + (compressedDataIndex / 8)]
-                                )[0]
+                                inputArray[flagStart + (compressedDataIndex / 8)]
                             ) >> (7- (compressedDataIndex % 8))
-                        ) & 0x00000001
+                        ) & 0x1
                     )
                 )
-            ) == 1
+            ) == 0x1
 
             if useTranslation:
-                newOutputStr = newOutputStr + translateValue(inputAcmStr[compressedDataStart + compressedDataIndex])
+                translatedBytes = translations[inputArray[compressedDataStart + compressedDataIndex]]
+                for translatedByteIndex in xrange(0, len(translatedBytes)):
+                    outputArray[outputPosition] = translatedBytes[translatedByteIndex]
+                    outputPosition = outputPosition + 1
             else:
-                newOutputStr = newOutputStr + inputAcmStr[compressedDataStart + compressedDataIndex]
+                outputArray[outputPosition] = inputArray[compressedDataStart + compressedDataIndex]
+                outputPosition = outputPosition + 1
            
             
-        outputStr = outputStr + newOutputStr
-        assert len(newOutputStr) == 0x10000
-        newOutputStr = ''
+        #print "Exported block %s" % blockIndex
 
-    return convertToRegularSpriteData(outputStr)
+
+    assert outputPosition == blockCount * 0x10000
+
+    return convertToRegularSpriteData(outputArray)
 
 
         
 # Takes the CROM data that was decompressed from "ACM", and gives it in the normal Neo Geo format. (bitplanes 0,1,2,3 in one string, in that order)
-def convertToRegularSpriteData(decompressedAcm):
-    assert (len(decompressedAcm) % 0x80) == 0
-    output = ''
+def convertToRegularSpriteData(inputByteArray):
+    assert (len(inputByteArray) % 0x80) == 0
 
-    for spritePosition in xrange(0, len(decompressedAcm), 0x80):
+    outputByteArray = bytearray('\x00' * len(inputByteArray))
+
+    for spritePosition in xrange(0, len(inputByteArray), 0x80):
         # Each sprite is 16x16 = 256 pixels
         # Each sprite is stored as 128 bytes, both in input and output
         # Each pixel is always 4 bits (16 different colours).
@@ -138,9 +143,6 @@ def convertToRegularSpriteData(decompressedAcm):
         # In output (that matches the memory layout of the NG), each byte represents 1 bit = 1/4 of 8 pixels.
         #   Note that the output file then needs to be split into C1,C2,C3... files, as all other VC NG games
         
-        inputByteArray = bytearray(decompressedAcm[spritePosition : spritePosition + 0x80])
-        outputByteArray = bytearray(0x80)
-
         # read four bytes from the input file, convert them to four bytes in the output file.
 
         for inputIndex in xrange (0x00, 0x80, 0x04):
@@ -217,12 +219,9 @@ def convertToRegularSpriteData(decompressedAcm):
             else:
                 outputIndex = row * 0x4
 
-            outputByteArray[outputIndex+0] = ob0
-            outputByteArray[outputIndex+1] = ob1
-            outputByteArray[outputIndex+2] = ob2
-            outputByteArray[outputIndex+3] = ob3
+            outputByteArray[spritePosition + outputIndex + 0] = ob0
+            outputByteArray[spritePosition + outputIndex + 1] = ob1
+            outputByteArray[spritePosition + outputIndex + 2] = ob2
+            outputByteArray[spritePosition + outputIndex + 3] = ob3
 
-
-        output = output + str(outputByteArray)
-
-    return output
+    return str(outputByteArray)
