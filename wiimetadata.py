@@ -217,8 +217,14 @@ class RomExtractor(object):
 				return False
 	
 	def extractrom_tg16(self, arc, outputPath, filenameWithoutExtension):
-		
+
+		#for node in arc.files:
+		#	print node.name
 		config = arc.getfile('config.ini')
+		#writerom(config, os.path.join(outputPath, "config.ini"))
+		#savetemplate = arc.getfile('savedata.tpl')
+		#writerom(savetemplate, os.path.join(outputPath, "savedata.tpl"))
+
 		if not config:
 			print 'config.ini not found'
 			return False

@@ -64,11 +64,22 @@ Known Issues
   a lot of extra manual steps. See [neogeo_reame.txt](neogeo_readme.txt)
 * NEO GEO: A few Neo geo games are compressed using LZMA. At this time, these
   cannot be decompressed.
-* NEO GEO: The BIOS used for Neo Geo games (MVS or AES depending on game) is
-  included with the VC games and is extracted, but some of the support ROMs
-  (sfix and m1) are missing because are not needed for normal game play.
-  To make the games run in mame, dummy files are created, but some BIOS
-  functionality (such as management menu) is broken.
+* NEO GEO:
+  NG games play differently depending on if they are ran on an MVS (arcade machine) or an AES (home console.)
+  They also change content depending on the region of the hardware.
+  This is all determined by the emulator (e.g. MAME) and the system ROM.
+  The Wii NG games comes bundled with the main system ROM. Some games comes with an AES system ROM, other comes with an MVS system ROM.
+  All games comes with a japanese system ROM.
+  The ROM is patched to make the game think it's an american or european system, and the MVS ROM is patched so that the game thinks it is an AES system.
+
+  * If you want the game to run in English and have the same experience as on a US/EU Wii, use "XXX-patched-to-us-XXX" or "XXX-patched-to-eu-XXX".
+  * If you want the game to give an arcade experience ("insert coin" etc) use "jp-mvs" or "XXX-patched-to-XX-mvs" ROMs.
+  * If you want the game to give a home console experience (insert coin etc) use "jp-aes" or "XXX-patched-to-XX-aes" ROMs.
+  * If you want to be able to set DIP switches, or to be able to access the sytem menu, use "jp-mvs" or "jp-mvs-patched-to-XX-mvs" ROMs.
+  * If you want to have an experience as accurate as possible, use the "jp-mvs" or "jp-aes".
+  * As of now, there are audio issues, and the system menu is completley black (because SFIX is empty), if using an "XX-mvs", "XX-mvs-patched-to-XXX" or "XXX-patched-to-XX-mvs".
+  * The system ROMs are not bound to a game, so you can use system ROMs exported from one game to any other NG game.
+
 * A lot of games have simply been modified for VC.
   * For some games, the changes are minimal, for example the removal of flashing
     graphics. Known examples:

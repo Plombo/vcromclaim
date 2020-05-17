@@ -14,7 +14,7 @@ KILOBYTE = 1024
 # To run Neo Geo games in mame, place the two folders (the game folder and the aes/neogeo bios-folder)
 # to the "roms" in the mame folder.
 # You can move the folders from the BIOS folder to the game folder if you want.
-# You can also run an MVS game with AES rom or vice versa. Sometimes this will chagne the game.
+# You can also run an MVS game with AES rom or vice versa. Sometimes this will change the game.
 # To run a game such as magdrop3 with an AES rom:
 #       .\mame64 aes -cart magdrop3 -bios japan
 # To run a game such as kotm with an MVS (neogeo) rom:
@@ -454,45 +454,40 @@ def convert_common(input, output):
     # use SHA1 to identify it
 
     # These are the same hashes as on: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
-    biosProperties = {
-        "e92910e20092577a4523a6b39d578a71d4de7085": ["neogeo", "japan-j3.bin"], #Japan MVS (J3)
-        "4e4a440cae46f3889d20234aebd7f8d5f522e22c": ["aes", "neo-po.bin"] #Japan AES
+    biosList = {
+        "e92910e20092577a4523a6b39d578a71d4de7085": "mvs", #"japan-j3.bin"], #Japan MVS (J3)
+        "4e4a440cae46f3889d20234aebd7f8d5f522e22c": "aes", #"neo-po.bin"] #Japan AES
     }
 
     hexDigest = input.regions['BIOS'].getSha1HexDigest()
-    if biosProperties.has_key(hexDigest):
-        subFolder = biosProperties[hexDigest][0]
-        biosFileName = biosProperties[hexDigest][1]
-        if (subFolder == "neogeo"):
-            #It's an MVS ROM. Some support roms are missing, they are not required for the game to run but mame wont run if at least the files doesn't exist.
+    if biosList.has_key(hexDigest) and (biosList[hexDigest] == "mvs"):
+        convert_bios_files(input, output, 'mvs-jp',                   'japan-j3.bin', True,  True, 0x00, False)
+        convert_bios_files(input, output, 'mvs-jp-no-checksum-check', 'japan-j3.bin', True,  True, 0x00, True)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-us', 'japan-j3.bin', True,  True, 0x01, True)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-eu', 'japan-j3.bin', True,  True, 0x02, True)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-jp', 'japan-j3.bin', False, True, 0x00, True)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-us', 'japan-j3.bin', False, True, 0x01, True)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-eu', 'japan-j3.bin', False, True, 0x02, True)
 
-            # SFIX is only used on arcade machines, contains graphics to use when no cartridge is inserted
-            # A file filled with 0s is interpreted as transparent graphics
-            output.createFile('sfix.sfix', bytearray('\x00' * 0x20000), subFolder = subFolder)
-            # output.createFile('sfix.sfix', bytearray('\x11\x00\x10\x01\x01\x10\x00\x11\x11\x11\x10\x10\x10\x10\x11\x11\x11\x11\x01\x01\x01\x01\x11\x11\x11\x00\x01\x10\x10\x01\x00\x11' * (0x20000 / 32)), subFolder = subFolder)
-            # SM1 is only used on arcade machines, contains music program to use when no cartridge is inserted
-            output.createFile('sm1.sm1', bytearray('\x00' * 0x20000), subFolder = subFolder)
+        #It's an MVS ROM. Some support roms are missing, they are not required for the game to run but mame wont run if at least the files doesn't exist.
+        print "This game includes MVS (arcade) BIOS ROMs."
+        print "Pick the original or one of the patched sets, and play the game in MAME using:"
+        print "   .\\mame64 " + output.mameShortName + " -bios japan-mv1b"
+    elif biosList.has_key(hexDigest) and (biosList[hexDigest] == "aes"):
+        convert_bios_files(input, output, 'aes-jp',                   'neo-po.bin', False, False, 0x00, False)
+        convert_bios_files(input, output, 'aes-jp-patched-to-aes-us', 'neo-po.bin', False, False, 0x01, False)
+        convert_bios_files(input, output, 'aes-jp-patched-to-aes-eu', 'neo-po.bin', False, False, 0x02, False)
+        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-jp', 'neo-po.bin', True,  False, 0x00, False)
+        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-us', 'neo-po.bin', True,  False, 0x01, False)
+        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-eu', 'neo-po.bin', True,  False, 0x02, False)
 
-            print "This game includes MVS (arcade) BIOS ROMs. To run the game with this BIOS, run:"
-            print "   .\\mame64 " + output.mameShortName + " -bios japan-mv1b"
-        else:
-            # The only support rom is l0 which is created below
-
-            print "This game includes AES (home system) BIOS ROMs. To run the game with this BIOS, run:"
-            print "   .\\mame64 aes -cart " + output.mameShortName + " -bios japan"
+        # The only support rom is l0 which is created below
+        print "This game includes AES (arcade) BIOS ROMs."
+        print "Pick the original or one of the patched sets, and play the game in MAME using:"
+        print "   .\\mame64 aes -cart " + output.mameShortName + " -bios japan"
     else:
         print "Warning: The included BIOS is not recognized. SHA1 hash: " + hexDigest
-        subFolder = "bios"
-        biosFileName = "unknown-bios-" + hexDigest + ".bin"
-        output.createFile(biosFileName, input.regions['BIOS'].data, subFolder = subFolder)
-
-    #extract the main BIOS ROM
-    output.createFile(biosFileName, input.regions['BIOS'].data, subFolder = subFolder)
-
-
-    # 000-lo.lo is required for all games.
-    # On VC, the data exists in RAM, not sure if it is generated or decompressed from somewhere.
-    output.createFile('000-lo.lo', get_l0(), subFolder = subFolder)
+        output.createFile('unknown-bios', input.regions['BIOS'].data)
     
 
     #UNKNOWN DATA. should be zero but we might be missing something
@@ -503,6 +498,54 @@ def convert_common(input, output):
             print "WARNING: Game contains data which belongs to unknown ROM. Maybe additional system ROMs?"
             print "SHA1:" + input.regions[regionKey].getSha1HexDigest()
             output.createFile(regionKey + "." + regionKey, regionData)
+
+
+def convert_bios_files(input, output, biosOutputFolder, systemRomFileName, mvsFlag, actuallyMvs, regionByte, patchChecksumCheck):
+    fileName = 'japan-j3.bin' if actuallyMvs else 'neo-po.bin'
+    folderName = 'neogeo' if actuallyMvs else 'aes'
+    folderPath = os.path.join(biosOutputFolder, folderName)
+    
+    data = bytearray(input.regions['BIOS'].data)
+
+    # this tells games which region the game is in (00 = jap, 01 = us, 02 = eur)
+    # Wii usually patch this to 0x01
+    data[0x400] = regionByte
+
+    # this tells games whether it is an mvs or aes console.
+    # Wii usually patch this to 0x00
+    data[0x401] = 0x80 if mvsFlag else 0x00
+    
+    if (patchChecksumCheck):
+        # The above patches cause an internal checksum test to fail on MVS system roms.
+        # The Wii emulator does a similar patch.
+
+        for address in xrange(0x10C62, 0x10D44, 2):
+            # NOP instruction
+            data[address] = 0x71
+            data[address+1] = 0x4E
+
+        for address in xrange(0x10D86, 0x10D8A, 2):
+            # NOP instruction
+            data[address] = 0x71
+            data[address+1] = 0x4E
+
+
+    output.createFile(fileName, str(data), subFolder = folderPath)
+
+    # 000-lo.lo is required for all games.
+    # On VC, the data exists in RAM, not sure if it is generated or decompressed from somewhere.
+    output.createFile('000-lo.lo', get_l0(), subFolder = folderPath)
+
+    if (actuallyMvs):
+        # SFIX is only used on arcade machines, contains graphics to use when no cartridge is inserted
+        # A file filled with 0s is interpreted as transparent graphics
+        output.createFile('sfix.sfix', bytearray('\x00' * 0x20000), subFolder = folderPath)
+
+        # output.createFile('sfix.sfix', bytearray('\x11\x00\x10\x01\x01\x10\x00\x11\x11\x11\x10\x10\x10\x10\x11\x11\x11\x11\x01\x01\x01\x01\x11\x11\x11\x00\x01\x10\x10\x01\x00\x11' * (0x20000 / 32)), subFolder = subFolder)
+        # SM1 is only used on arcade machines, contains music program to use when no cartridge is inserted
+        output.createFile('sm1.sm1', bytearray('\x00' * 0x20000), subFolder = folderPath)
+
+
 
 
 

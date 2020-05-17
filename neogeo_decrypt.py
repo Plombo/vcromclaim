@@ -38,7 +38,7 @@ def decrypt_neogeo(titleIdString, fileString):
             cipher = AES.new(key, AES.MODE_CBC, iv=zeroIv)
             decryptedString = cipher.decrypt(encryptedString)
         except:
-            print "Encryption failed. Make sure PyCryptodome or PyCrypto is installed."
+            print "Decryption failed. Make sure PyCryptodome or PyCrypto is installed."
             return (False, encryptedString)
 
         assert len(decryptedString) == len(encryptedString)

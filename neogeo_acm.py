@@ -148,14 +148,14 @@ def convertToRegularSpriteData(inputByteArray):
         for inputIndex in xrange (0x00, 0x80, 0x04):
 
             # Read 8 pixels from 4 bytes. The & operation is not needed, but below we only use the four last bits.
-            ip0 = ((inputByteArray[inputIndex+0]) >> 4) # & 0x0F = 00001111
-            ip1 = ((inputByteArray[inputIndex+0]) >> 0) # & 0x0F
-            ip2 = ((inputByteArray[inputIndex+1]) >> 4) # & 0x0F
-            ip3 = ((inputByteArray[inputIndex+1]) >> 0) # & 0x0F
-            ip4 = ((inputByteArray[inputIndex+2]) >> 4) # & 0x0F
-            ip5 = ((inputByteArray[inputIndex+2]) >> 0) # & 0x0F
-            ip6 = ((inputByteArray[inputIndex+3]) >> 4) # & 0x0F
-            ip7 = ((inputByteArray[inputIndex+3]) >> 0) # & 0x0F
+            ip0 = ((inputByteArray[spritePosition + inputIndex + 0]) >> 4) # & 0x0F = 00001111
+            ip1 = ((inputByteArray[spritePosition + inputIndex + 0]) >> 0) # & 0x0F
+            ip2 = ((inputByteArray[spritePosition + inputIndex + 1]) >> 4) # & 0x0F
+            ip3 = ((inputByteArray[spritePosition + inputIndex + 1]) >> 0) # & 0x0F
+            ip4 = ((inputByteArray[spritePosition + inputIndex + 2]) >> 4) # & 0x0F
+            ip5 = ((inputByteArray[spritePosition + inputIndex + 2]) >> 0) # & 0x0F
+            ip6 = ((inputByteArray[spritePosition + inputIndex + 3]) >> 4) # & 0x0F
+            ip7 = ((inputByteArray[spritePosition + inputIndex + 3]) >> 0) # & 0x0F
 
 
             # Convert the bits to the bytes in the output format.
