@@ -1,15 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (Plombo)
 # Extracts an NES ROM or FDS image from a 00000001.app file from an NES Virtual Console game.
 
 import sys, struct, hashlib
 import copy
 from array import array
-from cStringIO import StringIO
+from io import BytesIO
 import lz77
 
 
-NES_HEADER_MAGIC_WORD = 'NES\x1a'
+NES_HEADER_MAGIC_WORD = b'NES\x1a'
 
 #VCI file format used by Virtual console
 VCI_DISK_SIDE_LENGTH = 0x10000
@@ -17,8 +17,8 @@ VCI_DISK_SIDE_LENGTH = 0x10000
 #.fds file format used by common emulators
 #OUTPUT FORMAT: (fds format as described here: https://wiki.nesdev.com/w/index.php/Family_Computer_Disk_System)
 #Byte 00-03 = FDS\x1a
-FDS_MAGIC_WORD = bytearray(['F','D','S',0x1a])
-FDS_MAGIC_WORD_LENGTH = 0x4
+FDS_MAGIC_WORD = b'FDS\x1A'
+FDS_MAGIC_WORD_LENGTH = len(FDS_MAGIC_WORD)
 #Byte 04 = number of sides (0x01, 0x02)
 FDS_SIDE_COUNT_POSITION = 0x04
 FDS_SIDE_SIZE = 0x01
@@ -29,8 +29,8 @@ FDS_HEADER_LENGTH = 0x10
 FDS_DISK_SIDE_LENGTH = 0x0FFDC
 
 #original data on disks/ROMs
-FDS_SIDE_HEADER_MAGIC_WORD = '\x01*NINTENDO-HVC*'
-FDS_BIOS_HEADER_MAGIC_WORD = '\x00\x38\x4C\xC6\xC6\xC6\x64\x38\x00\x18\x38\x18\x18\x18\x18\x7E'
+FDS_SIDE_HEADER_MAGIC_WORD = b'\x01*NINTENDO-HVC*'
+FDS_BIOS_HEADER_MAGIC_WORD = b'\x00\x38\x4C\xC6\xC6\xC6\x64\x38\x00\x18\x38\x18\x18\x18\x18\x7E'
 
 
 def extract_fds_bios_from_app(app1, tryLZ77 = True):
@@ -39,13 +39,13 @@ def extract_fds_bios_from_app(app1, tryLZ77 = True):
 		app1.seek(fdsBiosOffset)
 		fileData = app1.read(0x2000) # = 8 KiB
 		fileHash = hashlib.md5(fileData)
-		print "Found FDS BIOS ROM with hash: " + fileHash.hexdigest()
+		print("Found FDS BIOS ROM with hash: " + fileHash.hexdigest())
 
-		return StringIO(fileData)
+		return BytesIO(fileData)
 	
 	if tryLZ77:
 		try:
-			return extract_fds_bios_from_app(StringIO(lz77.decompress_lz77_11(app1, 4, 5 * 1024 * 1024)), False)
+			return extract_fds_bios_from_app(BytesIO(lz77.decompress_lz77_11(app1, 4, 5 * 1024 * 1024)), False)
 		except IndexError:
 			return None
 
@@ -55,7 +55,7 @@ def extract_fds_bios_from_app(app1, tryLZ77 = True):
 
 # return:
 # 	result = 0 (neither cartridge or FDS), 1 (cartridge), or 2 (FDS)
-#	output = the rom/disk image data as StringIO with iNES or FDS header 
+#	output = the rom/disk image data as BytesIO with iNES or FDS header 
 def extract_nes_file_from_app(app1, tryLZ77 = True):
 	
 	cartridgeRomOffset = find_cartridge_header_in_app(app1)
@@ -64,7 +64,7 @@ def extract_nes_file_from_app(app1, tryLZ77 = True):
 
 	fdsImageOffset = find_fds_header_in_app(app1)
 	if fdsImageOffset >= 0:
-		return (2, StringIO(get_vci_image_as_fds_image(get_vci_body_in_app(app1, fdsImageOffset))))
+		return (2, BytesIO(get_vci_image_as_fds_image(get_vci_body_in_app(app1, fdsImageOffset))))
 
 	# some app files are compressed. decompress the entire file.
 	# it seems the ROMs are decompressed properly even if we do not start the decompression at the ROM's start position.
@@ -77,12 +77,12 @@ def extract_nes_file_from_app(app1, tryLZ77 = True):
 		
 		try:
 			#try to autodetect format
-			(result, output) = extract_nes_file_from_app(StringIO(lz77.decompress_nonN64(app1)), False)
+			(result, output) = extract_nes_file_from_app(BytesIO(lz77.decompress_nonN64(app1)), False)
 			return (result, output)
 		except ValueError:
 			try:
 				#try brutally decompressing the entire file
-				(result, output) = extract_nes_file_from_app(StringIO(lz77.decompress_lz77_11(app1, 4, 5 * 1024 * 1024)), False)
+				(result, output) = extract_nes_file_from_app(BytesIO(lz77.decompress_lz77_11(app1, 4, 5 * 1024 * 1024)), False)
 				return (result, output)
 			except IndexError:
 				return (0,None)
@@ -107,7 +107,7 @@ def find_cartridge_header_in_app(inputFile):
 		else:
 			#check if header byte B-F is zeroes, to skip some false positives
 			inputFile.seek(position + 0xB)
-			if inputFile.read(5) == '\x00\x00\x00\x00\x00':
+			if inputFile.read(5) == b'\x00\x00\x00\x00\x00':
 				# most likely a NES header
 				return position
 			else:
@@ -128,7 +128,7 @@ def get_cartridge_in_app(inputFile, start):
 	size += 16 * 1024 * struct.unpack(">B", inputFile.read(1))[0] # next byte: number of PRG banks, 16KB each
 	size += 8 * 1024 * struct.unpack(">B", inputFile.read(1))[0] # next byte: number of CHR banks, 8KB each
 	inputFile.seek(start)
-	return StringIO(inputFile.read(size))
+	return BytesIO(inputFile.read(size))
 
 # Returns the body as an array - all sides of the game, but with no header, in the Wii format (VCI)
 def get_vci_body_in_app(inputFile, start):
@@ -166,13 +166,13 @@ def get_vci_body_in_app(inputFile, start):
 def get_vci_image_as_fds_image(vciImage):
 	#convert the VCI image to the FDS file format.
 
-	numberOfSides = len(vciImage) / VCI_DISK_SIDE_LENGTH
+	numberOfSides = int(len(vciImage) / VCI_DISK_SIDE_LENGTH)
 
 	outputArray = array('B', FDS_MAGIC_WORD)
 	outputArray.extend([numberOfSides])
-	outputArray.extend(array('B', '\0' * (FDS_HEADER_LENGTH - FDS_MAGIC_WORD_LENGTH - FDS_SIDE_SIZE)) )
+	outputArray.extend(array('B', b'\0' * (FDS_HEADER_LENGTH - FDS_MAGIC_WORD_LENGTH - FDS_SIDE_SIZE)) )
 
-	for sideIndex in xrange(0, numberOfSides):
+	for sideIndex in range(0, numberOfSides):
 		outputArray.extend(get_vci_side_as_fds_side(vciImage, sideIndex*VCI_DISK_SIDE_LENGTH))
 
 	return outputArray
@@ -185,17 +185,17 @@ def get_vci_side_as_fds_side(vciImage, vciSideStart):
 
 	#checksum is NOT included in these lengths.
 	BLOCK_1_LENGTH = 0x38 #Side header
-	BLOCK_1_HEADER = '\x01'
+	BLOCK_1_HEADER = b'\x01'
 	
 	BLOCK_2_LENGTH = 0x02 #Number of files on the side - though some disks lie to improve load times. have to scan the entire side!
-	BLOCK_2_HEADER = '\x02'
+	BLOCK_2_HEADER = b'\x02'
 	
 	BLOCK_3_LENGTH = 0x10 #File header
-	BLOCK_3_HEADER = '\x03'
+	BLOCK_3_HEADER = b'\x03'
 	BLOCK_3_SIZE_OF_BLOCK_4_POSITION = 0xD # Position of little endian 2 byte value that defines the size of the block 4 data (excluding header and checksum)
 	BLOCK_3_SIZE_OF_BLOCK_4_SIZE = 0x2
 
-	BLOCK_4_HEADER = '\x04'
+	BLOCK_4_HEADER = b'\x04'
 	BLOCK_4_HEADER_LENGTH = 0x1
 	#Blocks are 1,2,[(3,4),(3,4),(3,4),...]. after the last file is padded with 0 till the end of the side.
 
@@ -217,7 +217,7 @@ def get_vci_side_as_fds_side(vciImage, vciSideStart):
 		side.extend(get_fds_block_from_vci_image(vciImage, inputPosition, block4length, BLOCK_4_HEADER))
 		inputPosition += block4length + CHECKSUM_LENGTH
 
-	side.extend(array('B', '\0' * (FDS_DISK_SIDE_LENGTH - len(side))))
+	side.extend(array('B', b'\0' * (FDS_DISK_SIDE_LENGTH - len(side))))
 	return side
 
 # returns True if the block at inputStart matches the header.
@@ -288,10 +288,10 @@ def convert_nes_save_data(originalFilePath, outputPathWithoutExtension, appFile)
 		infile = open(originalFilePath, 'rb')
 		
 		firstFourBytes = infile.read(4)
-		if firstFourBytes == '\x00\x00\x00\x00':
-			print 'Save file was found, but it was empty. This is normal if nothing has been saved in the game.'
+		if firstFourBytes == b'\x00\x00\x00\x00':
+			print('Save file was found, but it was empty. This is normal if nothing has been saved in the game.')
 			return False
-		elif firstFourBytes == 'EBDM':
+		elif firstFourBytes == b'EBDM':
 			infile.seek(40)
 			savePayloadSize = struct.unpack('>I', infile.read(4))[0]
 			assert savePayloadSize >= 1
@@ -321,7 +321,7 @@ def apply_patch(originalFile, patch):
 			break
 		else:
 			#get patch offset
-			byteArray = array('B', '\x00')
+			byteArray = array('B', b'\x00')
 			byteArray.extend(patch[i:i+3])
 			offset = struct.unpack('>I', array('B', byteArray))[0]
 			assert offset >= 0
@@ -351,7 +351,7 @@ if __name__ == '__main__':
 	result, output = extract_nes_file_from_app(f)
 	f.close()
 	if result <= 0:
-		print "No rom or disk image found in file!"
+		print("No rom or disk image found in file!")
 	else:
 		if result == 1:
 			filename = sys.argv[2] + ".nes"
@@ -361,5 +361,5 @@ if __name__ == '__main__':
 		f2 = open(filename, 'wb')
 		f2.write(output.read())
 		f2.close()
-		print 'Done!'
+		print('Done!')
 	

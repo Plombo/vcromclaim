@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+import sys
+
 # Decompress ACM files, used by some Neo Geo games on the Virtual Console.
 # Reverse engineered by JanErikGunnar using Dolphin.
 
@@ -68,14 +72,10 @@ def decompressAcm(inputAcmStr):
 
         return retVal
 
-    print "Decompressing ACM (this will take some time)..."
-
-    #assert(inputAcmStr[0:4] == 'ACM\x00')
-
     inputArray = bytearray(inputAcmStr)
     outputPosition = 0
 
-    blockCount = struct.unpack('>I', str(inputArray[0x10:0x14]))[0]
+    blockCount = struct.unpack('>I', inputArray[0x10:0x14])[0]
 
     outputArray = bytearray(blockCount * 0x10000)
     TRANSLATION_TABLE_POS = 0x20
@@ -84,18 +84,18 @@ def decompressAcm(inputAcmStr):
 
 
     #perform translations all at once for faster processing of the compressed data
-    translations = [translateValue(i) for i in xrange(0x00,0x100)]
+    translations = [translateValue(i) for i in range(0x00,0x100)]
 
-    for blockIndex in xrange(0, blockCount):
+    for blockIndex in range(0, blockCount):
         assert blockIndex < blockCount
         
         blockTableEntryPos = BLOCK_TABLE_POS + BLOCK_TABLE_ENTRY_SIZE*blockIndex
-        blockTableEntry = struct.unpack('>IHxx', str(inputArray[blockTableEntryPos:blockTableEntryPos+8]))
+        blockTableEntry = struct.unpack('>IHxx', inputArray[blockTableEntryPos:blockTableEntryPos+8])
         compressedDataStart = blockTableEntry[0]
         compressedDataLength = blockTableEntry[1]
         flagStart = compressedDataStart + compressedDataLength
 
-        for compressedDataIndex in xrange(0, compressedDataLength):
+        for compressedDataIndex in range(0, compressedDataLength):
             
             # read the flag after the compressed data
             useTranslation = (
@@ -103,7 +103,7 @@ def decompressAcm(inputAcmStr):
                     (
                         (
                             (
-                                inputArray[flagStart + (compressedDataIndex / 8)]
+                                inputArray[flagStart + int(compressedDataIndex / 8)]
                             ) >> (7- (compressedDataIndex % 8))
                         ) & 0x1
                     )
@@ -112,7 +112,7 @@ def decompressAcm(inputAcmStr):
 
             if useTranslation:
                 translatedBytes = translations[inputArray[compressedDataStart + compressedDataIndex]]
-                for translatedByteIndex in xrange(0, len(translatedBytes)):
+                for translatedByteIndex in range(0, len(translatedBytes)):
                     outputArray[outputPosition] = translatedBytes[translatedByteIndex]
                     outputPosition = outputPosition + 1
             else:
@@ -120,10 +120,13 @@ def decompressAcm(inputAcmStr):
                 outputPosition = outputPosition + 1
            
             
-        #print "Exported block %s" % blockIndex
+        sys.stdout.write("\rDecompressed ACM block %d of %d (%5.2f%%)" % (blockIndex+1, blockCount, 100.0 * blockIndex / blockCount))
+        sys.stdout.flush()
 
 
     assert outputPosition == blockCount * 0x10000
+
+    print() # start a new line after the progress counter
 
     return convertToRegularSpriteData(outputArray)
 
@@ -133,9 +136,9 @@ def decompressAcm(inputAcmStr):
 def convertToRegularSpriteData(inputByteArray):
     assert (len(inputByteArray) % 0x80) == 0
 
-    outputByteArray = bytearray('\x00' * len(inputByteArray))
+    outputByteArray = bytearray(b'\x00' * len(inputByteArray))
 
-    for spritePosition in xrange(0, len(inputByteArray), 0x80):
+    for spritePosition in range(0, len(inputByteArray), 0x80):
         # Each sprite is 16x16 = 256 pixels
         # Each sprite is stored as 128 bytes, both in input and output
         # Each pixel is always 4 bits (16 different colours).
@@ -145,7 +148,7 @@ def convertToRegularSpriteData(inputByteArray):
         
         # read four bytes from the input file, convert them to four bytes in the output file.
 
-        for inputIndex in xrange (0x00, 0x80, 0x04):
+        for inputIndex in range (0x00, 0x80, 0x04):
 
             # Read 8 pixels from 4 bytes. The & operation is not needed, but below we only use the four last bits.
             ip0 = ((inputByteArray[spritePosition + inputIndex + 0]) >> 4) # & 0x0F = 00001111
@@ -224,4 +227,9 @@ def convertToRegularSpriteData(inputByteArray):
             outputByteArray[spritePosition + outputIndex + 2] = ob2
             outputByteArray[spritePosition + outputIndex + 3] = ob3
 
-    return str(outputByteArray)
+        sys.stdout.write("\rConverted sprite %d of %d (%5.2f%%)" % (int(spritePosition / 0x80), int(len(inputByteArray) / 0x80), 100.0 * spritePosition / len(inputByteArray)))
+        sys.stdout.flush()
+
+    print() # start a new line after the progress counter
+
+    return outputByteArray

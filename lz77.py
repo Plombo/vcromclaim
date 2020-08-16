@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (Plombo)
 # Original WiiLZ77 class by Hector Martin (marcan)
 # Date: December 30, 2010
@@ -6,34 +6,34 @@
 
 import sys, os, struct
 from array import array
-from cStringIO import StringIO
+from io import BytesIO
 import romchu
 
 def decompress_lz77_lzss(file, inputOffset, outputLength):
 
-	#print "Decompressing LZ77/LZSS"
+	#print("Decompressing LZ77/LZSS")
 
-	dout = array('c', '\0' * outputLength)
+	dout = array('B', b'\0' * outputLength)
 	file.seek(inputOffset)
 	outputOffset = 0
 
 	while outputOffset < outputLength:
-		flags = ord(file.read(1))
+		flags = file.read(1)[0]
 
-		for i in xrange(8):
+		for i in range(8):
 			if flags & 0x80:
 				info = struct.unpack(">H", file.read(2))[0]
 				num = 3 + (info>>12)
 				disp = info & 0xFFF
 				ptr = outputOffset - disp - 1
-				for i in xrange(num):
+				for i in range(num):
 					dout[outputOffset] = dout[ptr]
 					ptr += 1
 					outputOffset += 1
 					if outputOffset >= outputLength:
 						break
 			else:
-				dout[outputOffset] = file.read(1)
+				dout[outputOffset] = file.read(1)[0]
 				outputOffset += 1
 			flags <<= 1
 			if outputOffset >= outputLength:
@@ -42,9 +42,9 @@ def decompress_lz77_lzss(file, inputOffset, outputLength):
 	return dout
 
 def decompress_lz77_11(file, inputOffset, outputLength):
-	#print "Decompressing LZ77 mode 11"
+	#print("Decompressing LZ77 mode 11"()
 
-	dout = array('c', '\0'*outputLength)
+	dout = array('B', b'\0'*outputLength)
 
 	file.seek(inputOffset)
 	outputOffset = 0
@@ -52,9 +52,9 @@ def decompress_lz77_11(file, inputOffset, outputLength):
 
 	while outputOffset < outputLength:
 	
-		flags = ord(file.read(1))
+		flags = file.read(1)[0]
 
-		for i in xrange(7, -1, -1):
+		for i in range(7, -1, -1):
 			if (flags & (1<<i)) > 0:
 				info = struct.unpack(">H", file.read(2))[0]
 				ptr, num = 0, 0
@@ -64,20 +64,20 @@ def decompress_lz77_11(file, inputOffset, outputLength):
 						ptr = outputOffset - (info2 & 0xFFF) - 1
 						num = (((info & 0xFFF) << 4) | (info2 >> 12)) + 273
 					else:
-						info2 = ord(file.read(1))
+						info2 = file.read(1)[0]
 						ptr = outputOffset - (((info & 0xF) << 8) | info2) - 1
 						num = ((info&0xFF0)>>4) + 17
 				else:
 					ptr = outputOffset - (info & 0xFFF) - 1
 					num = (info>>12) + 1
-				for i in xrange(num):
+				for i in range(num):
 					dout[outputOffset] = dout[ptr]
 					outputOffset += 1
 					ptr += 1
 					if outputOffset >= outputLength:
 						break
 			else:
-				dout[outputOffset] = file.read(1)
+				dout[outputOffset] = file.read(1)[0]
 				outputOffset += 1
 			
 			if outputOffset >= outputLength:
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 		du = decompress_nonN64(f)
 	
 	end = time.clock()
-	print 'Time: %.2f seconds' % (end - start)
+	print('Time: %.2f seconds' % (end - start))
 		
 	f2 = open(sys.argv[2], 'wb')
 	f2.write(''.join(du))

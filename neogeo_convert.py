@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import struct, os, hashlib
 
@@ -48,11 +48,11 @@ def convert_neogeo(inputFile, outputFolder):
         '263': (convert_mslug4, "mslug4")
     }
 
-    if supportedGames.has_key(ngh):
+    if supportedGames.__contains__(ngh):
         mameShortName = supportedGames[ngh][1]
         func = supportedGames[ngh][0]
     else:
-        print "Game is unknown. You will have to rename the folder and probably have to split, merge and/or byteswap the ROM files."
+        print("Game is unknown. You will have to rename the folder and probably have to split, merge and/or byteswap the ROM files.")
         mameShortName = "NGM-" + ngh
         func = convert_generic_guess
 
@@ -352,7 +352,7 @@ def convert_mslug3(input, output):
     # C files are not correct, they are decrypted but mame expects encrypted version.
     convert_common_c(input, output, 4)
 
-    print "This game is NOT correctly exported yet"
+    print("This game is NOT correctly exported yet")
 
 
 def convert_mslug4(input, output):
@@ -374,7 +374,7 @@ def convert_mslug4(input, output):
     # C files are not correct, they are decrypted but mame expects encrypted version. They do have crap at the end that is probably the S1 data1, encrypted or not.
     convert_common_c(input, output, 3)
 
-    print "This game is NOT correctly exported yet"
+    print("This game is NOT correctly exported yet")
 
 def convert_generic_guess(input, output):
     output.createFile("p1.p1", input.regions['P'].data)
@@ -402,7 +402,7 @@ def convert_generic_guess(input, output):
 
 
 def split_region(input, output, regionName, outputNameList):
-    sizePerPart = len(input.regions[regionName].data) / len(outputNameList)
+    sizePerPart = int(len(input.regions[regionName].data) / len(outputNameList))
     i = 0
     for outputName in outputNameList:
         output.createFile(outputName, getPart(input.regions[regionName].data, i, sizePerPart))
@@ -414,7 +414,7 @@ def split_region(input, output, regionName, outputNameList):
 # number of roms will be length*2
 # size per rom will be size of C region / (length*2)
 def convert_common_c(input, output, length):
-    if input.regions['C'].data[0:3] == 'ACM':
+    if input.regions['C'].data[0:3] == b'ACM':
         convert_c(neogeo_acm.decompressAcm(input.regions['C'].data), output, length, [[0,1],[2,3]])
     else:
         convert_c(input.regions['C'].data, output, length, [[0,2],[1,3]])
@@ -433,7 +433,7 @@ def convert_c(data, output, length, stripeMap):
     assert length > 0
     width = 2
 
-    for i in xrange(0, length):
+    for i in range(0, length):
         
         fileIndex = i*width + 1
         dataPart =  getPartByDivision(data, i, length)
@@ -441,7 +441,7 @@ def convert_c(data, output, length, stripeMap):
         # In original ROMs, bitplane 0 and 1 is in odd roms, and 1 and 2 is in even roms.
         # In the VC large C data area, they are stored as bitplane 0, bitplane 2, bitplane 1, bitplane 4.
 
-        for j in xrange(0,width):
+        for j in range(0,width):
             output.createFile(
                 "c" + str(fileIndex + j) + ".c" + str(fileIndex + j),
                 getStripes(dataPart, stripeMap[j])
@@ -460,7 +460,7 @@ def convert_common(input, output):
     }
 
     hexDigest = input.regions['BIOS'].getSha1HexDigest()
-    if biosList.has_key(hexDigest) and (biosList[hexDigest] == "mvs"):
+    if biosList.__contains__(hexDigest) and (biosList[hexDigest] == "mvs"):
         convert_bios_files(input, output, 'mvs-jp',                   'japan-j3.bin', True,  True, 0x00, False)
         convert_bios_files(input, output, 'mvs-jp-no-checksum-check', 'japan-j3.bin', True,  True, 0x00, True)
         convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-us', 'japan-j3.bin', True,  True, 0x01, True)
@@ -470,10 +470,10 @@ def convert_common(input, output):
         convert_bios_files(input, output, 'mvs-jp-patched-to-aes-eu', 'japan-j3.bin', False, True, 0x02, True)
 
         #It's an MVS ROM. Some support roms are missing, they are not required for the game to run but mame wont run if at least the files doesn't exist.
-        print "This game includes MVS (arcade) BIOS ROMs."
-        print "Pick the original or one of the patched sets, and play the game in MAME using:"
-        print "   .\\mame64 " + output.mameShortName + " -bios japan-mv1b"
-    elif biosList.has_key(hexDigest) and (biosList[hexDigest] == "aes"):
+        print("This game includes MVS (arcade) BIOS ROMs.")
+        print("Pick the original or one of the patched sets, and play the game in MAME using:")
+        print("   .\\mame64 " + output.mameShortName + " -bios japan-mv1b")
+    elif biosList.__contains__(hexDigest) and (biosList[hexDigest] == "aes"):
         convert_bios_files(input, output, 'aes-jp',                   'neo-po.bin', False, False, 0x00, False)
         convert_bios_files(input, output, 'aes-jp-patched-to-aes-us', 'neo-po.bin', False, False, 0x01, False)
         convert_bios_files(input, output, 'aes-jp-patched-to-aes-eu', 'neo-po.bin', False, False, 0x02, False)
@@ -482,21 +482,21 @@ def convert_common(input, output):
         convert_bios_files(input, output, 'aes-jp-patched-to-mvs-eu', 'neo-po.bin', True,  False, 0x02, False)
 
         # The only support rom is l0 which is created below
-        print "This game includes AES (arcade) BIOS ROMs."
-        print "Pick the original or one of the patched sets, and play the game in MAME using:"
-        print "   .\\mame64 aes -cart " + output.mameShortName + " -bios japan"
+        print("This game includes AES (arcade) BIOS ROMs.")
+        print("Pick the original or one of the patched sets, and play the game in MAME using:")
+        print("   .\\mame64 aes -cart " + output.mameShortName + " -bios japan")
     else:
-        print "Warning: The included BIOS is not recognized. SHA1 hash: " + hexDigest
+        print("Warning: The included BIOS is not recognized. SHA1 hash: " + hexDigest)
         output.createFile('unknown-bios', input.regions['BIOS'].data)
     
 
     #UNKNOWN DATA. should be zero but we might be missing something
-    for i in xrange(1,8):
+    for i in range(1,8):
         regionKey = 'X' + str(i)
         regionData = input.regions[regionKey].data
         if len(regionData) > 0:
-            print "WARNING: Game contains data which belongs to unknown ROM. Maybe additional system ROMs?"
-            print "SHA1:" + input.regions[regionKey].getSha1HexDigest()
+            print("WARNING: Game contains data which belongs to unknown ROM. Maybe additional system ROMs?")
+            print("SHA1:" + input.regions[regionKey].getSha1HexDigest())
             output.createFile(regionKey + "." + regionKey, regionData)
 
 
@@ -519,18 +519,18 @@ def convert_bios_files(input, output, biosOutputFolder, systemRomFileName, mvsFl
         # The above patches cause an internal checksum test to fail on MVS system roms.
         # The Wii emulator does a similar patch.
 
-        for address in xrange(0x10C62, 0x10D44, 2):
+        for address in range(0x10C62, 0x10D44, 2):
             # NOP instruction
             data[address] = 0x71
             data[address+1] = 0x4E
 
-        for address in xrange(0x10D86, 0x10D8A, 2):
+        for address in range(0x10D86, 0x10D8A, 2):
             # NOP instruction
             data[address] = 0x71
             data[address+1] = 0x4E
 
 
-    output.createFile(fileName, str(data), subFolder = folderPath)
+    output.createFile(fileName, data, subFolder = folderPath)
 
     # 000-lo.lo is required for all games.
     # On VC, the data exists in RAM, not sure if it is generated or decompressed from somewhere.
@@ -539,11 +539,11 @@ def convert_bios_files(input, output, biosOutputFolder, systemRomFileName, mvsFl
     if (actuallyMvs):
         # SFIX is only used on arcade machines, contains graphics to use when no cartridge is inserted
         # A file filled with 0s is interpreted as transparent graphics
-        output.createFile('sfix.sfix', bytearray('\x00' * 0x20000), subFolder = folderPath)
+        output.createFile('sfix.sfix', bytearray(b'\x00' * 0x20000), subFolder = folderPath)
 
         # output.createFile('sfix.sfix', bytearray('\x11\x00\x10\x01\x01\x10\x00\x11\x11\x11\x10\x10\x10\x10\x11\x11\x11\x11\x01\x01\x01\x01\x11\x11\x11\x00\x01\x10\x10\x01\x00\x11' * (0x20000 / 32)), subFolder = subFolder)
         # SM1 is only used on arcade machines, contains music program to use when no cartridge is inserted
-        output.createFile('sm1.sm1', bytearray('\x00' * 0x20000), subFolder = folderPath)
+        output.createFile('sm1.sm1', bytearray(b'\x00' * 0x20000), subFolder = folderPath)
 
 
 
@@ -572,7 +572,7 @@ def get_l0_half():
             byte = first_nibble*0x10 + second_nibble
             row.append(byte)
             row.sort()
-            output = output + bytearray(row) + ('\xFF' * (0x100 - len(row)))
+            output = output + bytearray(row) + (b'\xFF' * (0x100 - len(row)))
     
     return output
 
@@ -613,8 +613,8 @@ class region(object):
     def __init__(self, parentInputProcessor, indexInOldHeader, indexInRom0Header, byteSwappedRegion = False):
         
         def byteSwap(fileData):
-            intdata = struct.unpack('>' + str(len(fileData)/2) + 'H', fileData)
-            return struct.pack('<' + str(len(fileData)/2) + 'H', *intdata)
+            intdata = struct.unpack('>' + str(int(len(fileData)/2)) + 'H', fileData)
+            return struct.pack('<' + str(int(len(fileData)/2)) + 'H', *intdata)
         
         self.indexInOldHeader = indexInOldHeader
         self.indexInRom0Header = indexInRom0Header
@@ -671,13 +671,13 @@ class input_processor(object):
 
         self.inputFile.seek(0)
         firstBytesOfHeader = self.inputFile.read(4)
-        if (firstBytesOfHeader == 'ROM0') and (indexInRom0Header >= 0):
+        if (firstBytesOfHeader == b'ROM0') and (indexInRom0Header >= 0):
             position = HEADER_LENGTH
-            for i in xrange(0, indexInRom0Header):
+            for i in range(0, indexInRom0Header):
                 position += struct.unpack('>I', self.inputFile.read(4)) [0]
             length = struct.unpack('>I', self.inputFile.read(4)) [0]
             return (position, length)
-        elif (firstBytesOfHeader != 'ROM0') and indexInOldHeader >= 0:
+        elif (firstBytesOfHeader != b'ROM0') and indexInOldHeader >= 0:
             self.inputFile.seek(indexInOldHeader * 8)
             pair = struct.unpack('>2I', self.inputFile.read(8))
             position = pair[0]

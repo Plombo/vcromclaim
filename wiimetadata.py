@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (Plombo)
 # Date: December 27, 2010
 # Description: Reads Wii title metadata from an extracted NAND dump.
@@ -6,7 +6,7 @@
 # reference in writing this program.
 
 import os, os.path, struct, shutil, re, zlib
-from cStringIO import StringIO
+from io import BytesIO
 import gensave, n64save
 from u8archive import U8Archive
 from ccfarchive import CCFArchive
@@ -61,9 +61,9 @@ class RomExtractor(object):
 			if self.extractmanual(app, os.path.join(self.channeltype, self.name, 'manual')): manual_extracted = True
 		
 		if rom_extracted and manual_extracted: return
-		elif rom_extracted: print 'Unable to extract manual.'
-		elif manual_extracted: print 'Unable to extract ROM.'
-		else: print 'Unable to extract ROM and manual.'
+		elif rom_extracted: print('Unable to extract manual.')
+		elif manual_extracted: print('Unable to extract ROM.')
+		else: print('Unable to extract ROM and manual.')
 	
 	# Actually extract the ROM
 	# Currently works for almost all NES, SNES, N64, TG16, Master System, and Genesis ROMs.
@@ -109,7 +109,6 @@ class RomExtractor(object):
 		else:
 			return False
 	
-	# FIXME: use string instead of StringIO
 	def extractrom_nes(self, u8path, outputPath, filenameWithoutExtension):
 		if not os.path.exists(u8path): return False
 		
@@ -123,7 +122,7 @@ class RomExtractor(object):
 				try:
 					hasExportedSaveData = convert_nes_save_data(saveFilePath, os.path.join(outputPath, self.name), f)
 				except:
-					print 'Failed to extract save file(s)' 
+					print('Failed to extract save file(s)')
 					pass
 
 		f.close()
@@ -133,22 +132,22 @@ class RomExtractor(object):
 
 			# make sure save flag is set if the game has save data - not sure which games this is used for?
 			if hasExportedSaveData:
-				if not (ord(output.getvalue()[6]) & 2):
+				if not (output.getvalue()[6] & 2):
 					output = list(output.getvalue())
-					output[6] = chr(ord(output[6]) | 2)
-					output = StringIO(''.join(output))
-					print 'Set the save flag to true'
+					output[6] = output[6] | 2
+					output = BytesIO(''.join(output))
+					print('Set the save flag to true')
 
 			filename = os.path.join(outputPath, filenameWithoutExtension + ".nes")
 
-			print 'Got ROM: %s' % filename
+			print('Got ROM: %s' % filename)
 
 		elif result == 2:
 			# FDS
 			
 			filename = os.path.join(outputPath, filenameWithoutExtension + ".fds")
 
-			print 'Got FDS image: %s' % filename
+			print('Got FDS image: %s' % filename)
 
 		else:
 			return False
@@ -156,7 +155,7 @@ class RomExtractor(object):
 		writerom(output, filename)
 
 		if hasExportedSaveData:
-			print 'Extracted save data'
+			print('Extracted save data')
 
 		return True
 	
@@ -167,18 +166,18 @@ class RomExtractor(object):
 			outfile = open(filename, 'wb')
 			outfile.write(updateN64Crc(rom.read()))
 			outfile.close()
-			print 'Got ROM: %s' % filename
+			print('Got ROM: %s' % filename)
 		elif arc.hasfile('romc'):
 			rom = arc.getfile('romc')
-			print 'Decompressing ROM: %s (this could take a minute or two)' % filename
+			print('Decompressing ROM: %s (this could take a minute or two)' % filename)
 			try:
 				romdata = lz77.decompress_n64(rom)
 				outfile = open(filename, 'wb')
 				outfile.write(updateN64Crc(romdata))
 				outfile.close()
-				print 'Got ROM: %s' % filename
+				print('Got ROM: %s' % filename)
 			except IndexError: # unknown compression - something besides LZSS and romchu?
-				print 'Decompression failed: unknown compression type'
+				print('Decompression failed: unknown compression type')
 				outfile.close()
 				os.remove(filename)
 				return False
@@ -186,8 +185,8 @@ class RomExtractor(object):
 		
 		# extract save file
 		savepath = self.extractsave(outputPath)
-		if savepath: print 'Extracted save file(s)'
-		else: print 'Failed to extract save file(s)'
+		if savepath: print('Extracted save file(s)')
+		else: print('Failed to extract save file(s)')
 		
 		return True
 	
@@ -204,35 +203,34 @@ class RomExtractor(object):
 			if romfilename:
 				rom = ccf.find(romfilename)
 				writerom(rom, filename)
-				print 'Got ROM: %s' % filename
+				print('Got ROM: %s' % filename)
 				
 				if self.extractsave(outputPath):
-					print 'Extracted save to %s.srm' % self.name
+					print('Extracted save to %s.srm' % self.name)
 				else:
-					print 'No save file found'
+					print('No save file found')
 				
 				return True
 			else:
-				print 'ROM filename not specified in config'
+				print('ROM filename not specified in config')
 				return False
 	
 	def extractrom_tg16(self, arc, outputPath, filenameWithoutExtension):
-
 		#for node in arc.files:
-		#	print node.name
+		#	print(node.name)
 		config = arc.getfile('config.ini')
 		#writerom(config, os.path.join(outputPath, "config.ini"))
 		#savetemplate = arc.getfile('savedata.tpl')
 		#writerom(savetemplate, os.path.join(outputPath, "savedata.tpl"))
 
 		if not config:
-			print 'config.ini not found'
+			print('config.ini not found')
 			return False
 
 		path = getConfiguration(config, "ROM")
 		
 		if not path:
-			print 'ROM filename not specified in config.ini'
+			print('ROM filename not specified in config.ini')
 			return False
 
 		rom = arc.getfile(path)
@@ -240,7 +238,7 @@ class RomExtractor(object):
 		if rom:
 			filename =  os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 			writerom(rom, filename)
-			print 'Got ROM: %s' % filename
+			print('Got ROM: %s' % filename)
 			#self.extractsave(outputPath)
 			return True
 
@@ -249,7 +247,7 @@ class RomExtractor(object):
 	def extractrom_tgcd(self, arc, outputPath, filenameWithoutExtension):
 		if (arc.hasfile("config.ini")):
 			extract_tgcd(arc, outputPath)
-			print "Got TurboGrafx CD image"
+			print("Got TurboGrafx CD image")
 			#self.extractsave(outputPath)
 			return True
 		else:
@@ -263,10 +261,10 @@ class RomExtractor(object):
 		for f in arc.files:
 			path = f.path.split('.')
 			if len(path) == 2 and path[0].startswith('SN') and path[1].isdigit():
-				print 'Found original ROM: %s' % f.path
+				print('Found original ROM: %s' % f.path)
 				rom = arc.getfile(f.path)
 				writerom(rom, filename)
-				print 'Got ROM: %s' % filename
+				print('Got ROM: %s' % filename)
 				
 				extracted = True
 	
@@ -275,9 +273,9 @@ class RomExtractor(object):
 			for f in arc.files:
 				path = f.path.split('.')
 				if len(path) == 2 and path[1] == 'rom':
-					print "Recreating original ROM from %s" % f.path
+					print("Recreating original ROM from %s" % f.path)
 					vcrom = arc.getfile(f.path)
-					if not vcrom: print "Error in reading ROM file %s" % f.path; return False
+					if not vcrom: print("Error in reading ROM file %s" % f.path); return False
 			
 					# find raw PCM data
 					pcm = None
@@ -285,17 +283,17 @@ class RomExtractor(object):
 						path2 = f2.path.split('.')
 						if len(path2) == 2 and path2[1] == 'pcm':
 							pcm = arc.getfile(f2.path)
-					if not pcm: print 'Error: PCM audio data not found'; return False
+					if not pcm: print('Error: PCM audio data not found'); return False
 			
 					'''# encode raw PCM in SNES BRR format
-					print 'Encoding audio as BRR'
-					brr = StringIO()
+					print('Encoding audio as BRR')
+					brr = BytesIO()
 					enc = BRREncoder(pcm, brr)
 					enc.encode()
 					pcm.close()'''
 			
 					# inject BRR audio into the ROM
-					print 'Encoding and restoring BRR audio data to ROM'
+					print('Encoding and restoring BRR audio data to ROM')
 					romdata = restore_brr_samples(vcrom, pcm)
 					vcrom.close()
 					pcm.close()
@@ -304,15 +302,15 @@ class RomExtractor(object):
 					f = open(filename, 'wb')
 					f.write(romdata)
 					f.close()
-					print 'Got ROM: %s' % filename
+					print('Got ROM: %s' % filename)
 					extracted = True
 		
 		# extract save data (but don't overwrite existing save data)
 		if extracted:
 			srm = filename[0:filename.rfind('.smc')] + '.srm'
-			if os.path.lexists(srm): print 'Not overwriting existing save data'
-			elif self.extractsave(outputPath): print 'Extracted save data to %s' % srm
-			else: print 'Could not extract save data'
+			if os.path.lexists(srm): print('Not overwriting existing save data')
+			elif self.extractsave(outputPath): print('Extracted save data to %s' % srm)
+			else: print('Could not extract save data')
 		
 		return extracted
 
@@ -320,7 +318,7 @@ class RomExtractor(object):
 	def extractrom_neogeo(self, arc, outputPath, filenameWithoutExtension):
 		foundRom = False
 		for file in arc.files:
-			#print file.name
+			#print(file.name)
 
 			#arcFile = arc.getfile(file.path)
 			#f = open(os.path.join(outputPath, 'arc_' + file.name),'wb')
@@ -329,6 +327,7 @@ class RomExtractor(object):
 
 			#PROBABLY. game.bin = not compressed, .z = zlib compressed, .xz = LZMA/XZ compressed
 			#encryption may be applied on any file, and is applied after compression (decrypt before decompressing)
+			
 			if file.name == "game.bin" or file.name == "game.bin.z" or file.name == "game.bin.xz":
 
 				rom = arc.getfile(file.path)
@@ -338,7 +337,7 @@ class RomExtractor(object):
 				giveUp = False
 
 				if file.name == "game.bin.z" or file.name == "game.bin.xz":
-					if (entireFile[0:4] == 'CR00'):
+					if (entireFile[0:4] == b'CR00'):
 						#f = open(os.path.join(outputPath, 'encrypted_' + file.name),'wb')
 						#f.write(entireFile)
 						#f.close()
@@ -348,16 +347,16 @@ class RomExtractor(object):
 
 						if not success:
 							outputFileName = "game.bin.encrypted"
-							print "Exporting encrypted ROMs without decrypting them"
+							print("Exporting encrypted ROMs without decrypting them")
 							giveUp = True
 
 					#encrypted files can be compressed after being decrypted
-					if entireFile[0] == '\x78': # zlib compression (both encrypted and non-encrypted games can be compressed)
+					if entireFile[0] == 0x78:
 						entireFile = zlib.decompress(entireFile)
 
 					#encrypted files can be compressed after being decrypted
-					if entireFile[0:4] == '\x5D\x00\x00\x80': # zlib compression (both encrypted and non-encrypted games can be compressed)
-						print "LZMA (xz) compressed - not supported yet"
+					if entireFile[0:4] == b'\x5D\x00\x00\x80':
+						print("LZMA (xz) compressed - not supported yet")
 						outputFileName = "game.bin.xz"
 						giveUp = True
 				elif file.name != "game.bin":
@@ -371,23 +370,23 @@ class RomExtractor(object):
 					#f.write(entireFile)
 					#f.close()
 
-					convert_neogeo(StringIO(entireFile), outputPath)
-					print "Extracted ROM files (some BIOS files may be missing)"
+					convert_neogeo(BytesIO(entireFile), outputPath)
+					print("Extracted ROM files (some BIOS files may be missing)")
 				else:
-					writerom(StringIO(entireFile), os.path.join(outputPath, outputFileName))
-					print "Files extracted but further processing is required."
+					writerom(BytesIO(entireFile), os.path.join(outputPath, outputFileName))
+					print("Files extracted but further processing is required.")
 
 				if self.extractsave(outputPath):
-					print "Exported memory card with save file"
+					print("Exported memory card with save file")
 				else:
-					print "No save data found"
+					print("No save data found")
 
 				foundRom = True
 
 			# This is just the contents of a formatted 2KB memory card without any saves on it. Probably useless to everyone.
 			#elif file.name == "memcard.dat":
 			#	rom = arc.getfile(file.path)
-			#	print 'Got default (empty) save data'
+			#	print('Got default (empty) save data')
 			#	writerom(rom, os.path.join(outputFolderName, "memcard.empty.dat"))
 
 			#This probably contains the DIP switch settings of the game, or maybe flags for the emulator
@@ -405,19 +404,16 @@ class RomExtractor(object):
 	def extractrom_arcade(self, appFilePath, outputPath, filenameWithoutExtension):
 		foundRom = False
 
-		#print "file in app:" + appFilePath
+		#print("file in app:" + appFilePath)
 
 		u8arc = self.tryGetU8Archive(appFilePath)
 		if not u8arc:
-			#print "It is NOT a U8 archive! First bytes:"
+			#print("It is NOT a U8 archive! First bytes:")
 			inFile = open(appFilePath, 'rb')
-			#print ord((inFile.read(1))[0])
-			#print ord((inFile.read(1))[0])
-			#print ord((inFile.read(1))[0])
-			#print ord((inFile.read(1))[0])
+
 			inFile.seek(0)
-			if ord((inFile.read(1))[0]) == 0x11:
-				#print "The first byte is 11 so it is probably compressed LZ77"
+			if (inFile.read(1))[0] == 0x11:
+				#print("The first byte is 11 so it is probably compressed LZ77")
 				data = lz77.decompress_nonN64(inFile)
 				inFile.close()
 			
@@ -427,17 +423,17 @@ class RomExtractor(object):
 				outFile.write(data)
 				outFile.close()
 			#else:
-				#print "The first byte is unknown, don't know what to do with this file, dumping it as DERP"
+				#print("The first byte is unknown, don't know what to do with this file, dumping it as DERP")
 				#inFile.seek(0)
 				#outFile = open(os.path.join(outputPath, "DERP_output" + appFilePath[(len(appFilePath)-7):]), 'wb')
 				#outFile.write(inFile.read())
 				#outFile.close()
 
 		else:
-			#print "It IS a U8 archive! Content:"
+			#print("It IS a U8 archive! Content:")
 
 			#for file in u8arc.files:
-			#	print file.path
+			#	print(file.path)
 
 			if u8arc.hasfile('data.ccf'):
 				ccf = CCFArchive(u8arc.getfile('data.ccf'))
@@ -445,7 +441,7 @@ class RomExtractor(object):
 					foundRom = extract_arcade(ccf, outputPath)
 
 		if foundRom:
-			print "Got ROMs"
+			print("Got ROMs")
 
 		return foundRom
 
@@ -529,19 +525,19 @@ class RomExtractor(object):
 				man = U8Archive(ccf.getfile('man.arc'))
 			elif u8arc.findfile('htmlc.arc'):
 				manc = u8arc.getfile(u8arc.findfile('htmlc.arc'))
-				print 'Decompressing manual: htmlc.arc'
-				man = U8Archive(StringIO(lz77.decompress_n64(manc)))
+				print('Decompressing manual: htmlc.arc')
+				man = U8Archive(BytesIO(lz77.decompress_n64(manc)))
 			elif u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'):
 				# E.g. makaimura_manual_usa.arc.lz77 (Arcade Ghosts n Goblins)
 				manc = u8arc.getfile(u8arc.findfilebyregex('.+_manual_.+\\.arc\\.lz77$'))
-				man = U8Archive(StringIO(lz77.decompress_nonN64(manc)))
+				man = U8Archive(BytesIO(lz77.decompress_nonN64(manc)))
 				manc.close()
 		except AssertionError: pass
 	
 		if man:
 			self.ensure_folder_exists(manualOutputPath)
 			man.extract(manualOutputPath)
-			print 'Extracted manual to ' + manualOutputPath
+			print('Extracted manual to ' + manualOutputPath)
 			return True
 	
 		return False
@@ -560,14 +556,14 @@ class NandDump(object):
 			if(os.path.exists(os.path.join(self.path, title))):
 				appname = self.getappname(title)
 				if not appname: continue
-				#print title, content + appname
+				#print(title, content + appname)
 				name = self.gettitle(os.path.join(content, appname), id)
 				channeltype = self.channeltype(ticket)
 				if name and channeltype:
-					print '%s: %s (ID: %s)' % (channeltype, name, id)
+					print('%s: %s (ID: %s)' % (channeltype, name, id))
 					ext = RomExtractor(id, name, channeltype, self)
 					ext.extract()
-					print
+					print()
 	
 	# Returns a string denoting the channel type.  Returns None if it's not a VC game.
 	def channeltype(self, ticket):
@@ -583,17 +579,18 @@ class NandDump(object):
 		
 		# TODO: support the commented game types
 		# http://wiibrew.org/wiki/Title_database
-		if ident[0] == 'F': return 'NES'
-		elif ident[0] == 'J': return 'SNES'
-		elif ident[0] == 'L': return 'Master System'
-		elif ident[0] == 'M': return 'Genesis'
-		elif ident[0] == 'N': return 'Nintendo 64'
-		elif ident[0] == 'P': return 'TurboGrafx16'
-		elif ident == 'EA': return 'Neo Geo' #E.g. Neo Turf Master
-		elif ident == 'EB': return 'Neo Geo' #E.g. Spin Master, RFBB Special
-		elif ident == 'EC': return 'Neo Geo' #E.g. Shock Troopers 2, NAM-1975
-		elif ident[0] == 'E': return 'Arcade' #E.g. E5 = Ghosts'n' Goblins, E6 = Space Harrier
-		elif ident[0] == 'Q': return 'TurboGrafxCD'
+		
+		if ident[0] == ord('F'): return 'NES'
+		elif ident[0] == ord('J'): return 'SNES'
+		elif ident[0] == ord('L'): return 'Master System'
+		elif ident[0] == ord('M'): return 'Genesis'
+		elif ident[0] == ord('N'): return 'Nintendo 64'
+		elif ident[0] == ord('P'): return 'TurboGrafx16'
+		elif ident[0] == ord('E') and ident[1] == ord('A'): return 'Neo Geo' #E.g. Neo Turf Master
+		elif ident[0] == ord('E') and ident[1] == ord('B'): return 'Neo Geo' #E.g. Spin Master, RFBB Special
+		elif ident[0] == ord('E') and ident[1] == ord('C'): return 'Neo Geo' #E.g. Shock Troopers 2, NAM-1975
+		elif ident[0] == ord('E'): return 'Arcade' #E.g. E5 = Ghosts'n' Goblins, E6 = Space Harrier
+		elif ident[0] == ord('Q'): return 'TurboGrafxCD'
 		#elif ident[0] == 'C': return 'Commodore 64'
 		#elif ident[0] == 'X': return 'MSX'
 		else: return None
@@ -620,38 +617,38 @@ class NandDump(object):
 		f = open(path, 'rb')
 		data = f.read()
 		f.close()
-		index = data.find('IMET')
+		index = data.find(b'IMET')
 		if index < 0: return None
 		engindex = index + 29 + 84
 		title = data[engindex:engindex+84]
 		
 		# Format the title properly
-		title = title.strip('\0')
-		while title.find('\0\0\0') >= 0: title = title.replace('\0\0\0', '\0\0')
-		title = title.replace('\0\0', ' - ')
-		title = title.replace('\0', '')
-		title = title.replace(':', ' - ')
+		title = title.strip(b'\0')
+		while title.find(b'\0\0\0') >= 0: title = title.replace(b'\0\0\0', b'\0\0')
+		title = title.replace(b'\0\0', b' - ')
+		title = title.replace(b'\0', b'')
+		title = title.replace(b':', b' - ')
 
 		# Replace some characters
-		title = re.sub('!\x60', 'I', title) # e.g. Ys Book I&II
-		title = re.sub('!\x61', 'II', title) # e.g. Zelda II 
-		title = re.sub('!\x62', 'III', title) # e.g. Ninja Gaiden III
-		title = re.sub(' \x19', '\'', title) # e.g. Indiana Jones' GA
+		title = re.sub(b'!\x60', b'I', title) # e.g. Ys Book I&II
+		title = re.sub(b'!\x61', b'II', title) # e.g. Zelda II 
+		title = re.sub(b'!\x62', b'III', title) # e.g. Ninja Gaiden III
+		title = re.sub(b' \x19', b'\'', title) # e.g. Indiana Jones' GA
 
 		# Delete any characters that are not known to be safe
-		title = re.sub('[^A-Za-z0-9\\-\\!\\_\\&\\\'\\. ]', '', title)
+		title = re.sub(b'[^A-Za-z0-9\\-\\!\\_\\&\\\'\\. ]', b'', title)
 
 		# more than one consequtive spaces --> one space
-		while title.find('  ') >= 0: title = title.replace('  ', ' ')
+		while title.find(b'  ') >= 0: title = title.replace(b'  ', b' ')
 
 		# Delete any mix of "." and space at beginning or end of string - they are valid in filenames, but not always as head or tail
-		title = re.sub('(^[\\s.]*)|([\\s.]*$)', '', title)
+		title = re.sub(b'(^[\\s.]*)|([\\s.]*$)', b'', title)
 
 		# If we stripped everything (maybe can happen on japanese titles?), fall back to using defaultTitle
 		if len(title) <= 0:
 			title = defaultTitle
 
-		return title
+		return title.decode('ascii')
 
 if __name__ == '__main__':
 	import sys

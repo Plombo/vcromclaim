@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Original author: ZOINKITY
 # Original version? https://pastebin.com/hcRjjTWg
 # CRC part copied and downgraded to Python 2 by JanErikGunnar
@@ -133,14 +133,14 @@ class Cart():
 
         #in Python 3, bytes(7) returns a null array of length 7
         #in Python 3, bytes(7) returns a 
-        m = array("L", struct.unpack(">" + str((l-base)/4) + "L", self.rom[base:l]) + tuple(bytearray(seel - l)))
+        m = array("L", struct.unpack(">" + str(int((l-base)/4)) + "L", self.rom[base:l]) + tuple(bytearray(seel - l)))
         #Python3: m = array("L", self.rom[base:l] + bytes(seel - l))
         #Python3: m.byteswap()
 
         # Zelda updates the second word a different way...
         if cic == 'zelda':
             from itertools import cycle
-            n = array("L", struct.unpack(">" + str((0x850-0x750)/4) + "L", self.rom[0x750:0x850]))
+            n = array("L", struct.unpack(">" + str(int((0x850-0x750)/4)) + "L", self.rom[0x750:0x850]))
             #Python3: n = array("L", self.rom[0x750:0x850])
             #Python3: n.byteswap()
             n = cycle(n)

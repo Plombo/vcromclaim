@@ -44,9 +44,10 @@ Features
 
 Requirements
 ------------
-* [Python](http://python.org) 2.6 or 2.7 (or higher, but not Python 3.x)
+* [Python](http://python.org) 3.x (tested with 3.8.5)
 * A NAND dump dumped by [BootMii](http://bootmii.org) and extracted by 
   [ShowMiiWads](http://code.google.com/p/showmiiwads) or [nandextract](http://github.com/Plombo/showmiiwads)
+* Additional requirements applies for some Neo Geo games, see [neogeo_reame.txt](neogeo_readme.txt)
 
 Usage
 -----

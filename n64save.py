@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain
 # Date: January 22, 2011
 # Description: Converts Virtual Console N64 saves to Mupen64Plus N64 saves.
@@ -66,5 +66,5 @@ if __name__ == '__main__':
 		sys.stderr.write('Usage: %s infile outfile\n' % sys.argv[0])
 		sys.exit(1)
 	convert(sys.argv[1], sys.argv[2])
-	print 'Done'
+	print('Done')
 

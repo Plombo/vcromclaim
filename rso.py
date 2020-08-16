@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Utilities to extract stuff from RSO files.
 # RSO files are like SO files in Linux or DLL files in Windows, so they contain mostly code but sometimes other binary data.
 # In some VC Arcade games, some RSO files contain the system specific emulation code, as well as the emulated ROMs.
@@ -100,7 +102,7 @@ class rso(object):
         exportTableLength = headerValues[17]
         exportNamesOffset = headerValues[18]
 
-        for exportTableEntryPosition in xrange(0, exportTableLength, 4*4):
+        for exportTableEntryPosition in range(0, exportTableLength, 4*4):
 
             self.file.seek(exportTableOffset + exportTableEntryPosition)
             exportTableEntry = struct.unpack(">4I", self.file.read(4*4))
@@ -150,7 +152,7 @@ class rso(object):
 
         exports = []
 
-        for exportTableEntryOffset in xrange(0, exportTableLength, 4*4):
+        for exportTableEntryOffset in range(0, exportTableLength, 4*4):
 
             self.file.seek(exportTableOffset + exportTableEntryOffset)
             exportTableEntry = struct.unpack(">4I", self.file.read(4*4))
@@ -165,16 +167,14 @@ class rso(object):
 
     def readNullTerminatedString(self, startOffset):
         self.file.seek(startOffset)
-        chars = []
+        ba = bytearray()
         while True:
-            c = self.file.read(1)
+            b = self.file.read(1)
             
-            assert len(c) > 0
-            
-            if c == chr(0):
-                return "".join(chars)
+            if b[0] == 0:
+                return ba.decode('ascii')
             else:
-                chars.append(c)
+                ba.extend(b)
 
 
         

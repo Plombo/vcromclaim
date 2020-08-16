@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (Plombo)
 # Date: December 27, 2010
 # Description: Reads Wii U8 archives.
 
 import os, struct, posixpath
-from cStringIO import StringIO
+from io import BytesIO
 import lz77, huf8, lzh8
 import re
 
@@ -12,7 +12,7 @@ class U8Archive(object):
 	# archive can be a string (filesystem path) or file-like object
 	def __init__(self, archive):
 		if type(archive) == str:
-			#print archive
+			#print(archive)
 			self.file = open(archive, 'rb')
 		else:
 			self.file = archive
@@ -22,9 +22,13 @@ class U8Archive(object):
 	
 	def readheader(self):
 		magic, rootnode_offset, header_size, data_offset = tuple(struct.unpack('>IIII', self.file.read(16)))
+		#print('IS A U8?')
+		#print(magic)
+		#print(0x55aa382d)
+		
 		assert magic == 0x55aa382d
 		assert rootnode_offset == 0x20
-		assert self.file.read(16) == 16 * '\0'
+		assert self.file.read(16) == 16 * b'\0'
 		
 		root = Node(self.file, rootnode_offset)
 		root.path = '<root>'
@@ -39,15 +43,13 @@ class U8Archive(object):
 			if node.type == 0x100:
 				# change current path if this is a directory
 				path = node.path
-				#print node.name, node.path
+				#print(node.name, node.path)
 				curdirs.append(node.size)
 				dirnames.append(node.name)
 			else: self.files.append(node)
 			
-			indices = range(len(curdirs))
-			indices.reverse()
 			while curdirs and filenum >= curdirs[len(curdirs)-1]:
-				#print 'done with ' + dirnames.pop() + ' at %d' % filenum
+				#print('done with ' + dirnames.pop() + ' at %d' % filenum)
 				path = posixpath.dirname(path)
 				curdirs.pop()
 	
@@ -64,26 +66,24 @@ class U8Archive(object):
 		else:
 			return False
 	
-	# returns a file-like object (actually a cStringIO object) for the specified
+	# returns a file-like object (actually a BytesIO object) for the specified
 	# file; detects and decompresses compressed files (LZ77/Huf8/LZH8) automatically!
 	# path: file name (string) or actual file node, but NOT node path :D
 	def getfile(self, path):
 		for node in self.files:
-			#print node
-			#print node.name
 			if node == path or (type(path) == str and node.name.endswith(path)):
 				if node == path:
 					path = node.name
 				self.file.seek(node.data_offset)
-				file = StringIO(self.file.read(node.size))
+				file = BytesIO(self.file.read(node.size))
 				if path.startswith("LZ77"):
 					try:
-						decompressed_file = StringIO(lz77.decompress_nonN64(file))
+						decompressed_file = BytesIO(lz77.decompress_nonN64(file))
 						file.close()
 						return decompressed_file
-					except ValueError, IndexError:
-						print "LZ77 decompression of '%s' failed" % path
-						print 'Dumping compressed file to %s' % path
+					except (ValueError, IndexError) as e:
+						print("LZ77 decompression of '%s' failed" % path)
+						print('Dumping compressed file to %s' % path)
 						f2 = open(path, "wb")
 						f2.write(file.read())
 						f2.close()
@@ -91,29 +91,29 @@ class U8Archive(object):
 						return None
 				elif path.startswith("Huf8"):
 					try:
-						decompressed_file = StringIO()
+						decompressed_file = BytesIO()
 						huf8.decompress(file, decompressed_file)
 						file.close()
 						decompressed_file.seek(0)
 						return decompressed_file
 					except Exception:
-						print "Huf8 decompression of '%s' failed" % path
-						print "Dumping compressed file to %s" % path
+						print("Huf8 decompression of '%s' failed" % path)
+						print("Dumping compressed file to %s" % path)
 						f2 = open(path, "wb")
 						f2.write(file.read())
 						f2.close()
 						file.close()
-					return decompressed_file
+						return None
 				elif path.startswith("LZH8"):
 					try:
-						decompressed_file = StringIO()
+						decompressed_file = BytesIO()
 						decompressed_file.write(lzh8.decompress(file))
 						decompressed_file.seek(0)
 						file.close()
 						return decompressed_file
 					except Exception:
-						print "LZH8 decompression of '%s' failed" % path
-						print "Dumping compressed file to %s" % path
+						print("LZH8 decompression of '%s' failed" % path)
+						print("Dumping compressed file to %s" % path)
 						f2 = open(path, "wb")
 						f2.write(file.read())
 						f2.close()
@@ -141,9 +141,9 @@ class U8Archive(object):
 			if node.name in ('<root>', '.'): continue
 			if node.type == 0x100:
 				os.makedirs(os.path.join(dest, node.path))
-				#print 'created dir %s' % os.path.join(dest, node.path)
+				#print('created dir %s' % os.path.join(dest, node.path))
 			else:
-				#print node.path
+				#print(node.path)
 				path = os.path.join(dest, node.path)
 				if not os.path.lexists(os.path.dirname(path)): os.makedirs(os.path.dirname(path))
 				f = open(path, 'wb')
@@ -151,7 +151,7 @@ class U8Archive(object):
 				contents.seek(0)
 				f.write(contents.read())
 				f.close()
-				#print 'extracted file %s' % os.path.join(dest, node.path)
+				#print('extracted file %s' % os.path.join(dest, node.path))
 
 # file node object
 class Node(object):
@@ -167,15 +167,15 @@ class Node(object):
 		
 		# no sane file name should be more than 64 bytes; if one is, string.index() will throw an exception
 		arcfile.seek(stringoffset + self.name_offset)
-		self.name = arcfile.read(64)
-		self.name = self.name[0:self.name.index('\0')]
-		#print self.name
+		binaryName = arcfile.read(64)
+		self.name = (binaryName[0:binaryName.index(b'\0')]).decode('ascii')
+		#print(self.name)
 		arcfile.seek(arcpos)
 
 if __name__ == '__main__':
 	# Quick functionality test and sanity check; will only work on my (Plombo's) computer without a path change
 	import os, os.path
 	arc = U8Archive(os.path.join(os.getenv('HOME'), 'wii/ssb/00000005.app'))
-	print arc.hasfile('romc')
-	print len(arc.getfile('romc').read())
+	print(arc.hasfile('romc'))
+	print(len(arc.getfile('romc').read()))
 

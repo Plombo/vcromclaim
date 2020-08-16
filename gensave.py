@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain
 # Date: January 22, 2011
 # Description: Converts VC Genesis and VC Master System saves to the .srm/.ssm format used by Gens/GS/Kega Fusion.
@@ -15,9 +15,9 @@ def convert(src, dest, genesis):
 	outfile = open(dest, 'wb')
 
 	SIZE_SIZE = 4
-	COMPOUND_DATA_MAGIC = 'compound data\x00\x00\x00'
+	COMPOUND_DATA_MAGIC = b'compound data\x00\x00\x00'
 	COMPOUND_DATA_MAGIC_SIZE = len(COMPOUND_DATA_MAGIC)
-	SRAM_MAGIC = 'SRAM'
+	SRAM_MAGIC = b'SRAM'
 	SRAM_MAGIC_SIZE = len(SRAM_MAGIC)
 
 	# MW4 = monster world IV, genesis NTSC
@@ -27,7 +27,7 @@ def convert(src, dest, genesis):
 	# i've tried to preserve the original functionality but have not been able to test it so I might have broken it.
 
 	# read "VCSD"
-	assert infile.read(4) == 'VCSD'
+	assert infile.read(4) == b'VCSD'
 
 	# read four bytes = size
 	totalSize = struct.unpack('<I', infile.read(SIZE_SIZE))[0]
@@ -89,5 +89,5 @@ if __name__ == '__main__':
 		sys.stderr.write('Usage: %s infile outfile\n' % sys.argv[0])
 		sys.exit(1)
 	convert(sys.argv[1], sys.argv[2], True)
-	print 'Done'
+	print('Done')
 

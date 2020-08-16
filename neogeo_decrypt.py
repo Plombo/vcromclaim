@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from neogeo_keys import keys
 from binascii import unhexlify
 
@@ -12,7 +14,7 @@ except:
 # note that the decryptedData will still be compressed (zipped), similar to some other neo geo games without encryption.
 def decrypt_neogeo(titleIdString, fileString):
     # encrypted files starts with a magic word
-    assert fileString[0:4] == 'CR00'
+    assert fileString[0:4] == b'CR00'
 
     # ignore the next 16 bytes. The CR00 magic word and these 16 bytes are used to reconstruct the encryption key,
     # together with many other data which we don't have.
@@ -29,7 +31,7 @@ def decrypt_neogeo(titleIdString, fileString):
         # The IV is just zeroes.
         # If the IV is wrong, only the first block (16 bytes) will be decrypted incorrectly,
         # but that's bad enough for the decompression to fail
-        zeroIv = '\x00'*16
+        zeroIv = b'\x00'*16
 
         key = unhexlify(keys[titleIdString])
         assert len(key) == 16
@@ -38,14 +40,14 @@ def decrypt_neogeo(titleIdString, fileString):
             cipher = AES.new(key, AES.MODE_CBC, iv=zeroIv)
             decryptedString = cipher.decrypt(encryptedString)
         except:
-            print "Decryption failed. Make sure PyCryptodome or PyCrypto is installed."
+            print("Decryption failed. Make sure PyCryptodome or PyCrypto is installed.")
             return (False, encryptedString)
 
         assert len(decryptedString) == len(encryptedString)
 
-        print "Decrypted ROMs"
+        print("Decrypted ROMs")
 
         return (True, decryptedString)
     else:
-        print "No encryption key found for the title, see Readme about how to get the key"
+        print("No encryption key found for the title, see Readme about how to get the key")
         return (False, encryptedString)

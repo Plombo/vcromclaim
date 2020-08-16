@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #Extracts VC Arcade games from a CCF archive.
 
 import string
@@ -14,11 +16,10 @@ def extract_arcade(ccfArchive, outputFolder):
 
     if architecture == 'sharrier':
         extract_SHARRIER(ccfArchive, create_rom_folder(outputFolder,'sharrier1'))
-        #print 'Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game. Showing possible keys...'
         #print_metadata(ccfArchive, config)
         return True
     else: 
-        print 'Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game. Showing possible keys...'
+        print('Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game. Showing possible keys...')
         print_metadata(ccfArchive, config)
         return False
 
@@ -44,7 +45,7 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     moduleFile.seek(0)
 
     #for export in module.getAllExports():
-    #    print " -- Export " + export
+    #    print(" -- Export " + export)
 
     #maincpu = 68000 code
     cpu1 = get_rom_file(module, 'sharrier_rom_cpu1', 0x40000)
@@ -138,11 +139,11 @@ def print_metadata(ccfArchive, config):
     modules = string.split(getConfiguration(config, 'modules'))
     for module in modules:
         moduleFilename = module + '.rso'
-        print ' - Module ' + moduleFilename + ':'
+        print(' - Module ' + moduleFilename + ':')
         moduleFile = ccfArchive.find(moduleFilename)
         module = rso(moduleFile)
         for export in module.getAllExports():
-            print " -- Export " + export
+            print(" -- Export " + export)
 
         
 def create_rom_folder(parentFolder, romFolderName):

@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import os.path, StringIO, struct, zlib
+import os.path, struct, zlib
+from io import BytesIO, StringIO
 from configurationfile import getConfiguration 
 
 
@@ -28,8 +29,9 @@ def extract_tgcd(u8InputFile, outputFolder):
 
     hcdFileName = getHcdFileName(extractFile(u8InputFile, "config.ini"))
     hcdFileContent = extractFile(u8InputFile, hcdFileName)
+    assert hcdFileContent is not None
 
-    cueFileContent = StringIO.StringIO()
+    cueFileContent = StringIO()
 
     #saveFile(hcdFileContent, "debug.hcd", outputFolder)
     #saveFile(extractFile(u8InputFile, "config.ini"), "debug.ini", outputFolder)
@@ -48,7 +50,7 @@ def extract_tgcd(u8InputFile, outputFolder):
                 data = decompressBinaryFile(extractFile(u8InputFile,trackDescription.fileName))
                 fileName = trackDescription.fileName
             else:
-                data = StringIO.StringIO()
+                data = BytesIO()
                 fileName = getWithOtherFileExtension(trackDescription.fileName, "dummy")
             saveFile(getLengthCorrectedData(data, 2048, trackDescription.sectorCount), fileName, outputFolder)
             cueFileContent.write(createCueDirective(trackDescription, fileName))
@@ -60,7 +62,7 @@ def extract_tgcd(u8InputFile, outputFolder):
                 cueFileContent.write(createCueDirective(trackDescription, trackDescription.fileName))
             else:
                 dummyFileName = getWithOtherFileExtension(trackDescription.fileName, "dummy")
-                saveFile(getLengthCorrectedData(StringIO.StringIO(), 2352, trackDescription.sectorCount), dummyFileName, outputFolder)
+                saveFile(getLengthCorrectedData(BytesIO(), 2352, trackDescription.sectorCount), dummyFileName, outputFolder)
                 cueFileContent.write(createDummyAudioCueDirective(trackDescription, dummyFileName))
 
 
@@ -84,12 +86,18 @@ def getHcdFileName(configFileContent):
     else:
         raise ValueError
 
-def getTrackDescriptionsFromHcdFile(hcdFileContent):
-    hcdFileContent.seek(0)
+def getTrackDescriptionsFromHcdFile(hcdFileContentBytesIO):
+    #convert BytesIO to stringIO
+    hcdBytes = hcdFileContentBytesIO.read()
+    # Convert to a "unicode" object
+    text_obj = hcdBytes.decode('ascii')
+    hcdFileContentStringIO = StringIO(text_obj)
+
+    hcdFileContentStringIO.seek(0)
     returnArray = []
     counter = 1
     previousEndSector = 0
-    for line in hcdFileContent:
+    for line in hcdFileContentStringIO:
         trackDescription = TrackDescription(line, counter, previousEndSector)
         returnArray.append(trackDescription)
         previousEndSector = trackDescription.endSector
@@ -103,9 +111,9 @@ def decompressBinaryFile(compressedBinaryFileContent):
     compressedBinaryFileContent.seek(0)
     entries = struct.unpack('<I', compressedBinaryFileContent.read(4))[0]
 
-    decompressed = StringIO.StringIO()
+    decompressed = BytesIO()
 
-    for i in xrange(entries):
+    for i in range(entries):
         compressedBinaryFileContent.seek((i * 8) + 4)
         offset = struct.unpack('<I', compressedBinaryFileContent.read(4))[0]
         size = struct.unpack('<I', compressedBinaryFileContent.read(4))[0]
@@ -126,7 +134,12 @@ def saveFile(fileContent, fileName, outputFolder):
     if not os.path.lexists(folderPath):
         os.makedirs(folderPath)
 
-    outputFile = open(filePath, 'wb')
+    if isinstance(fileContent, str) or isinstance(fileContent, StringIO):
+        mode = 'w'
+    else:
+        mode = 'wb'
+    
+    outputFile = open(filePath, mode)
     fileContent.seek(0)
     outputFile.write(fileContent.read())
     outputFile.close()
@@ -148,8 +161,8 @@ def createDummyAudioCueDirective(trackDescription, replacementFileName):
 
 def getTimeFromSectorIndex(sectorIndex):
     sectors = sectorIndex % 75
-    seconds = ((sectorIndex - sectors) / 75) % 60
-    minutes = (sectorIndex - seconds * 75 - sectors) / (60*75)
+    seconds = int(((sectorIndex - sectors) / 75)) % 60
+    minutes = int((sectorIndex - seconds * 75 - sectors) / (60*75))
 
     return ('%02d' % minutes) + ":" + ('%02d' % seconds) + ":" + ('%02d' % sectors)
 
@@ -162,10 +175,10 @@ def getLengthCorrectedData(data, sectorSize, sectorCount):
     
     #pad if needed
     if actualSize < targetSize:
-        data.write('\x00'*(targetSize-actualSize))
+        data.write(b'\x00'*(targetSize-actualSize))
         return data
     elif actualSize > targetSize:
-        newData = StringIO.StringIO()
+        newData = StringIO()
         data.seek(0)
         newData.write(data.read(targetSize))
         return newData

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain
 # Based on but heavily modified from BRRTools by Bregalad (written in Java)
 # Date: January 16, 2011
@@ -8,19 +8,19 @@ import wave
 import struct
 
 class BRREncoder(object):
-	def __init__(self, pcm, brr):
+	def __init__(self, pcm):
 		self.pcm_owner = False
-		self.brr_owner = False
+		#self.brr_owner = False
 		
 		if type(pcm) == type(''):
 			pcm = open(pcm, 'rb')
 			self.pcm_owner = True
-		if type(brr) == type(''):
-			brr = open(brr, 'wb')
-			self.brr_owner = True
+		#if type(brr) == type(''):
+		#	brr = open(brr, 'wb')
+		#	self.brr_owner = True
 		
 		self.pcm = pcm
-		self.brr = brr
+		#self.brr = brr
 		self.p1 = 0
 		self.p2 = 0
 	
@@ -89,7 +89,7 @@ class BRREncoder(object):
 			c = 0
 			if dp > 0:
 				if step > 1:
-					c = dp /(step>>1)
+					c = int(dp /(step>>1))
 				else:
 					c = dp<<1
 				if c > 15:
@@ -121,7 +121,7 @@ class BRREncoder(object):
 		#wav = wave.open(wav, 'rb')
 		#if wav.getsampwidth() != 2: raise ValueError('must be 16 bits per sample')
 		pcm = self.pcm
-		brr = self.brr
+		#brr = self.brr
 		self.p1 = 0
 		self.p2 = 0
 		
@@ -130,13 +130,13 @@ class BRREncoder(object):
 			samples2 = struct.unpack('>16h', samples2)
 			self.BRRBuffer = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 			self.ADPCMBlockMash(samples2)
-			brr.write(struct.pack('9B', *self.BRRBuffer))
+			#brr.write(struct.pack('9B', *self.BRRBuffer))
 			#samples2 = wav.readframes(16)
 			samples2 = pcm.read(32)
 		
 		#wav.close()
 		if self.pcm_owner: pcm.close()
-		if self.brr_owner: brr.close()
+		#if self.brr_owner: brr.close()
 	
 	# offset: PCM offset (measured in samples, NOT in bytes)
 	# returns: 9-byte BRR block
@@ -160,8 +160,8 @@ class BRREncoder(object):
 if __name__ == '__main__':
 	import sys
 	if len(sys.argv) != 3:
-		print 'Usage: %s input.pcm output.brr' % sys.argv[0]
-	enc = BRREncoder(sys.argv[1], sys.argv[2])
-	enc.encode()
-	print 'Wrote file %s' % sys.argv[2]
+		print('Usage: %s input.pcm' % sys.argv[0])
+	#enc = BRREncoder(sys.argv[1])
+	#enc.encode()
+	print('Wrote file %s' % sys.argv[2])
 

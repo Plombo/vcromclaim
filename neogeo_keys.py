@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Add keys to this file to enable decryption.
 # See neogeo_readme.txt for instructions on how to get the keys from your games.
 # FOR LEGAL REASONS, DO NOT SHARE KEYS! DO NOT PUSH OR SUBMIT PRS WITH ACTUAL KEYS!!!
