@@ -19,6 +19,7 @@ from arcade_extract import extract_arcade
 from tgcd_extract import extract_tgcd
 from configurationfile import getConfiguration 
 from n64crc import updateN64Crc
+import game_specific_patches
 
 # rom: file-like object
 # path: string (filesystem path)
@@ -164,16 +165,15 @@ class RomExtractor(object):
 		if arc.hasfile('rom'):
 			rom = arc.getfile('rom')
 			outfile = open(filename, 'wb')
-			outfile.write(updateN64Crc(rom.read()))
+			outfile.write(updateN64Crc(game_specific_patches.patch_specific_games(rom.read())))
 			outfile.close()
 			print('Got ROM: %s' % filename)
 		elif arc.hasfile('romc'):
 			rom = arc.getfile('romc')
 			print('Decompressing ROM: %s (this could take a minute or two)' % filename)
 			try:
-				romdata = lz77.decompress_n64(rom)
 				outfile = open(filename, 'wb')
-				outfile.write(updateN64Crc(romdata))
+				outfile.write(updateN64Crc(game_specific_patches.patch_specific_games(lz77.decompress_n64(rom))))
 				outfile.close()
 				print('Got ROM: %s' % filename)
 			except IndexError: # unknown compression - something besides LZSS and romchu?

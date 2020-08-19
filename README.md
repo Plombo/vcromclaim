@@ -91,10 +91,8 @@ Known Issues
     it in these known examples:
     * Bio Miracle Bokutte Upa: Flashing "wait" screen
     * Zelda no Densetsu: "Press start" is shown, nothing happens if you do
-  * Some games are completely broken when played in regular emulators, known
+  * Some games are completely broken when played in regular emulators or real hardware, known
     cases:
-    * Mario Tennis (N64) - 8 bytes are different in the middle of the file,
-      (as well as the CRC checksum in the header) making it crash on boot.
     * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
       glitch and freeze.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
