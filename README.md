@@ -26,6 +26,7 @@ Features
   * Magical Drop 3
   * Shock Troopers
   * Metal Slug 2
+  * The King of Fighters '98
   * The Last Blade 2
   * Shock Troopers 2
   * Metal Slug X

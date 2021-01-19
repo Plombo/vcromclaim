@@ -41,6 +41,7 @@ def convert_neogeo(inputFile, outputFolder):
         '233': (convert_magdrop3, "magdrop3"),
         '238': (convert_shocktro, 'shocktro'),
         '241': (convert_mslug2, "mslug2"),
+        '242': (convert_kof98h, "kof98h"),
         '243': (convert_lastbld2, "lastbld2"),
         '246': (convert_shocktr2, "shocktr2"),
         '250': (convert_mslugx, "mslugx"),
@@ -266,6 +267,27 @@ def convert_mslug2(input, output):
 
     convert_common_c(input, output, 2)
 
+def convert_kof98h(input, output):
+
+    # wrong CRC for kof98h (MVS/AES), but works
+    # kof98 (MVS) has encrypted code
+    # to be able to play this as "kof98" in mame, we would need to encrypt this ROM, reversing: https://github.com/ColumPaget/gngeo-cjp/blob/master/src/neocrypt.c
+    output.createFile("pn1.p1", getAsymmetricPart(input.regions['P'].data, 0*KILOBYTE, 1024*KILOBYTE))
+
+    output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
+
+    # used for kof98 (MVS), correct CRC!
+    # output.createFile("m1.m1", input.regions['M'].data)
+
+    # used for kof98h (MVS/AES). wrong CRC!
+    output.createFile("mg1.m1", input.regions['M'].data)
+
+    split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
+
+    output.createFile("s1.s1", input.regions['S'].data)
+
+    convert_common_c(input, output, 4)
+
 def convert_lastbld2(input, output):
 
     # Same ROM for MVS/AES
@@ -482,7 +504,7 @@ def convert_common(input, output):
         convert_bios_files(input, output, 'aes-jp-patched-to-mvs-eu', 'neo-po.bin', True,  False, 0x02, False)
 
         # The only support rom is l0 which is created below
-        print("This game includes AES (arcade) BIOS ROMs.")
+        print("This game includes AES (home) BIOS ROMs.")
         print("Pick the original or one of the patched sets, and play the game in MAME using:")
         print("   .\\mame64 aes -cart " + output.mameShortName + " -bios japan")
     else:

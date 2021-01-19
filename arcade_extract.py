@@ -19,8 +19,8 @@ def extract_arcade(ccfArchive, outputFolder):
         #print_metadata(ccfArchive, config)
         return True
     else: 
-        print('Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game. Showing possible keys...')
-        print_metadata(ccfArchive, config)
+        print('Found unfamiliar game. Extraction scripts need to be updated to be able to extract this game.')
+#       #print_metadata(ccfArchive, config)
         return False
 
 def extract_SHARRIER(ccfArchive, outputFolder):
@@ -112,7 +112,7 @@ def extract_SHARRIER(ccfArchive, outputFolder):
     save_rom_file(getStripes(getPart(sprites,7,0x20000),[0]), outputFolder, 'epr-7199.ic1')
 
     #gfx3 = road gfx - BROKEN!
-    gfx3 = get_rom_file(module, 'sharrier_rom_grp3', 0x8000)
+    gfx3 = get_rom_file(module, 'sharrier_rom_grp3', 0x20000)
     save_rom_file(gfx3, outputFolder, 'epr-7181.ic2')
 
     #soundcpu = sound CPU
@@ -132,18 +132,18 @@ def extract_SHARRIER(ccfArchive, outputFolder):
 #TODO: create extract_ARCHITECTURE functions for other games
 
 
-def print_metadata(ccfArchive, config):
+#def print_metadata(ccfArchive, config):
     
     #Look for the module most specific to the game, and for exports that refers to roms
 
-    modules = string.split(getConfiguration(config, 'modules'))
-    for module in modules:
-        moduleFilename = module + '.rso'
-        print(' - Module ' + moduleFilename + ':')
-        moduleFile = ccfArchive.find(moduleFilename)
-        module = rso(moduleFile)
-        for export in module.getAllExports():
-            print(" -- Export " + export)
+#    modules = string.split(getConfiguration(config, 'modules'))
+#    for module in modules:
+#        moduleFilename = module + '.rso'
+#        print(' - Module ' + moduleFilename + ':')
+#        moduleFile = ccfArchive.find(moduleFilename)
+#        module = rso(moduleFile)
+#        for export in module.getAllExports():
+#            print(" -- Export " + export)
 
         
 def create_rom_folder(parentFolder, romFolderName):

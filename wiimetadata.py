@@ -5,7 +5,7 @@
 # Thanks to Leathl for writing Wii.cs in ShowMiiWads, which was an important 
 # reference in writing this program.
 
-import os, os.path, struct, shutil, re, zlib
+import os, os.path, struct, shutil, re, zlib, lzma
 from io import BytesIO
 import gensave, n64save
 from u8archive import U8Archive
@@ -126,6 +126,9 @@ class RomExtractor(object):
 					print('Failed to extract save file(s)')
 					pass
 
+
+#		fdsBios = extract_fds_bios_from_app(f)
+
 		f.close()
 
 		if result == 1:
@@ -155,6 +158,10 @@ class RomExtractor(object):
 
 		writerom(output, filename)
 
+#		if fdsBios != None:
+#			print('Extracted FDS BIOS')
+#			writerom(fdsBios, os.path.join(outputPath, "DISKSYS.ROM"))
+#
 		if hasExportedSaveData:
 			print('Extracted save data')
 
@@ -336,34 +343,35 @@ class RomExtractor(object):
 
 				giveUp = False
 
-				if file.name == "game.bin.z" or file.name == "game.bin.xz":
-					if (entireFile[0:4] == b'CR00'):
-						#f = open(os.path.join(outputPath, 'encrypted_' + file.name),'wb')
-						#f.write(entireFile)
-						#f.close()
+				if (entireFile[0:4] == b'CR00'):
+					#f = open(os.path.join(outputPath, 'encrypted_' + file.name),'wb')
+					#f.write(entireFile)
+					#f.close()
 
-						(success, output) = decrypt_neogeo(self.id, entireFile)
-						entireFile = output
+					(success, output) = decrypt_neogeo(self.id, entireFile)
+					entireFile = output
 
-						if not success:
-							outputFileName = "game.bin.encrypted"
-							print("Exporting encrypted ROMs without decrypting them")
-							giveUp = True
-
-					#encrypted files can be compressed after being decrypted
-					if entireFile[0] == 0x78:
-						entireFile = zlib.decompress(entireFile)
-
-					#encrypted files can be compressed after being decrypted
-					if entireFile[0:4] == b'\x5D\x00\x00\x80':
-						print("LZMA (xz) compressed - not supported yet")
-						outputFileName = "game.bin.xz"
+					if not success:
+						outputFileName = "game.bin.encrypted"
+						print("Exporting encrypted ROMs without decrypting them")
 						giveUp = True
+
+				if file.name == "game.bin.xz":
+					assert entireFile[0:4] == b'\x5D\x00\x00\x80'
+					print("Decompressing LZMA (XZ) file")
+					decomp = lzma.LZMADecompressor(lzma.FORMAT_AUTO, None, None)
+					entireFile = decomp.decompress(entireFile)
+
+				elif file.name == "game.bin.z":
+					assert entireFile[0] == 0x78
+					print("Decompressing using zlib")
+					entireFile = zlib.decompress(entireFile)
+
 				elif file.name != "game.bin":
 					#game.bin = unencrypted, uncompress game
 					#any other file name: do nothing
+					outputFileName = file.name
 					giveUp = True
-
 
 				if not giveUp:
 					#f = open(os.path.join(outputPath, 'decrypted_' + file.name),'wb')
