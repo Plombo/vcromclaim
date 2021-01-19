@@ -27,13 +27,47 @@ def extract_SHARRIER(ccfArchive, outputFolder):
 
     # https://github.com/mamedev/mame/blob/master/src/mame/drivers/segahang.cpp
 
-    # The separate ROM files has been merged, we need to splice them so that MAME can load them.
-    # Basically this is doing the reverse of what MAME does when loading the ROMs
+    def convert_roadgfx(roadInput):
 
-    #TODO: GFX3 (road), sharrier/sharrier1?
+        # input = vc version format
+        # output = original ROM format
 
-    #TODO: fix gfx3 - road graphics, the wii version is probably unpacked vs the
-    #   original roms.
+        # this would probably be very similar for Super Hangon which use the same Arcade hardware
+
+        outputHalfLength = int(len(roadInput) / 8)
+        outputFullLength = int(outputHalfLength * 2)
+        BITS_IN_BYTE = 8
+
+        # real rom has twice as many "rows", but each "row" has 8x bytes as the VC ROM
+        returnValue = bytearray(outputFullLength)
+
+        for outputByteOffset in range(0, outputHalfLength):
+            inputByteOffset = outputByteOffset * BITS_IN_BYTE
+            explodedByte = roadInput[inputByteOffset : inputByteOffset+BITS_IN_BYTE]
+            
+            returnValue[outputByteOffset] = (
+                ((explodedByte[0] & 0x1) << 7) |
+                ((explodedByte[1] & 0x1) << 6) |
+                ((explodedByte[2] & 0x1) << 5) |
+                ((explodedByte[3] & 0x1) << 4) |
+                ((explodedByte[4] & 0x1) << 3) |
+                ((explodedByte[5] & 0x1) << 2) |
+                ((explodedByte[6] & 0x1) << 1) |
+                ((explodedByte[7] & 0x1)     )
+            )
+
+            returnValue[outputHalfLength + outputByteOffset] = (
+                ((explodedByte[0] & 0x2) << 6) |
+                ((explodedByte[1] & 0x2) << 5) |
+                ((explodedByte[2] & 0x2) << 4) |
+                ((explodedByte[3] & 0x2) << 3) |
+                ((explodedByte[4] & 0x2) << 2) |
+                ((explodedByte[5] & 0x2) << 1) |
+                ((explodedByte[6] & 0x2)     ) |
+                ((explodedByte[7] & 0x2) >> 1)
+            )
+
+        return returnValue
 
     moduleFile = ccfArchive.find('sharrier.rso')
     module = rso(moduleFile)
@@ -46,6 +80,9 @@ def extract_SHARRIER(ccfArchive, outputFolder):
 
     #for export in module.getAllExports():
     #    print(" -- Export " + export)
+
+    # The separate ROM files has been merged, we need to splice them so that MAME can load them.
+    # Basically this is doing the reverse of what MAME does when loading the ROMs
 
     #maincpu = 68000 code
     cpu1 = get_rom_file(module, 'sharrier_rom_cpu1', 0x40000)
@@ -113,7 +150,7 @@ def extract_SHARRIER(ccfArchive, outputFolder):
 
     #gfx3 = road gfx - BROKEN!
     gfx3 = get_rom_file(module, 'sharrier_rom_grp3', 0x20000)
-    save_rom_file(gfx3, outputFolder, 'epr-7181.ic2')
+    save_rom_file(convert_roadgfx(gfx3), outputFolder, 'epr-7181.ic2')
 
     #soundcpu = sound CPU
     soundcpu = get_rom_file(module, 'sharrier_rom_cpu3', 0x008000)

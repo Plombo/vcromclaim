@@ -35,9 +35,9 @@ Features
 * Can recreate a playable replica of the original ROM for SNES games where the 
   original sound data has been removed from the ROM, by re-encoding the PCM 
   sound data to BRR and restoring the BRR data to its original place in the ROM.
-* Can extract most, but not all, of Space Harrier (Arcade).
+* Can extract Space Harrier (Arcade).
 * Automatically extracts the built-in manuals in VC games.
-* Automatically extracts saves for all formats, except PC Engine / TurboGrafx16
+* Automatically extracts saves for most formats, except PC Engine / TurboGrafx16
   / TurboGrafx CD.
 * Displays useful debugging information in the extraction process.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
@@ -64,8 +64,6 @@ Known Issues
   for your game.
 * NEO GEO: Many Neo Geo games are encrypted. These can be decrypted, but requires
   a lot of extra manual steps. See [neogeo_reame.txt](neogeo_readme.txt)
-* NEO GEO: A few Neo geo games are compressed using LZMA. At this time, these
-  cannot be decompressed.
 * NEO GEO:
   NG games play differently depending on if they are ran on an MVS (arcade machine) or an AES (home console.)
   They also change content depending on the region of the hardware.
@@ -79,7 +77,7 @@ Known Issues
   * If you want the game to give a home console experience (insert coin etc) use "jp-aes" or "XXX-patched-to-XX-aes" ROMs.
   * If you want to be able to set DIP switches, or to be able to access the sytem menu, use "jp-mvs" or "jp-mvs-patched-to-XX-mvs" ROMs.
   * If you want to have an experience as accurate as possible, use the "jp-mvs" or "jp-aes".
-  * As of now, there are audio issues, and the system menu is completley black (because SFIX is empty), if using an "XX-mvs", "XX-mvs-patched-to-XXX" or "XXX-patched-to-XX-mvs".
+  * As of now, there are audio issues, and the system menu is completely black (because SFIX is empty), if using an "XX-mvs", "XX-mvs-patched-to-XXX" or "XXX-patched-to-XX-mvs".
   * The system ROMs are not bound to a game, so you can use system ROMs exported from one game to any other NG game.
 
 * A lot of games have simply been modified for VC.
@@ -97,16 +95,16 @@ Known Issues
     * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
       glitch and freeze.
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
-  files makes them run correctly.
+  files to 44.1kHz makes them play correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
 * TURBOGRAFX 16/CD: Save games are not extracted at this time.
-* COMMODORE 64 and ARCADE: games cannot be extracted at this time.
+* COMMODORE 64 games and most ARCADE games cannot be extracted at this time.
 
 Credits
 -------
 * [Bryan Cain](https://github.com/Plombo) - author of vcromclaim
-* [JanErikGunnar](https://github.com/JanErikGunnar) - fixed a number of bugs and
-  added compatibility with Famicom FDS, TurboGrafx CD, and some Neo Geo games.
+* [JanErikGunnar](https://github.com/JanErikGunnar) - added extraction of Famicom FDS,
+  TurboGrafx CD, Neo Geo and Space Harrier.
 * [hcs](http://hcs64.com) - author of C decompression code for Huf8, LZH8, and 
   romchu, all of which I (Bryan) ported to Python for vcromextract.
 * [Hector Martin (marcan)](http://marcansoft.com/blog) - original author of the 
