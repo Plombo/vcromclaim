@@ -222,7 +222,7 @@ class TrackDescription(object):
         # We calculate pregap for the ISO to start the new track at the correct sector.
 
         # Sometimes this track is positioned before the last track's start+length.
-        # I've only seen it once, track 3 on Castlevania: RoB is about 15 frames (1/10s) too long.
+        # I've only seen it once, track 3 on Castlevania: RoB is about 15 frames (0,1 or 0,2 sec) too long.
         # It is probably a bug on that game.
         #if (self.startSector - previousEndSector < 0):
         #    print("Warning: Start sector less than previous end sector.")
