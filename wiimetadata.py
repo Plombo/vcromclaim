@@ -356,27 +356,23 @@ class RomExtractor(object):
 						print("Exporting encrypted ROMs without decrypting them")
 						giveUp = True
 
-				if file.name == "game.bin.xz":
-					assert entireFile[0:4] == b'\x5D\x00\x00\x80'
-					print("Decompressing LZMA (XZ) file")
-					decomp = lzma.LZMADecompressor(lzma.FORMAT_AUTO, None, None)
-					entireFile = decomp.decompress(entireFile)
-
-				elif file.name == "game.bin.z":
-					assert entireFile[0] == 0x78
-					print("Decompressing using zlib")
-					entireFile = zlib.decompress(entireFile)
-
-				elif file.name != "game.bin":
-					#game.bin = unencrypted, uncompress game
-					#any other file name: do nothing
-					outputFileName = file.name
-					giveUp = True
-
 				if not giveUp:
-					#f = open(os.path.join(outputPath, 'decrypted_' + file.name),'wb')
-					#f.write(entireFile)
-					#f.close()
+					if file.name == "game.bin.xz":
+						assert entireFile[0:4] == b'\x5D\x00\x00\x80'
+						print("Decompressing LZMA (XZ) file")
+						decomp = lzma.LZMADecompressor(lzma.FORMAT_AUTO, None, None)
+						entireFile = decomp.decompress(entireFile)
+
+					elif file.name == "game.bin.z":
+						assert entireFile[0] == 0x78
+						print("Decompressing using zlib")
+						entireFile = zlib.decompress(entireFile)
+
+					elif file.name != "game.bin":
+						#game.bin = unencrypted, uncompress game
+						#any other file name: do nothing
+						outputFileName = file.name
+						giveUp = True
 
 					convert_neogeo(BytesIO(entireFile), outputPath)
 					print("Extracted ROM files (some BIOS files may be missing)")
