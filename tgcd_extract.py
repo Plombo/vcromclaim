@@ -142,6 +142,7 @@ def saveFile(fileContent, fileName, outputFolder):
     outputFile = open(filePath, mode)
     fileContent.seek(0)
     outputFile.write(fileContent.read())
+    fileContent.seek(0)
     outputFile.close()
         
 def createCueDirective(trackDescription, replacementFileName):
@@ -215,10 +216,21 @@ class TrackDescription(object):
         self.endSector = self.startSector + self.sectorCount #NON-INCLUSIVE
         assert (self.endSector >= self.startSector)
 
-        # Calculate the pregap
-        # It actually happens that the HCD files specify tracks that are longer than fits before the next
-        # track's start sector.
-        # We assume the over/underlapping bytes of the first track is data that can be ignored.
-        # The length of the previous track is truncated at other place.
+        # Calculate the pregap.
+        # In Cue/Bin, each track starts immediatelly after the next track.
+        # In HCD, the start sector of each track is specified.
+        # We calculate pregap for the ISO to start the new track at the correct sector.
+
+        # Sometimes this track is positioned before the last track's start+length.
+        # I've only seen it once, track 3 on Castlevania: RoB is about 15 frames (1/10s) too long.
+        # It is probably a bug on that game.
+        #if (self.startSector - previousEndSector < 0):
+        #    print("Warning: Start sector less than previous end sector.")
+        #    print(self.trackNumber)
+        #    print(self.fileName)
+        #    print(self.startSector)
+        #    print(self.sectorCount)
+        #    print(previousEndSector)
+
         self.pregap = max(0, self.startSector - previousEndSector)
         assert (self.pregap) >= 0

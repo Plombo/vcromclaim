@@ -94,8 +94,8 @@ Known Issues
     cases:
     * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
       glitch and freeze.
-* TURBOGRAFX CD: CD audio will play too slow in Mednafen. Reencodeing the OGG
-  files to 44.1kHz makes them play correctly.
+* TURBOGRAFX CD: CD audio will play too slow in Mednafen, and a few games (like Super Air Zonk) are completely broken.
+  Reencodeing the OGG files to 44.1kHz WAVE makes them play correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
 * TURBOGRAFX 16/CD: Save games are not extracted at this time.
 * COMMODORE 64 games and most ARCADE games cannot be extracted at this time.
