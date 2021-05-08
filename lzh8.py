@@ -113,7 +113,7 @@ def decompress(infile):
 	
 	# determine input file size
 	infile.seek(0, os.SEEK_END)
-	file_length = infile.tell()
+	#file_length = infile.tell()
 	
 	# read header
 	infile.seek(input_offset)
@@ -237,7 +237,7 @@ def decompress(infile):
 		# end of length tree traversal
 	# end of main decode loop
 	
-	return outbuf.tostring()
+	return outbuf
 
 
 if __name__ == "__main__":

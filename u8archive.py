@@ -81,7 +81,7 @@ class U8Archive(object):
 						decompressed_file = BytesIO(lz77.decompress_nonN64(file))
 						file.close()
 						return decompressed_file
-					except (ValueError, IndexError) as e:
+					except (ValueError, IndexError):
 						print("LZ77 decompression of '%s' failed" % path)
 						print('Dumping compressed file to %s' % path)
 						f2 = open(path, "wb")
@@ -115,6 +115,7 @@ class U8Archive(object):
 						print("LZH8 decompression of '%s' failed" % path)
 						print("Dumping compressed file to %s" % path)
 						f2 = open(path, "wb")
+						file.seek(0)
 						f2.write(file.read())
 						f2.close()
 						file.close()

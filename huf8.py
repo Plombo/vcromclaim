@@ -8,7 +8,7 @@ from array import array
 
 def decompress(infile, outfile):
 	infile.seek(0, os.SEEK_END)
-	file_length = infile.tell()
+	#file_length = infile.tell()
 	infile.seek(0, os.SEEK_SET)
 
 	# read header
