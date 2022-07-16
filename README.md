@@ -37,8 +37,7 @@ Features
   sound data to BRR and restoring the BRR data to its original place in the ROM.
 * Can extract Space Harrier (Arcade).
 * Automatically extracts the built-in manuals in VC games.
-* Automatically extracts saves for most formats, except PC Engine / TurboGrafx16
-  / TurboGrafx CD.
+* Automatically extracts saves for most formats.
 * Displays useful debugging information in the extraction process.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
   platform supported by Python.
@@ -97,7 +96,6 @@ Known Issues
 * TURBOGRAFX CD: CD audio will play too slow in Mednafen, and a few games (like Super Air Zonk) are completely broken.
   Reencodeing the OGG files to 44.1kHz WAVE makes them play correctly.
 * TURBOGRAFX CD: Super Air Zonk does not play.
-* TURBOGRAFX 16/CD: Save games are not extracted at this time.
 * COMMODORE 64 games and most ARCADE games cannot be extracted at this time.
 
 Credits
@@ -105,6 +103,7 @@ Credits
 * [Bryan Cain](https://github.com/Plombo) - author of vcromclaim
 * [JanErikGunnar](https://github.com/JanErikGunnar) - added extraction of Famicom FDS,
   TurboGrafx CD, Neo Geo and Space Harrier.
+* [Euan Forrester](https://github.com/euan-forrester) - TurboGrafx save file exporting
 * [hcs](http://hcs64.com) - author of C decompression code for Huf8, LZH8, and 
   romchu, all of which I (Bryan) ported to Python for vcromextract.
 * [Hector Martin (marcan)](http://marcansoft.com/blog) - original author of the 

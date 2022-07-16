@@ -17,6 +17,7 @@ from neogeo_decrypt import decrypt_neogeo
 from neogeo_convert import convert_neogeo
 from arcade_extract import extract_arcade
 from tgcd_extract import extract_tgcd
+from tgsave import unmangle_tgsave
 from configurationfile import getConfiguration 
 from n64crc import updateN64Crc
 import game_specific_patches
@@ -246,7 +247,7 @@ class RomExtractor(object):
 			filename =  os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 			writerom(rom, filename)
 			print('Got ROM: %s' % filename)
-			#self.extractsave(outputPath)
+			self.extractsave(outputPath)
 			return True
 
 		return False
@@ -254,8 +255,8 @@ class RomExtractor(object):
 	def extractrom_tgcd(self, arc, outputPath, filenameWithoutExtension):
 		if (arc.hasfile("config.ini")):
 			extract_tgcd(arc, outputPath)
-			print("Got TurboGrafx CD image")
-			#self.extractsave(outputPath)
+			print("Extracted TurboGrafx CD image")
+			self.extractsave(outputPath)
 			return True
 		else:
 			return False
@@ -476,9 +477,10 @@ class RomExtractor(object):
 		
 		for filename in datafiles:
 			path = os.path.join(datadir, filename)
-			#if self.channeltype == 'TurboGrafxCD' and filename != 'nocopy':
-			#	shutil.copy2(path, os.path.join(outputPath, filename))
-			if filename == 'savedata.bin':
+			if (self.channeltype == 'TurboGrafxCD' or self.channeltype == 'TurboGrafx16') and filename == 'pcengine.bup':
+				unmangle_tgsave(path, outputPath)
+				return True
+			elif filename == 'savedata.bin':
 				if self.channeltype == 'SNES':
 					# VC SNES saves are standard SRM files
 					outpath = os.path.join(outputPath, self.name + '.srm')
@@ -498,7 +500,7 @@ class RomExtractor(object):
 					outpath = os.path.join(outputPath, self.name + '.ssm')
 					gensave.convert(path, outpath, False)
 					return True
-			if filename == 'savefile.dat' and self.channeltype == 'Neo Geo':
+			elif filename == 'savefile.dat' and self.channeltype == 'Neo Geo':
 				# VC Neo Geo saves are memory card images, can be opened as is by mame
 				shutil.copy2(path, os.path.join(outputPath, "memorycard.bin"))
 				return True
