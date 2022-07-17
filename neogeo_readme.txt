@@ -2,6 +2,9 @@ The following are instructions that are necessary to be able to extract encrypte
 Roughly half of the Neo Geo virtual console games are encrypted.
 Vcromclaim will tell you if a game is encrypted, and refer to this file.
 
+Note that "encryption" in this file refers to the Wii specific encrption.
+If does NOT refer to the original encryption that some games originally had, like Metal Slug 3 and Metal Slug 4.
+
 The steps are, roughly:
 1. Run ShowMiiWads to pack the game as a Wad
 2. Run the Wad in Dolphin
@@ -80,11 +83,6 @@ Read more about it here if necessary: https://pypi.org/project/pycryptodome/
 PyCrypto should also work.
 
 NOTE: If game extraction crash with an unclear error message, you probably got the wrong key. Make sure you copied the key correctly or look for another key as described above.
-
-After decryption, many games also need to be decompressed. Two different algorithms are used: zlib and LZSA/XZ.
-Zlib compressed games are decompressed automatically.
-XZ compressed games cannot currently be decompressed, but you can decompress them yourself with 7zip.
-If 7zip gives error about unexpected data after end of compressed data, use hex-editor such as HxD to remove 00 bytes at end of file.
 
 
 TECHNICAL DETAILS ABOUT THE KEYS AND NEO GEO VIRTUAL CONSOLE ENCRYPTION

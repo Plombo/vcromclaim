@@ -15,12 +15,12 @@ Features
   TurboGrafx16 / TurboGrafx CD, Mega Drive/Genesis, Master System, and
   Nintendo 64 games without fail!
 * Extracts several Neo Geo games, along with the AES/MVS BIOS, so that they are
-  playable in MAME:
+  playable in MAME (note - extra steps may be required, see below)
   * NAM-1975
   * Magician Lord
   * King of the Monsters
   * Spinmaster
-  * Neo Turf Master
+  * Neo Turf Masters
   * Metal Slug
   * Real Bout Fatal Fury Special
   * Magical Drop 3
@@ -30,17 +30,13 @@ Features
   * The Last Blade 2
   * Shock Troopers 2
   * Metal Slug X
-  * Support for many other Neo Geo games can be added easily. Encrypted games
-  can be extracted, although extra steps are required, see [neogeo_reame.txt](neogeo_readme.txt)
-* Can recreate a playable replica of the original ROM for SNES games where the 
-  original sound data has been removed from the ROM, by re-encoding the PCM 
-  sound data to BRR and restoring the BRR data to its original place in the ROM.
+  * ...and support for many other Neo Geo games can be added relatively easily.
+    Lots of caveats though - see below!
 * Can extract Space Harrier (Arcade).
 * Automatically extracts the built-in manuals in VC games.
 * Automatically extracts saves for most formats.
-* Displays useful debugging information in the extraction process.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
-  platform supported by Python.
+  platform supported by Python. Some games may require additional libraries to extract.
 
 Requirements
 ------------
@@ -55,21 +51,48 @@ The program is run by executing wiimetadata.py:
 
     python wiimetadata.py nand_directory
 
-Known Issues
-------------
-* NEO GEO: Because of the way Neo Geo games are made, part of the extraction
+Known Issues/Caveats
+--------------------
+* ALL SYSTEMS: A lot of games have been modified for VC for various reasons. Same games may
+  simply just behave differently from the original games, some games may not work properly
+  in accurate emulators or on real hardware due. Very often checksums will not be accurate.
+  Known instances:
+  * Removal of flashing graphics:
+    * In Magical Drop 3, Tower character's flashing animation has been removed.
+  * FDS games have been customized to let the VC emulator automatically switch disk
+    side. You might get strange behaviour when the game normally would ask you to change the
+    disk. Depending on emulator, just changing disk may work as usual.
+    * Bio Miracle Bokutte Upa: Flashing "wait" screen
+    * Zelda no Densetsu: "Press start" is shown, nothing happens if you do
+  * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
+      glitch and freeze in accurate emulators.
+  * Content changes:
+    * "Ogra Battle 64": "JIHAD" was renamed "LASER" for obvious reasons
+* TURBOGRAFX CD: CD audio is extracted in the wrong speed, because the quality is
+  higher than required (48 kZz in 44.1kHz). Music in all games will play too slow in Mednafen,
+  and a few games (like Super Air Zonk) are completely broken.
+  Manually reencodeing the OGG files to 44.1kHz WAVE with e.g. Audacity everything play correctly.
+* COMMODORE 64 games and most ARCADE games cannot be extracted at this time.
+* NEO GEO: Because of the way Neo Geo ROMs are made, part of the extraction
   process has to be hardcoded separately for each game. If your game is not
   supported, it might be trivial to expand neogeo_convert.py to include support
   for your game.
-* NEO GEO: Many Neo Geo games are encrypted. These can be decrypted, but requires
-  a lot of extra manual steps. See [neogeo_reame.txt](neogeo_readme.txt)
+* NEO GEO: Many Neo Geo games are encrypted on VC. These can be decrypted, but requires
+  a lot of advanced extra manual steps. See [neogeo_reame.txt](neogeo_readme.txt)
+* NEO GEO: Games that had encryption on the original hardware, like Metal Slug 3 and
+  Metal Slug 4, cannot currently be exported correctly. This is because MAME expects
+  the original, encrypted ROMs while the VC ROMs come decrypted. (Not the same encryption
+  as the previous point.) To solve we must apply encryption to the extracted ROMs.
 * NEO GEO:
-  NG games play differently depending on if they are ran on an MVS (arcade machine) or an AES (home console.)
-  They also change content depending on the region of the hardware.
+  NG games play differently depending on if they are ran on an MVS (arcade machine)
+  or an AES (home console.) They also change content depending on the region of the
+  hardware.
   This is all determined by the emulator (e.g. MAME) and the system ROM.
-  The Wii NG games comes bundled with the main system ROM. Some games comes with an AES system ROM, other comes with an MVS system ROM.
+  The Wii NG games comes bundled with the main system ROM. Some games comes with an
+  AES system ROM, other comes with an MVS system ROM.
   All games comes with a japanese system ROM.
-  The ROM is patched to make the game think it's an american or european system, and the MVS ROM is patched so that the game thinks it is an AES system.
+  The ROM is patched to make the game think it's an american or european system,
+  and the MVS ROM is patched so that the game thinks it is an AES system.
 
   * If you want the game to run in English and have the same experience as on a US/EU Wii, use "XXX-patched-to-us-XXX" or "XXX-patched-to-eu-XXX".
   * If you want the game to give an arcade experience ("insert coin" etc) use "jp-mvs" or "XXX-patched-to-XX-mvs" ROMs.
@@ -78,25 +101,6 @@ Known Issues
   * If you want to have an experience as accurate as possible, use the "jp-mvs" or "jp-aes".
   * As of now, there are audio issues, and the system menu is completely black (because SFIX is empty), if using an "XX-mvs", "XX-mvs-patched-to-XXX" or "XXX-patched-to-XX-mvs".
   * The system ROMs are not bound to a game, so you can use system ROMs exported from one game to any other NG game.
-
-* A lot of games have simply been modified for VC.
-  * For some games, the changes are minimal, for example the removal of flashing
-    graphics. Known examples:
-    * In Magical Drop 3, Tower character's flashing animation has been removed.
-  * FDS games have been customized to let the emulator automatically switch disk
-    side, which regular emulators does not support. You might get strange
-    behaviour when it's time to switch disk. Just switching disk let's you bypass
-    it in these known examples:
-    * Bio Miracle Bokutte Upa: Flashing "wait" screen
-    * Zelda no Densetsu: "Press start" is shown, nothing happens if you do
-  * Some games are completely broken when played in regular emulators or real hardware, known
-    cases:
-    * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
-      glitch and freeze.
-* TURBOGRAFX CD: CD audio will play too slow in Mednafen, and a few games (like Super Air Zonk) are completely broken.
-  Reencodeing the OGG files to 44.1kHz WAVE makes them play correctly.
-* TURBOGRAFX CD: Super Air Zonk does not play.
-* COMMODORE 64 games and most ARCADE games cannot be extracted at this time.
 
 Credits
 -------
@@ -107,7 +111,7 @@ Credits
 * [hcs](http://hcs64.com) - author of C decompression code for Huf8, LZH8, and 
   romchu, all of which I (Bryan) ported to Python for vcromextract.
 * [Hector Martin (marcan)](http://marcansoft.com/blog) - original author of the 
-  Python LZ77 decompression code, which I heavily modified and expanded for 
+  Python LZ77 decompression code, which I (Plombo) heavily modified and expanded for 
   vcromextract.
 * [sepalani](https://github.com/sepalani/librso/blob/master/rvl/rso.py) - author of librso, 
   with some reverse engineering done for RSO file format
@@ -123,5 +127,4 @@ Credits
   arcade and Neo Geo roms
 * [HxD](https://mh-nexus.de/en/hxd/) - great, free hex editor
 * [WiiBrew](https://wiibrew.org) - invaluable for any Wii development
-
 
