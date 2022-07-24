@@ -3,13 +3,14 @@
 import struct, os, hashlib
 
 import neogeo_acm
+import neogeo_cmc
 from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad
 
 HEADER_LENGTH = 64
 KILOBYTE = 1024
 
 
-#invaluable source: https://github.com/mamedev/mame/blob/master/src/mame/drivers/neogeo.cpp
+#invaluable source: https://github.com/mamedev/mame/blob/master/src/mame/neogeo/neogeo.cpp
 
 # To run Neo Geo games in mame, place the two folders (the game folder and the aes/neogeo bios-folder)
 # to the "roms" in the mame folder.
@@ -385,16 +386,31 @@ def convert_mslug4(input, output):
     # correct CRC for MVS version, not for AES version
     output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
 
-    # TODO: M, V and C all have bad CRCs and garbled graphics and missing sound. Probably due to encryption.
-
-    output.createFile("m1.m1", input.regions['M'].data)
     split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
-    
-    # TODO: real cart does not have s1 rom
-    output.createFile("s1test.s1test", input.regions['S'].data)
 
-    # C files are not correct, they are decrypted but mame expects encrypted version. They do have crap at the end that is probably the S1 data1, encrypted or not.
-    convert_common_c(input, output, 3)
+    # Original hardware has decryption hardware for S, M and C, which MAME emulates.
+    # Hence MAME and original hardware expects encrypted ROMs.
+    # Wii comes with decrypted ROMs.
+    # We need to encrypt them to make them playable with MAME.
+
+    # C ROM (includes S ROM)
+    if input.regions['C'].data[0:3] == b'ACM':
+        data = neogeo_acm.decompressAcm(input.regions['C'].data)
+    else:
+        data = input.regions['C'].data
+
+    # key found in https://github.com/mamedev/mame/blob/master/src/devices/bus/neogeo/prot_cmc.h
+    convert_c(neogeo_cmc.encrypt_cmc50_gfx(data, 0x31), output, 3, [[0,2],[1,3]])
+
+    # Note: MAME does additional unscrambling of the S part at the end of the C ROM.
+    # We do not have to scramble it, because the decrypted Wii C ROM version already contains the
+    # scrambled S portion. (The Wii version ALSO contains this as an separate unscrambled S ROM, which
+    # we ignore)
+
+    # TODO: M is not decrypted yet. No audio and probably cause crash during early gameplay
+    output.createFile("m1.m1", input.regions['M'].data)
+
+    # TODO: SFIX, maybe other roms are missing or have wrong CRC
 
     print("This game is NOT correctly exported yet")
 
