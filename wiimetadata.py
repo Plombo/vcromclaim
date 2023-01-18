@@ -59,7 +59,7 @@ class RomExtractor(object):
 		for app in os.listdir(content):
 			if not app.endswith('.app'): continue
 			app = os.path.join(content, app)
-			if self.extractrom(app, os.path.join(self.channeltype, self.name), app[-10:]): rom_extracted = True
+			if self.extractrom(app, os.path.join(self.channeltype, self.name), app[-10:], self.id): rom_extracted = True
 			if self.extractmanual(app, os.path.join(self.channeltype, self.name, 'manual')): manual_extracted = True
 		
 		if rom_extracted and manual_extracted: return
@@ -69,7 +69,7 @@ class RomExtractor(object):
 	
 	# Actually extract the ROM
 	# Currently works for almost all NES, SNES, N64, TG16, Master System, and Genesis ROMs.
-	def extractrom(self, u8path, gameOutputPath, name):
+	def extractrom(self, u8path, gameOutputPath, name, id):
 		funcs = {
 			'Nintendo 64': self.extractrom_n64,
 			'Genesis': self.extractrom_sega,
@@ -107,11 +107,11 @@ class RomExtractor(object):
 		self.ensure_folder_exists(gameOutputPath)
 
 		if self.channeltype in funcs.keys():
-			return funcs[self.channeltype](u8arc, gameOutputPath, self.name)
+			return funcs[self.channeltype](u8arc, gameOutputPath, self.name, id)
 		else:
 			return False
 	
-	def extractrom_nes(self, u8path, outputPath, filenameWithoutExtension):
+	def extractrom_nes(self, u8path, outputPath, filenameWithoutExtension, id):
 		if not os.path.exists(u8path): return False
 		
 		f = open(u8path, 'rb')
@@ -135,13 +135,29 @@ class RomExtractor(object):
 		if result == 1:
 			# nes rom
 
-			# make sure save flag is set if the game has save data - not sure which games this is used for?
-			if hasExportedSaveData:
-				if not (output.getvalue()[6] & 2):
-					output = list(output.getvalue())
-					output[6] = output[6] | 2
-					output = BytesIO(''.join(output))
-					print('Set the save flag to true')
+			# make sure save/SRAM flag is set if the game has save data - not sure which games this is used for?
+			# Original behaviour in vcromclaim was to force the flag IF there was save data, otherwise leave it.
+			# That is not complete because user maybe never saved anything.
+			# Have extended to include a check for some games known to have SRAM.
+
+			sramFlagAlreadySet = output.getvalue()[6] & 2
+
+			if sramFlagAlreadySet:
+				# WORST CASE: some games incorrectly indicate to emulator that they use SRAM.
+				# If it causes problems - extend logic to clear flags of games known NOT to have SRAM?
+				print('Leaving SRAM flag ON.')
+			else:
+				# Incomplete list of games known to have SRAM: Kirby's Adventure, Zelda 1 and 2, Star Tropics 1 and 2, Final Fantasy, Wario's Woods, NES Open Tournament Golf
+				# All of those except Kirby's Adventure has been seen to have the SRAM flag set though.
+				knownToHaveSram = id in ['46413845', '46414b45', '46413945', '46433645', '46455245', '46464145', '46414d45', '46415045']
+
+				# Flag NOT set correctly! Not sure if this causes any problems, not sure if emulators actually care about this flag.
+				if knownToHaveSram or hasExportedSaveData:
+					print('Changing SRAM flag from OFF to ON! It is OFF in extracted ROM header, but we found saved data, or the game is known to have SRAM.')
+					output.seek(6)
+					output.write((output.getvalue()[6] | 2).to_bytes(1, 'little'))
+				else:
+					print('Leaving SRAM flag OFF, because nothing suggest it is wrong.')
 
 			filename = os.path.join(outputPath, filenameWithoutExtension + ".nes")
 
@@ -168,7 +184,7 @@ class RomExtractor(object):
 
 		return True
 	
-	def extractrom_n64(self, arc, outputPath, filenameWithoutExtension):
+	def extractrom_n64(self, arc, outputPath, filenameWithoutExtension, id):
 		filename = os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 		if arc.hasfile('rom'):
 			rom = arc.getfile('rom')
@@ -198,7 +214,7 @@ class RomExtractor(object):
 		
 		return True
 	
-	def extractrom_sega(self, arc, outputPath, filenameWithoutExtension):
+	def extractrom_sega(self, arc, outputPath, filenameWithoutExtension, id):
 		filename =  os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 		if arc.hasfile('data.ccf'):
 			ccf = CCFArchive(arc.getfile('data.ccf'))
@@ -223,7 +239,7 @@ class RomExtractor(object):
 				print('ROM filename not specified in config')
 				return False
 	
-	def extractrom_tg16(self, arc, outputPath, filenameWithoutExtension):
+	def extractrom_tg16(self, arc, outputPath, filenameWithoutExtension, id):
 		#for node in arc.files:
 		#	print(node.name)
 		config = arc.getfile('config.ini')
@@ -252,7 +268,7 @@ class RomExtractor(object):
 
 		return False
 
-	def extractrom_tgcd(self, arc, outputPath, filenameWithoutExtension):
+	def extractrom_tgcd(self, arc, outputPath, filenameWithoutExtension, id):
 		if (arc.hasfile("config.ini")):
 			extract_tgcd(arc, outputPath)
 			print("Extracted TurboGrafx CD image")
@@ -261,7 +277,7 @@ class RomExtractor(object):
 		else:
 			return False
 	
-	def extractrom_snes(self, arc, outputPath, filenameWithoutExtension):
+	def extractrom_snes(self, arc, outputPath, filenameWithoutExtension, id):
 		filename = os.path.join(outputPath, filenameWithoutExtension + self.extensions[self.channeltype])
 		extracted = False
 		
@@ -323,7 +339,7 @@ class RomExtractor(object):
 		return extracted
 
 
-	def extractrom_neogeo(self, arc, outputPath, filenameWithoutExtension):
+	def extractrom_neogeo(self, arc, outputPath, filenameWithoutExtension, id):
 		foundRom = False
 		for file in arc.files:
 			#print(file.name)
@@ -406,7 +422,7 @@ class RomExtractor(object):
 
 		return foundRom
 
-	def extractrom_arcade(self, appFilePath, outputPath, filenameWithoutExtension):
+	def extractrom_arcade(self, appFilePath, outputPath, filenameWithoutExtension, id):
 		foundRom = False
 
 		#print("file in app:" + appFilePath)
