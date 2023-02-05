@@ -4,6 +4,18 @@
 # Description: Converts Virtual Console N64 saves to Mupen64Plus N64 saves.
 # The save formats used by N64 Virtual Console games were reverse engineered by Bryan Cain.
 
+
+
+# EXAMPLES:
+# Mario Golf (North America) = 4e415545 = NMFE
+# Save file created in Project64: ".sra", >= 27 KiB (seems to cut after the last written byte)
+# Save file created in Wii: "RAM_MMFE", 48KiB (where the P64 file ends, the Wii file is padded with 0xAA)
+# Project64 is fine with using the 48 KiB Wii file as it is, so that is how we export it
+# Actual hardware: 32KiB battery-backed SRAM
+
+
+
+
 import os, shutil, struct
 
 # Converts (byte-swaps) Nintendo N64 SRAM and/or Flash RAM saves to little endian
@@ -11,6 +23,8 @@ import os, shutil, struct
 def convert_sram(src, name, size):
 	# determine output extensions
 	if size == 32*1024:
+		ext = '.sra'
+	if size == 48*1024:
 		ext = '.sra'
 	elif size == 128*1024:
 		ext = '.fla'
@@ -57,7 +71,7 @@ def convert(src, name):
 	f.close()
 	
 	if size in (4*1024, 16*1024): convert_eeprom(src, name)
-	elif size in (32*1024, 128*1024, 256*1024): convert_sram(src, name, size)
+	elif size in (32*1024, 48*1024, 128*1024, 256*1024): convert_sram(src, name, size)
 	else: raise ValueError('unknown save type (size=%d bytes)' % size)
 
 if __name__ == '__main__':
