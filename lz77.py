@@ -130,13 +130,13 @@ if __name__ == '__main__':
 	import time
 	f = open(sys.argv[1], 'rb')
 	
-	start = time.clock()
+	start = time.process_time()
 	if (sys.argv[2] == 'True'):
 		du = decompress_n64(f)
 	else:
 		du = decompress_nonN64(f)
 	
-	end = time.clock()
+	end = time.process_time()
 	print('Time: %.2f seconds' % (end - start))
 		
 	f2 = open(sys.argv[2], 'wb')
