@@ -203,12 +203,9 @@ def decompress(infile, inputOffset, nominal_size):
 		block_count += 1
 		sys.stdout.write("\rDecompressed %d of %d bytes [%x/%x] (%5.2f%%)" % (out_offset, nominal_size, out_offset, nominal_size, 100.0 * out_offset / nominal_size))
 		sys.stdout.flush()
-		#print('\nDecompressed block %d in %.2f seconds' % (block_count, time.clock() - start)
 	
 	print() # start a new line after the progress counter
 	assert out_offset == nominal_size # size mismatch
-	
-	#print('Average block time: %.2f seconds' % (time.clock() / block_count))
 	
 	return out_buf
 	
