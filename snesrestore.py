@@ -121,9 +121,9 @@ if __name__ == '__main__':
 	
 	# encode and inject BRR sound data into the ROM
 	print('Encoding and restoring BRR audio data to ROM')
-	start = time.clock()
+	start = time.process_time()
 	string = restore_brr_samples(vcrom, pcm)
-	end = time.clock()
+	end = time.process_time()
 	print('Time: %.2f seconds' % (end - start))
 	
 	# write to file
