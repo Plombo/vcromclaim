@@ -56,7 +56,7 @@ Known Issues/Caveats
 --------------------
 * ALL SYSTEMS: A lot of games have been modified for VC for various reasons. Same games may
   simply just behave differently from the original games, some games may not work properly
-  in accurate emulators or on real hardware due. Very often checksums will not be accurate.
+  in accurate emulators or on real hardware. Very often checksums will not be accurate.
   Known instances:
   * Removal of flashing graphics:
     * In Magical Drop 3, Tower character's flashing animation has been removed.
@@ -70,9 +70,9 @@ Known Issues/Caveats
   * Content changes:
     * "Ogra Battle 64": "JIHAD" was renamed "LASER" for obvious reasons
 * TURBOGRAFX CD: CD audio is extracted in the wrong speed, because the quality is
-  higher than required (48 kZz in 44.1kHz). Music in all games will play too slow in Mednafen,
-  and a few games (like Super Air Zonk) are completely broken.
-  Manually reencodeing the OGG files to 44.1kHz WAVE with e.g. Audacity everything play correctly.
+  higher than required (48 kHz instead of 44.1kHz). Music in all games will play too slow
+  in Mednafen, and a few games (like Super Air Zonk) are completely broken.
+  Manually reencodeing the OGG files to 44.1kHz WAVE with e.g. Audacity should fix all this.
 * COMMODORE 64 games and most ARCADE games cannot be extracted at this time.
 * NEO GEO: Because of the way Neo Geo ROMs are made, part of the extraction
   process has to be hardcoded separately for each game. If your game is not
