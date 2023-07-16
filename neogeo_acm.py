@@ -86,6 +86,8 @@ def decompressAcm(inputAcmStr):
     #perform translations all at once for faster processing of the compressed data
     translations = [translateValue(i) for i in range(0x00,0x100)]
 
+    print("Decompressing ACM blocks...")
+
     for blockIndex in range(0, blockCount):
         assert blockIndex < blockCount
         
@@ -96,7 +98,7 @@ def decompressAcm(inputAcmStr):
         flagStart = compressedDataStart + compressedDataLength
 
         for compressedDataIndex in range(0, compressedDataLength):
-            
+
             # read the flag after the compressed data
             useTranslation = (
                 (
@@ -119,9 +121,9 @@ def decompressAcm(inputAcmStr):
                 outputArray[outputPosition] = inputArray[compressedDataStart + compressedDataIndex]
                 outputPosition = outputPosition + 1
            
-            
-        sys.stdout.write("\rDecompressed ACM block %d of %d (%5.2f%%)" % (blockIndex+1, blockCount, 100.0 * blockIndex / blockCount))
-        sys.stdout.flush()
+
+        sys.stdout.write("\r  %d of %d (%5.2f%%)" % (blockIndex+1, blockCount, 100.0 * ((blockIndex+1) / blockCount)))
+        sys.stdout.flush()            
 
 
     assert outputPosition == blockCount * 0x10000
@@ -137,6 +139,8 @@ def convertToRegularSpriteData(inputByteArray):
     assert (len(inputByteArray) % 0x80) == 0
 
     outputByteArray = bytearray(b'\x00' * len(inputByteArray))
+
+    print ("Converting sprites...")
 
     for spritePosition in range(0, len(inputByteArray), 0x80):
         # Each sprite is 16x16 = 256 pixels
@@ -227,8 +231,9 @@ def convertToRegularSpriteData(inputByteArray):
             outputByteArray[spritePosition + outputIndex + 2] = ob2
             outputByteArray[spritePosition + outputIndex + 3] = ob3
 
-        sys.stdout.write("\rConverted sprite %d of %d (%5.2f%%)" % (int(spritePosition / 0x80), int(len(inputByteArray) / 0x80), 100.0 * spritePosition / len(inputByteArray)))
-        sys.stdout.flush()
+        if spritePosition % (0x8000) == 0 or spritePosition+0x80 == len(inputByteArray):
+            sys.stdout.write("\r  %d of %d (%5.2f%%)" % (int((spritePosition) / 0x80)+1, int(len(inputByteArray) / 0x80), 100.0 * (spritePosition+0x80) / len(inputByteArray)))
+            sys.stdout.flush()
 
     print() # start a new line after the progress counter
 

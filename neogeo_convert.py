@@ -508,25 +508,24 @@ def convert_common(input, output):
 
     hexDigest = input.regions['BIOS'].getSha1HexDigest()
     if biosList.__contains__(hexDigest) and (biosList[hexDigest] == "mvs"):
-        convert_bios_files(input, output, 'mvs-jp',                   'japan-j3.bin', True,  True, 0x00, False)
-        convert_bios_files(input, output, 'mvs-jp-no-checksum-check', 'japan-j3.bin', True,  True, 0x00, True)
-        convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-us', 'japan-j3.bin', True,  True, 0x01, True)
-        convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-eu', 'japan-j3.bin', True,  True, 0x02, True)
-        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-jp', 'japan-j3.bin', False, True, 0x00, True)
-        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-us', 'japan-j3.bin', False, True, 0x01, True)
-        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-eu', 'japan-j3.bin', False, True, 0x02, True)
+        convert_bios_files(input, output, 'mvs-jp',                   True,  True, 0x00)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-us', True,  True, 0x01)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-mvs-eu', True,  True, 0x02)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-jp', False, True, 0x00)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-us', False, True, 0x01)
+        convert_bios_files(input, output, 'mvs-jp-patched-to-aes-eu', False, True, 0x02)
 
         #It's an MVS ROM. Some support roms are missing, they are not required for the game to run but mame wont run if at least the files doesn't exist.
         print("This game includes MVS (arcade) BIOS ROMs.")
         print("Pick the original or one of the patched sets, and play the game in MAME using:")
         print("   .\\mame64 " + output.mameShortName + " -bios japan-mv1b")
     elif biosList.__contains__(hexDigest) and (biosList[hexDigest] == "aes"):
-        convert_bios_files(input, output, 'aes-jp',                   'neo-po.bin', False, False, 0x00, False)
-        convert_bios_files(input, output, 'aes-jp-patched-to-aes-us', 'neo-po.bin', False, False, 0x01, False)
-        convert_bios_files(input, output, 'aes-jp-patched-to-aes-eu', 'neo-po.bin', False, False, 0x02, False)
-        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-jp', 'neo-po.bin', True,  False, 0x00, False)
-        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-us', 'neo-po.bin', True,  False, 0x01, False)
-        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-eu', 'neo-po.bin', True,  False, 0x02, False)
+        convert_bios_files(input, output, 'aes-jp',                   False, False, 0x00)
+        convert_bios_files(input, output, 'aes-jp-patched-to-aes-us', False, False, 0x01)
+        convert_bios_files(input, output, 'aes-jp-patched-to-aes-eu', False, False, 0x02)
+        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-jp', True,  False, 0x00)
+        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-us', True,  False, 0x01)
+        convert_bios_files(input, output, 'aes-jp-patched-to-mvs-eu', True,  False, 0x02)
 
         # The only support rom is l0 which is created below
         print("This game includes AES (home) BIOS ROMs.")
@@ -547,7 +546,7 @@ def convert_common(input, output):
             output.createFile(regionKey + "." + regionKey, regionData)
 
 
-def convert_bios_files(input, output, biosOutputFolder, systemRomFileName, mvsFlag, actuallyMvs, regionByte, patchChecksumCheck):
+def convert_bios_files(input, output, biosOutputFolder, mvsFlag, actuallyMvs, regionByte):
     fileName = 'japan-j3.bin' if actuallyMvs else 'neo-po.bin'
     folderName = 'neogeo' if actuallyMvs else 'aes'
     folderPath = os.path.join(biosOutputFolder, folderName)
@@ -556,25 +555,27 @@ def convert_bios_files(input, output, biosOutputFolder, systemRomFileName, mvsFl
 
     # this tells games which region the game is in (00 = jap, 01 = us, 02 = eur)
     # Wii usually patch this to 0x01
+    originalRegionByte = data[0x400]
     data[0x400] = regionByte
 
     # this tells games whether it is an mvs or aes console.
     # Wii usually patch this to 0x00
+    originalMvsFlagValue = data[0x401]
+    newMvsFlagValue = 0x80 if mvsFlag else 0x00
     data[0x401] = 0x80 if mvsFlag else 0x00
     
-    if (patchChecksumCheck):
+    if actuallyMvs and (originalMvsFlagValue != newMvsFlagValue or originalRegionByte != regionByte):
+
         # The above patches cause an internal checksum test to fail on MVS system roms.
         # The Wii emulator does a similar patch.
 
         for address in range(0x10C62, 0x10D44, 2):
             # NOP instruction
-            data[address] = 0x71
-            data[address+1] = 0x4E
+            data[address:address+2] = b'\x71\x4E'
 
         for address in range(0x10D86, 0x10D8A, 2):
             # NOP instruction
-            data[address] = 0x71
-            data[address+1] = 0x4E
+            data[address:address+2] = b'\x71\x4E'
 
 
     output.createFile(fileName, data, subFolder = folderPath)
