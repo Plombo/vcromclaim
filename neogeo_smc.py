@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #Metal Slug 4 has some weird byteswapping not seen elsewhere, maybe related to SMC encryption or something.
 
 

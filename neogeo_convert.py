@@ -406,7 +406,6 @@ def convert_mslug4(input, output):
     # M1: checksum OK
     output.createFile("m1.m1", neogeo_cmc_m1.encrypt_cmc50_m1(input.regions['M'].data))
 
-    print("This game is NOT correctly exported yet")
 
 def convert_generic_guess(input, output):
     output.createFile("p1.p1", input.regions['P'].data)
