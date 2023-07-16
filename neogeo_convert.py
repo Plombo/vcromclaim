@@ -3,7 +3,7 @@
 import struct, os, hashlib
 
 import neogeo_acm
-import neogeo_cmc_gfx, neogeo_cmc_m1
+import neogeo_cmc_gfx, neogeo_cmc_m1, neogeo_smc
 from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad
 
 HEADER_LENGTH = 64
@@ -386,10 +386,8 @@ def convert_mslug4(input, output):
     # correct CRC for MVS version, not for AES version
     output.createFile("p2.sp2", getAsymmetricPart(input.regions['P'].data, 1024*KILOBYTE, 4*1024*KILOBYTE))
 
-    # TODO: they are encrypted
-    # probably need to reverse this:
-    # https://github.com/mamedev/mame/blob/master/src/devices/bus/neogeo/prot_pcm2.cpp
-    split_region(input, output, 'V1', ['v1.v1', 'v2.v2'])
+    # V1: checsum OK    
+    split_region_by_data(neogeo_smc.swap_8_byte_pairs(bytearray(input.regions['V1'].data)), output, ['v1.v1', 'v2.v2'])
 
     # Original hardware has decryption hardware for S, M and C, which MAME emulates.
     # Hence MAME and original hardware expects encrypted ROMs.
@@ -407,8 +405,6 @@ def convert_mslug4(input, output):
 
     # M1: checksum OK
     output.createFile("m1.m1", neogeo_cmc_m1.encrypt_cmc50_m1(input.regions['M'].data))
-
-    # TODO: SFIX has bad checksum
 
     print("This game is NOT correctly exported yet")
 
@@ -438,10 +434,13 @@ def convert_generic_guess(input, output):
 
 
 def split_region(input, output, regionName, outputNameList):
-    sizePerPart = int(len(input.regions[regionName].data) / len(outputNameList))
+    split_region_by_data(input.regions[regionName].data, output, outputNameList)
+
+def split_region_by_data(regionData, output, outputNameList):
+    sizePerPart = int(len(regionData) / len(outputNameList))
     i = 0
     for outputName in outputNameList:
-        output.createFile(outputName, getPart(input.regions[regionName].data, i, sizePerPart))
+        output.createFile(outputName, getPart(regionData, i, sizePerPart))
         i = i+1
 
 

@@ -30,6 +30,7 @@ Features
   * The Last Blade 2
   * Shock Troopers 2
   * Metal Slug X
+  * Metal Slug 4
   * ...and support for many other Neo Geo games can be added relatively easily.
     Lots of caveats though - see below!
 * Can extract Space Harrier (Arcade).
