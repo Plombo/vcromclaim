@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-# Python re-implementation of https://github.com/mamedev/mame/blob/master/src/devices/bus/neogeo/prot_cmc.cpp
+# Python re-implementation of https://github.com/mamedev/mame/blob/master/src/devices/bus/neogeo/prot_cmc.cpp (gfx part)
 # but also with encryption, so that MAME can decrypt it
 
 # WARNING: minor adjustments to the input and output maybe due to different "striping" of input data
@@ -326,12 +326,12 @@ def gfx_change_address(input, rom_size, extra_xor, address_16_23_xor1, address_1
 
 
 def encrypt_cmc50_gfx(unencrypted_crom, game_specific_xor_seed):
-    print("Encrypting ROM with original CMC50 encryption...")
+    print("Encrypting graphics with original CMC50 encryption...")
     encrypted_addresses = gfx_change_address(unencrypted_crom, len(unencrypted_crom), game_specific_xor_seed, kof2000_address_16_23_xor1, kof2000_address_16_23_xor2, kof2000_address_8_15_xor1, kof2000_address_8_15_xor2, kof2000_address_0_7_xor, True)
     return gfx_change_data(encrypted_addresses, len(unencrypted_crom), kof2000_type0_t03, kof2000_type0_t12, kof2000_type1_t03, kof2000_type1_t12, kof2000_address_16_23_xor2, kof2000_address_0_7_xor, True)
 
 def decrypt_cmc50_gfx(encrypted_crom, game_specific_xor_seed):
-    print("Decrypting ROM with CMC50 encryption...")
+    print("Decrypting graphics with CMC50 encryption...")
     unencrypted_data = gfx_change_data(encrypted_crom, len(encrypted_crom), kof2000_type0_t03, kof2000_type0_t12, kof2000_type1_t03, kof2000_type1_t12, kof2000_address_16_23_xor2, kof2000_address_0_7_xor, False)
     return gfx_change_address(unencrypted_data, len(encrypted_crom), game_specific_xor_seed, kof2000_address_16_23_xor1, kof2000_address_16_23_xor2, kof2000_address_8_15_xor1, kof2000_address_8_15_xor2, kof2000_address_0_7_xor, False)
 
