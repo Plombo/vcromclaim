@@ -103,13 +103,9 @@ def decompressAcm(inputAcmStr):
             useTranslation = (
                 (
                     (
-                        (
-                            (
-                                inputArray[flagStart + int(compressedDataIndex / 8)]
-                            ) >> (7- (compressedDataIndex % 8))
-                        ) & 0x1
-                    )
-                )
+                        inputArray[flagStart + int(compressedDataIndex / 8)]
+                    ) >> (7 - (compressedDataIndex % 8))
+                ) & 0x1
             ) == 0x1
 
             if useTranslation:
@@ -155,65 +151,18 @@ def convertToRegularSpriteData(inputByteArray):
         for inputIndex in range (0x00, 0x80, 0x04):
 
             # Read 8 pixels from 4 bytes. The & operation is not needed, but below we only use the four last bits.
-            ip0 = ((inputByteArray[spritePosition + inputIndex + 0]) >> 4) # & 0x0F = 00001111
-            ip1 = ((inputByteArray[spritePosition + inputIndex + 0]) >> 0) # & 0x0F
-            ip2 = ((inputByteArray[spritePosition + inputIndex + 1]) >> 4) # & 0x0F
-            ip3 = ((inputByteArray[spritePosition + inputIndex + 1]) >> 0) # & 0x0F
-            ip4 = ((inputByteArray[spritePosition + inputIndex + 2]) >> 4) # & 0x0F
-            ip5 = ((inputByteArray[spritePosition + inputIndex + 2]) >> 0) # & 0x0F
-            ip6 = ((inputByteArray[spritePosition + inputIndex + 3]) >> 4) # & 0x0F
-            ip7 = ((inputByteArray[spritePosition + inputIndex + 3]) >> 0) # & 0x0F
+            inputBytes = inputByteArray[spritePosition + inputIndex : spritePosition + inputIndex + 4]
 
-
-            # Convert the bits to the bytes in the output format.
-
-            # 0 everything except bitplane 0 for all 8 pixels, store in byte 0
-            ob0 = (
-                ((ip0 & 0x1) << 7) |
-                ((ip1 & 0x1) << 6) |
-                ((ip2 & 0x1) << 5) |
-                ((ip3 & 0x1) << 4) |
-                ((ip4 & 0x1) << 3) |
-                ((ip5 & 0x1) << 2) |
-                ((ip6 & 0x1) << 1) |
-                ((ip7 & 0x1)     )
-            )
-
-            # 0 everything except bitplane 1 for all 8 pixels, store in byte 1
-            ob1 = (
-                ((ip0 & 0x2) << 6) |
-                ((ip1 & 0x2) << 5) |
-                ((ip2 & 0x2) << 4) |
-                ((ip3 & 0x2) << 3) |
-                ((ip4 & 0x2) << 2) |
-                ((ip5 & 0x2) << 1) |
-                ((ip6 & 0x2)     ) |
-                ((ip7 & 0x2) >> 1)
-            )
-            
-            # 0 everything except bitplane 2 for all 8 pixels, store in byte 2
-            ob2 = (
-                ((ip0 & 0x4) << 5) |
-                ((ip1 & 0x4) << 4) |
-                ((ip2 & 0x4) << 3) |
-                ((ip3 & 0x4) << 2) |
-                ((ip4 & 0x4) << 1) |
-                ((ip5 & 0x4)     ) |
-                ((ip6 & 0x4) >> 1) |
-                ((ip7 & 0x4) >> 2)
-            )
-
-            # 0 everything except bitplane 3 for all 8 pixels, store in byte 3
-            ob3 = (
-                ((ip0 & 0x8) << 4) |
-                ((ip1 & 0x8) << 3) |
-                ((ip2 & 0x8) << 2) |
-                ((ip3 & 0x8) << 1) |
-                ((ip4 & 0x8)     ) |
-                ((ip5 & 0x8) >> 1) |
-                ((ip6 & 0x8) >> 2) |
-                ((ip7 & 0x8) >> 3)
-            )
+            ip = [
+                ((inputBytes[0]) >> 4), # & 0x0F = 00001111
+                ((inputBytes[0])     ), # & 0x0F
+                ((inputBytes[1]) >> 4), # & 0x0F
+                ((inputBytes[1])     ), # & 0x0F
+                ((inputBytes[2]) >> 4), # & 0x0F
+                ((inputBytes[2])     ), # & 0x0F
+                ((inputBytes[3]) >> 4), # & 0x0F
+                ((inputBytes[3])     )  # & 0x0F
+            ]
 
             # ACTUAL row within the sprite:
             row = (inputIndex >> 3) # 0-F
@@ -226,10 +175,56 @@ def convertToRegularSpriteData(inputByteArray):
             else:
                 outputIndex = row * 0x4
 
-            outputByteArray[spritePosition + outputIndex + 0] = ob0
-            outputByteArray[spritePosition + outputIndex + 1] = ob1
-            outputByteArray[spritePosition + outputIndex + 2] = ob2
-            outputByteArray[spritePosition + outputIndex + 3] = ob3
+            # Convert the bits to the bytes in the output format.
+
+            outputByteArray[spritePosition + outputIndex : spritePosition + outputIndex + 4] =[
+                # 0 everything except bitplane 0 for all 8 pixels, store in byte 0
+                (
+                    ((ip[0] & 0x1) << 7) |
+                    ((ip[1] & 0x1) << 6) |
+                    ((ip[2] & 0x1) << 5) |
+                    ((ip[3] & 0x1) << 4) |
+                    ((ip[4] & 0x1) << 3) |
+                    ((ip[5] & 0x1) << 2) |
+                    ((ip[6] & 0x1) << 1) |
+                    ((ip[7] & 0x1)     )
+                ),
+
+                # 0 everything except bitplane 1 for all 8 pixels, store in byte 1
+                (
+                    ((ip[0] & 0x2) << 6) |
+                    ((ip[1] & 0x2) << 5) |
+                    ((ip[2] & 0x2) << 4) |
+                    ((ip[3] & 0x2) << 3) |
+                    ((ip[4] & 0x2) << 2) |
+                    ((ip[5] & 0x2) << 1) |
+                    ((ip[6] & 0x2)     ) |
+                    ((ip[7] & 0x2) >> 1)
+                ),
+                
+                # 0 everything except bitplane 2 for all 8 pixels, store in byte 2
+                (
+                    ((ip[0] & 0x4) << 5) |
+                    ((ip[1] & 0x4) << 4) |
+                    ((ip[2] & 0x4) << 3) |
+                    ((ip[3] & 0x4) << 2) |
+                    ((ip[4] & 0x4) << 1) |
+                    ((ip[5] & 0x4)     ) |
+                    ((ip[6] & 0x4) >> 1) |
+                    ((ip[7] & 0x4) >> 2)
+                ),
+
+                # 0 everything except bitplane 3 for all 8 pixels, store in byte 3
+                (
+                    ((ip[0] & 0x8) << 4) |
+                    ((ip[1] & 0x8) << 3) |
+                    ((ip[2] & 0x8) << 2) |
+                    ((ip[3] & 0x8) << 1) |
+                    ((ip[4] & 0x8)     ) |
+                    ((ip[5] & 0x8) >> 1) |
+                    ((ip[6] & 0x8) >> 2) |
+                    ((ip[7] & 0x8) >> 3)
+                )]
 
         if spritePosition % (0x8000) == 0 or spritePosition+0x80 == len(inputByteArray):
             sys.stdout.write("\r  %d of %d (%5.2f%%)" % (int((spritePosition) / 0x80)+1, int(len(inputByteArray) / 0x80), 100.0 * (spritePosition+0x80) / len(inputByteArray)))
