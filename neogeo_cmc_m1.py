@@ -9,6 +9,10 @@
 # mame converts from an original ROM to the address space expected by the game code/hardware.
 
 
+import arcade_utilities
+
+
+
 #static const uint8_t m1_address_8_15_xor[256] = {
 m1_address_8_15_xor = [
     0x0a, 0x72, 0xb7, 0xaf, 0x67, 0xde, 0x1d, 0xb1, 0x78, 0xc4, 0x4f, 0xb5, 0x4b, 0x18, 0x76, 0xdd,
@@ -51,50 +55,6 @@ m1_address_0_7_xor = [
 
 
 
-# \brief Extract a single bit from an integer
-#
-# Extracts a single bit from an integer into the least significant bit
-# position.
-#
-# \param [in] x The integer to extract the bit from.
-# \param [in] n The bit to extract, where zero is the least
-#   significant bit of the input.
-# \return Zero if the specified bit is unset, or one if it is set.
-# \sa bitswap
-#template <typename T, typename U> constexpr T BIT(T x, U n) noexcept { return (x >> n) & T(1); }
-def get_bit(x, n):
-	return (x >> n) & 1
-
-
-# \brief Extract bits in arbitrary order
-#
-# Extracts bits from an integer.  Specify the bits in the order they
-# should be arranged in the output, from most significant to least
-# significant.  The extracted bits will be packed into a right-aligned
-# field in the output.
-#
-# \param [in] val The integer to extract bits from.
-# \param [in] b The first bit to extract from the input
-#   extract, where zero is the least significant bit of the input.
-#   This bit will appear in the most significant position of the
-#   right-aligned output field.
-# \param [in] c The remaining bits to extract, where zero is the
-#   least significant bit of the input.
-# \return The extracted bits packed into a right-aligned field.
-#template <typename T, typename U, typename... V> constexpr T bitswap(T val, U b, V... c) noexcept
-def bitswap(val, c):
-	assert val <= 0xFFFF
-
-	#if constexpr (sizeof...(c) > 0U)
-	if len(c) > 1:
-		#return (BIT(val, b) << sizeof...(c)) | bitswap(val, c...);
-		return (get_bit(val, c[0]) << (len(c)-1)) | bitswap(val, c[1:])
-	else:
-		# return BIT(val, b);
-		return get_bit(val, c[0])
-
-
-
 # The CMC50 hardware does a checksum of the first 64kb of the M1 rom, and
 #   uses this checksum as the basis of the key with which to decrypt the rom */
 #uint16_t cmc_prot_device::generate_cs16(uint8_t *rom, int size)
@@ -132,14 +92,14 @@ def m1_address_scramble(address, key):
 	aux = address & 0xffff
 
 	#aux ^= bitswap<16>(key,12,0,2,4,8,15,7,13,10,1,3,6,11,9,14,5);
-	aux ^= bitswap(key,[12,0,2,4,8,15,7,13,10,1,3,6,11,9,14,5])
+	aux ^= arcade_utilities.bitswap(key,[12,0,2,4,8,15,7,13,10,1,3,6,11,9,14,5])
 
 	#aux = bitswap<16>(aux,
 	#	p1[block][15], p1[block][14], p1[block][13], p1[block][12],
 	#	p1[block][11], p1[block][10], p1[block][9], p1[block][8],
 	#	p1[block][7], p1[block][6], p1[block][5], p1[block][4],
 	#	p1[block][3], p1[block][2], p1[block][1], p1[block][0]);
-	aux = bitswap(aux,
+	aux = arcade_utilities.bitswap(aux,
 		[p1[block][15], p1[block][14], p1[block][13], p1[block][12],
 		p1[block][11], p1[block][10], p1[block][9], p1[block][8],
 		p1[block][7], p1[block][6], p1[block][5], p1[block][4],
@@ -152,7 +112,7 @@ def m1_address_scramble(address, key):
 	aux ^= m1_address_8_15_xor[aux & 0xff] << 8
 
 	#aux = bitswap<16>(aux, 7,15,14,6,5,13,12,4,11,3,10,2,9,1,8,0);
-	aux = bitswap(aux, [7,15,14,6,5,13,12,4,11,3,10,2,9,1,8,0])
+	aux = arcade_utilities.bitswap(aux, [7,15,14,6,5,13,12,4,11,3,10,2,9,1,8,0])
 
 	return (block << 16) | aux
 

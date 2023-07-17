@@ -3,7 +3,7 @@
 import struct, os, hashlib
 
 import neogeo_acm
-import neogeo_cmc_gfx, neogeo_cmc_m1, neogeo_smc
+import neogeo_cmc_gfx, neogeo_cmc_m1, neogeo_sma, neogeo_smc
 from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad
 
 HEADER_LENGTH = 64
@@ -348,31 +348,26 @@ def convert_mslug3(input, output):
 
     # TODO:
     # - The original game's C rom is encrypted, the Virtual Console version is not encrypted. Do we have to encrypt the bugger to get it playable in mame??
-    # - The P roms are different (9 MB in Wii version, 4 MB + 4 MB + 256 KB in arcade versions, 1 MB + 4 MB in home version)
 
-    # TODO: mame does not use this.
-    output.createFile("p1.p1", input.regions['P'].data)
-
-    # TODO: mame does not use this
+    # TODO: mame does not use this. used for research only. probably is part of C ROMs
     output.createFile("s1.s1", input.regions['S'].data)
 
     #v1 and m1 hash matches mslug3, mslug3a, mslug3h.
     output.createFile("m1.m1", input.regions['M'].data)
     split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
 
-    #correct checksum for a rom only found in "mslug3", file not used in home version
-    output.createFile("green.neo-sma", getAsymmetricPart(input.regions['P'].data, 3*256*KILOBYTE, 256*KILOBYTE), None, False)
-    
-    # not correct - game does not run, bad crcs. probably mame wants the encrypted file, the VC versions are decrypted
-    output.createFile("pg1.p1", getAsymmetricPart(input.regions['P'].data, 1*1024*KILOBYTE, 4*1024*KILOBYTE))
-    output.createFile("pg2.p2", getAsymmetricPart(input.regions['P'].data, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
+    encypted_pdata = neogeo_sma.mslug3_encrypt_68k(bytearray(input.regions['P'].data))
 
-    # if ran as mslug3h (home version), the game kind of starts, but reboots after main menu. home version
-    # Note, home version only has 1+4MB P, while arcade has 4+4 mb + the green file. The VC version has 9 MB P ROM.
-    output.createFile("ph1.p1", getAsymmetricPart(input.regions['P'].data, 1*1024*KILOBYTE, 1*1024*KILOBYTE))
-    output.createFile("ph2.sp2", getAsymmetricPart(input.regions['P'].data, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
+    # correct checksum for a rom only found in "mslug3", not mslug3a or mslug3h
+    # the "green" rom is untouched by encryption, can also be retrieved from original region on same address
+    output.createFile("green.neo-sma", getAsymmetricPart(encypted_pdata, 3*256*KILOBYTE, 256*KILOBYTE), None, False)
+
+    # CRC incorrect for both, but only minor changes. maybe anti-flashing?
+    output.createFile("pg1.p1", getAsymmetricPart(encypted_pdata, 1*1024*KILOBYTE, 4*1024*KILOBYTE))
+    output.createFile("pg2.p2", getAsymmetricPart(encypted_pdata, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
 
     # C files are not correct, they are decrypted but mame expects encrypted version.
+    # probably includs S rom
     convert_common_c(input, output, 4)
 
     print("This game is NOT correctly exported yet")
