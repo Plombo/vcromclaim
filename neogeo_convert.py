@@ -346,31 +346,26 @@ def convert_mslug3(input, output):
 
     # Comes with AES bios
 
-    # TODO:
-    # - The original game's C rom is encrypted, the Virtual Console version is not encrypted. Do we have to encrypt the bugger to get it playable in mame??
-
-    # TODO: mame does not use this. used for research only. probably is part of C ROMs
-    output.createFile("s1.s1", input.regions['S'].data)
-
     #v1 and m1 hash matches mslug3, mslug3a, mslug3h.
     output.createFile("m1.m1", input.regions['M'].data)
     split_region(input, output, 'V1', ['v1.v1', 'v2.v2', 'v3.v3', 'v4.v4'])
 
     encypted_pdata = neogeo_sma.mslug3_encrypt_68k(bytearray(input.regions['P'].data))
 
+    # the first 3*256KB of the encrypted data is garbage: real ROMs are only 256KB + 8MB,
+    # when decrypting it grows to 9 MB, when encryptng it shrinks again)
+
     # correct checksum for a rom only found in "mslug3", not mslug3a or mslug3h
     # the "green" rom is untouched by encryption, can also be retrieved from original region on same address
     output.createFile("green.neo-sma", getAsymmetricPart(encypted_pdata, 3*256*KILOBYTE, 256*KILOBYTE), None, False)
 
-    # CRC incorrect for both, but only minor changes. maybe anti-flashing?
+    # CRC incorrect for both, but only minor binary differences. maybe anti-flashing?
     output.createFile("pg1.p1", getAsymmetricPart(encypted_pdata, 1*1024*KILOBYTE, 4*1024*KILOBYTE))
     output.createFile("pg2.p2", getAsymmetricPart(encypted_pdata, 5*1024*KILOBYTE, 4*1024*KILOBYTE))
 
-    # C files are not correct, they are decrypted but mame expects encrypted version.
-    # probably includs S rom
-    convert_common_c(input, output, 4)
-
-    print("This game is NOT correctly exported yet")
+    # C ROM (includes S ROM)
+    # key found in https://github.com/mamedev/mame/blob/master/src/devices/bus/neogeo/prot_cmc.h
+    convert_c(neogeo_cmc_gfx.encrypt_cmc42_gfx(get_decompressed_c(input), 0xAD), output, 4, [[0,2],[1,3]])
 
 
 def convert_mslug4(input, output):

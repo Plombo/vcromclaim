@@ -30,6 +30,7 @@ Features
   * The Last Blade 2
   * Shock Troopers 2
   * Metal Slug X
+  * Metal Slug 3
   * Metal Slug 4
   * ...and support for many other Neo Geo games can be added relatively easily.
     Lots of caveats though - see below!
@@ -78,31 +79,44 @@ Known Issues/Caveats
 * NEO GEO: Because of the way Neo Geo ROMs are made, part of the extraction
   process has to be hardcoded separately for each game. If your game is not
   supported, it might be trivial to expand neogeo_convert.py to include support
-  for your game.
+  for your game - please create a bug and I can try to implement it.
 * NEO GEO: Many Neo Geo games are encrypted on VC. These can be decrypted, but requires
-  a lot of advanced extra manual steps. See [neogeo_reame.txt](neogeo_readme.txt)
-* NEO GEO: Games that had encryption on the original hardware, like Metal Slug 3 and
-  Metal Slug 4, cannot currently be exported correctly. This is because MAME expects
-  the original, encrypted ROMs while the VC ROMs come decrypted. (Not the same encryption
-  as the previous point.) To solve we must apply encryption to the extracted ROMs.
-* NEO GEO:
-  NG games play differently depending on if they are ran on an MVS (arcade machine)
-  or an AES (home console.) They also change content depending on the region of the
-  hardware.
-  This is all determined by the emulator (e.g. MAME) and the system ROM.
-  The Wii NG games comes bundled with the main system ROM. Some games comes with an
-  AES system ROM, other comes with an MVS system ROM.
-  All games comes with a japanese system ROM.
-  The ROM is patched to make the game think it's an american or european system,
-  and the MVS ROM is patched so that the game thinks it is an AES system.
+  a lot of advanced extra manual steps to find the encryption key. See [neogeo_reame.txt](neogeo_readme.txt).
+  I do not want to include the encryption keys I have found in the source code because I
+  do not want to do something that may be illegal.
+* NEO GEO: About the system ROMs...
+  NEO GEO games always require a set of them. Either the MVS (arcade) or AES (home) ROMs,
+  each available in many different versions, and regional variations (jap/us/eu).
+  Depending on what ROM is used, the game will automatically display different language,
+  and different content. The MVS ROM will enable system menu, some generic "how to play"
+  screens, "winners don't do drugs", etc. The AES ROMs are lighter and does not provide any
+  of that. Also games ran with MVS ROMs will typically show "insert coin", but not when ran with
+  AES ROMs.
 
-  * If you want the game to run in English and have the same experience as on a US/EU Wii, use "XXX-patched-to-us-XXX" or "XXX-patched-to-eu-XXX".
-  * If you want the game to give an arcade experience ("insert coin" etc) use "jp-mvs" or "XXX-patched-to-XX-mvs" ROMs.
-  * If you want the game to give a home console experience (insert coin etc) use "jp-aes" or "XXX-patched-to-XX-aes" ROMs.
-  * If you want to be able to set DIP switches, or to be able to access the sytem menu, use "jp-mvs" or "jp-mvs-patched-to-XX-mvs" ROMs.
-  * If you want to have an experience as accurate as possible, use the "jp-mvs" or "jp-aes".
-  * As of now, there are audio issues, and the system menu is completely black (because SFIX is empty), if using an "XX-mvs", "XX-mvs-patched-to-XXX" or "XXX-patched-to-XX-mvs".
-  * The system ROMs are not bound to a game, so you can use system ROMs exported from one game to any other NG game.
+  The Wii games comes bundled with weird system ROMs. Some games randomly comes shippd with
+  MVS ROMs, others with AES ROMs. All are shipped with the Japanese ROMs.
+  The system ROMs contain a few flags that tell the game what region/system it is in.
+  Annoyingly, instead of shipping the correct system ROMs, all of them are instead patched
+  to tell the game it is e.g. US AES.
+
+  Also the MVS ROM sets are incomplete. They are missing the SFIX ROM, which contains all of the
+  graphics used in system menu and how-to-play screens. (To allow the games to run, this tool
+  creates a dummy SFIX file, but system menu etc is basically unusable.)
+
+  This tool will extract whatever ROM was included. It will export an original version that
+  is as close to original as possible, AND it will also create a number of different patches
+  to simulate different Wii behaviours. You may have to experiment and try different ROM
+  versions, to get the experience you want. Some combinations of games+system ROM may not work,
+  or have audio problems.
+
+  * If you want to have an US/EU Wii-like experience, use "XXX-patched-to-aes-us" or "XXX-patched-to-aes-eu"
+  * If you want ARCADE-like experience, use "jp-mvs" or "XXX-patched-to-XX-mvs"
+  * If you want the game to give a HOME CONSOLE experience, use "aes-jp" or "XXX-patched-to-aes-XX"
+  * If you want to have an experience as ACCURATE as possible, use the "jp-mvs" or "jp-aes"
+  * If you want the game to be in ENGLISH, use "XXX-patched-to-XX-us" or "XXX-patched-to-XX-eu"
+  * If you want the game to be in JAPANESE, use "mvs-jp", "aes-jp" or "XXX-patched-to-XX-jp"
+
+
 
 Credits
 -------
