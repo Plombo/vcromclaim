@@ -110,9 +110,9 @@ Known Issues/Caveats
   or have audio problems.
 
   * If you want to have an US/EU Wii-like experience, use "XXX-patched-to-aes-us" or "XXX-patched-to-aes-eu"
-  * If you want ARCADE-like experience, use "jp-mvs" or "XXX-patched-to-XX-mvs"
+  * If you want ARCADE-like experience, use "jp-mvs" or "XXX-patched-to-mvs-XX"
   * If you want the game to give a HOME CONSOLE experience, use "aes-jp" or "XXX-patched-to-aes-XX"
-  * If you want to have an experience as ACCURATE as possible, use the "jp-mvs" or "jp-aes"
+  * If you want to have an experience as ACCURATE as possible, use the "mvs-jp" or "aes-jp"
   * If you want the game to be in ENGLISH, use "XXX-patched-to-XX-us" or "XXX-patched-to-XX-eu"
   * If you want the game to be in JAPANESE, use "mvs-jp", "aes-jp" or "XXX-patched-to-XX-jp"
 
