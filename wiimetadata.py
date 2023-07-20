@@ -15,7 +15,8 @@ from nes_extract import extract_nes_file_from_app, extract_fds_bios_from_app, co
 from snesrestore import restore_brr_samples
 from neogeo_decrypt import decrypt_neogeo
 from neogeo_convert import convert_neogeo
-from arcade_extract import extract_arcade
+from arcade_extract_ccf import extract_arcade_ccf
+import arcade_extract_gng
 from tgcd_extract import extract_tgcd
 from tgsave import unmangle_tgsave
 from configurationfile import getConfiguration 
@@ -434,21 +435,17 @@ class RomExtractor(object):
 
 			inFile.seek(0)
 			if (inFile.read(1))[0] == 0x11:
+				
 				#print("The first byte is 11 so it is probably compressed LZ77")
-				data = lz77.decompress_nonN64(inFile)
-				inFile.close()
-			
-				#!!! NOTE !!! This will be done multiple time for each game, overwriting the previous one
-				# For ghosts n goblins, this is the only file that might contain the roms!
-				outFile = open(os.path.join(outputPath, "TODO_DECOMPRESSED.BIN"), 'wb')
-				outFile.write(data)
-				outFile.close()
+
+				if id == '45353445': #ghosts n goblins
+					arcade_extract_gng.export_roms_from_lzh_compressed_dol(inFile, outputPath)
+					foundRom = True
+				# else ignore the file
 			#else:
-				#print("The first byte is unknown, don't know what to do with this file, dumping it as DERP")
-				#inFile.seek(0)
-				#outFile = open(os.path.join(outputPath, "DERP_output" + appFilePath[(len(appFilePath)-7):]), 'wb')
-				#outFile.write(inFile.read())
-				#outFile.close()
+				#print("The first byte is unknown, don't know what to do with this file")
+
+			inFile.close()
 
 		else:
 			#print("It IS a U8 archive! Content:")
@@ -459,7 +456,7 @@ class RomExtractor(object):
 			if u8arc.hasfile('data.ccf'):
 				ccf = CCFArchive(u8arc.getfile('data.ccf'))
 				if ccf.hasfile('config'):
-					foundRom = extract_arcade(ccf, outputPath)
+					foundRom = extract_arcade_ccf(ccf, outputPath)
 
 		if foundRom:
 			print("Got ROMs")

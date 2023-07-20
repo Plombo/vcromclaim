@@ -34,11 +34,13 @@ Features
   * Metal Slug 4
   * ...and support for many other Neo Geo games can be added relatively easily.
     Lots of caveats though - see below!
-* Can extract Space Harrier (Arcade).
+* Can extract the arcade games Ghousts'N Goblins and Space Harrier.
 * Automatically extracts the built-in manuals in VC games.
 * Automatically extracts saves for most formats.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
   platform supported by Python. Some games may require additional libraries to extract.
+* If the game/platform you want to extract is missing - please submit a bug to let me
+  know there is demand for it!
 
 Requirements
 ------------
@@ -70,7 +72,7 @@ Known Issues/Caveats
   * Shadow of the Ninja (NES) - 2 bytes are different, causing the intro to
       glitch and freeze in accurate emulators.
   * Content changes:
-    * "Ogra Battle 64": "JIHAD" was renamed "LASER" for obvious reasons
+    * Ogre Battle 64: "JIHAD" was renamed "LASER" for obvious reasons
 * TURBOGRAFX CD: CD audio is extracted in the wrong speed, because the quality is
   higher than required (48 kHz instead of 44.1kHz). Music in all games will play too slow
   in Mednafen, and a few games (like Super Air Zonk) are completely broken.

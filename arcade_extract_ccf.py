@@ -2,14 +2,13 @@
 
 #Extracts VC Arcade games from a CCF archive.
 
-import string
 import os, os.path
 
 from configurationfile import getConfiguration
 from rso import rso
-from arcade_utilities import getAsymmetricPart, getPart, getPartByDivision, getStripes, pad, getBitStripe
+from arcade_utilities import getPart, getStripes, getBitStripe
 
-def extract_arcade(ccfArchive, outputFolder):
+def extract_arcade_ccf(ccfArchive, outputFolder):
     config = ccfArchive.find('config')
 
     architecture = getConfiguration(config, "console.machine_arch")
@@ -184,7 +183,7 @@ def extract_SHARRIER(ccfArchive, outputFolder):
 
         
 def create_rom_folder(parentFolder, romFolderName):
-    newFolder = os.path.join(parentFolder, 'sharrier1')
+    newFolder = os.path.join(parentFolder, romFolderName)
     if not os.path.lexists(newFolder):
         os.makedirs(newFolder)
     return newFolder
