@@ -10,7 +10,6 @@ try:
 except:
     pass
 
-#TODO: stop using neogeo_keys.py
 
 
 def tryGetU8Archive(path):

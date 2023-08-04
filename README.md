@@ -123,7 +123,7 @@ Credits
 -------
 * [Bryan Cain](https://github.com/Plombo) - author of vcromclaim
 * [JanErikGunnar](https://github.com/JanErikGunnar) - added extraction of Famicom FDS,
-  TurboGrafx CD, Neo Geo and Space Harrier.
+  TurboGrafx CD, Neo Geo and arcade games.
 * [Euan Forrester](https://github.com/euan-forrester) - TurboGrafx save file exporting
 * [hcs](http://hcs64.com) - author of C decompression code for Huf8, LZH8, and 
   romchu, all of which I (Bryan) ported to Python for vcromextract.
