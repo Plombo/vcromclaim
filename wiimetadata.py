@@ -366,7 +366,7 @@ class RomExtractor(object):
 					#f.write(entireFile)
 					#f.close()
 
-					(success, output) = decrypt_neogeo(self.id, entireFile)
+					(success, output) = decrypt_neogeo(os.path.join(self.nand.path, 'title', '00010001', self.id, 'content'), self.id, entireFile)
 					entireFile = output
 
 					if not success:

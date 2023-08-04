@@ -1,3 +1,10 @@
+UPDATE: This is not really needed anymore, since the scripts now automatically can regenerate the AES key.
+Leaving it since it MAY be useful if some games uses a different method to generate the key.
+
+
+
+---
+
 The following are instructions that are necessary to be able to extract encrypted Neo Geo games.
 Roughly half of the Neo Geo virtual console games are encrypted.
 Vcromclaim will tell you if a game is encrypted, and refer to this file.
@@ -96,14 +103,14 @@ For the encrypted files, the first 20 bytes is a header, the rest is the encrypt
 It is encrypted using 128-bit (16 byte blocks) AES in CBC mode.
 The IV is just zeroes.
 
-The key is the problem... It is constructed using the following:
-- The 20 first bytes of the encrypted file (different for each game)
-- A 128byte block of random data in the DOL file (probably same for every game)
-- 16 bytes of data constructed by some code (probably same for each game)
-- ?????? (there is more, which is different for each game, but I've given up digging deeper,
-    I can imagine it is the checksum of the DOL file or something like that)
+The key is the problem... It is constructed using the following: (UPDATED)
+- Bytes 4-19 (0-based) of the encrypted file (unique for every game)
+- The entire content of "banner.bin" within one of the game's U8 archives (unique for each game)
+- A 448 block of "random" data in the DOL file (probably same for every game)
+- 16 bytes of data constructed by some code (probably same for every game)
+- A few other bytes of random data (probably the same for every game)
 
 Between each merging of the above data, A TON of bitshifting, byteswapping, xoring etc etc is done.
 
 So it's definitly POSSIBLE to automatically rebuild the encryption keys from a NAND backup.
-However, I can't justify spending the time reverse-engineering this.
+However, I can't justify spending the time reverse-engineering this. UPDATE: I did... :)

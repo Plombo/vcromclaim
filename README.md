@@ -14,8 +14,8 @@ Features
 * Extracts virtually all NES/Famicom/Disk System, SNES, PC Engine /
   TurboGrafx16 / TurboGrafx CD, Mega Drive/Genesis, Master System, and
   Nintendo 64 games without fail!
-* Extracts several Neo Geo games, along with the AES/MVS BIOS, so that they are
-  playable in MAME (note - extra steps may be required, see below)
+* Extracts several Neo Geo games, includin encypted games, along with the AES/MVS
+  BIOS, so that they are playable in MAME
   * NAM-1975
   * Magician Lord
   * King of the Monsters
@@ -82,10 +82,9 @@ Known Issues/Caveats
   process has to be hardcoded separately for each game. If your game is not
   supported, it might be trivial to expand neogeo_convert.py to include support
   for your game - please create a bug and I can try to implement it.
-* NEO GEO: Many Neo Geo games are encrypted on VC. These can be decrypted, but requires
-  a lot of advanced extra manual steps to find the encryption key. See [neogeo_reame.txt](neogeo_readme.txt).
-  I do not want to include the encryption keys I have found in the source code because I
-  do not want to do something that may be illegal.
+* NEO GEO: For AES encrypted games, you will need to install PyCryptodome (or PyCrypto).
+  Install it by typing in terminal:
+  pip install pycryptodome
 * NEO GEO: About the system ROMs...
   NEO GEO games always require a set of them. Either the MVS (arcade) or AES (home) ROMs,
   each available in many different versions, and regional variations (jap/us/eu).
