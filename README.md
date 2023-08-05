@@ -14,7 +14,7 @@ Features
 * Extracts virtually all NES/Famicom/Disk System, SNES, PC Engine /
   TurboGrafx16 / TurboGrafx CD, Mega Drive/Genesis, Master System, and
   Nintendo 64 games without fail!
-* Extracts several Neo Geo games, includin encypted games, along with the AES/MVS
+* Extracts several Neo Geo games, including encrypted games, along with the AES/MVS
   BIOS, so that they are playable in MAME
   * NAM-1975
   * Magician Lord
