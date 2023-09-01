@@ -34,7 +34,7 @@ Features
   * Metal Slug 4
   * ...and support for many other Neo Geo games can be added relatively easily.
     Lots of caveats though - see below!
-* Can extract the arcade games Ghousts'N Goblins and Space Harrier.
+* Can extract the arcade games Ghosts'N Goblins and Space Harrier.
 * Automatically extracts the built-in manuals in VC games.
 * Automatically extracts saves for most formats.
 * Cross-platform - compatible with Linux, Windows, Mac OS X, and any other 
