@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain
 # Original software (lzh8_dec 0.8) written in C by hcs
 # Date: January 17, 2011
@@ -113,28 +113,28 @@ def decompress(infile):
 	
 	# determine input file size
 	infile.seek(0, os.SEEK_END)
-	file_length = infile.tell()
+	#file_length = infile.tell()
 	
 	# read header
 	infile.seek(input_offset)
 	header = struct.unpack("<I", infile.read(4))[0]
 	if (header & 0xFF) != 0x40: raise ValueError("not LZH8")
 	uncompressed_length = header >> 8
-	if uncompressed_length == 0:
-		uncompressed_length = struct.unpack("<I", f.read(4))[0]
+	#if uncompressed_length == 0:
+	#	uncompressed_length = struct.unpack("<I", f.read(4))[0]
 
 	# allocate output buffer
-	outbuf = array('B', '\0' * uncompressed_length) # uint8_t*
+	outbuf = array('B', b'\0' * uncompressed_length) # uint8_t*
 
 	# allocate backreference length decode table
 	length_table_bytes = (struct.unpack("<H", infile.read(2))[0] + 1) * 4 # const uint32_t
 	length_decode_table_size = LENCNT * 2 # const long
-	length_decode_table = array('H', '\0' * length_decode_table_size * 2) # uint16_t* const 
+	length_decode_table = array('H', b'\0' * length_decode_table_size * 2) # uint16_t* const 
 	
 	input_offset = infile.tell()
 
 	# read backreference length decode table
-	#if SHOW_TABLE: print "backreference length table"
+	#if SHOW_TABLE: print("backreference length table")
 	start_input_offset = input_offset-2
 	i = 1
 	bits_left = 0
@@ -143,19 +143,19 @@ def decompress(infile):
 			break
 		length_decode_table[i] = get_next_bits(infile, LENBITS)
 		i += 1
-		#if SHOW_TABLE: print "%ld: %d" % (i-1, length_decode_table[i-1])
+		#if SHOW_TABLE: print("%ld: %d" % (i-1, length_decode_table[i-1]))
 	input_offset = start_input_offset + length_table_bytes
 	bits_left = 0
-	#if SHOW_TABLE: print "done at 0x%lx" % input_offset
+	#if SHOW_TABLE: print("done at 0x%lx" % input_offset)
 
 	# allocate backreference displacement length decode table
 	infile.seek(input_offset)
 	displen_table_bytes = (struct.unpack("<B", infile.read(1))[0] + 1) * 4 # const uint32_t
 	input_offset += 1
-	displen_decode_table = array('B', '\0' * (DISPCNT * 2)) # uint8_t* const
+	displen_decode_table = array('B', b'\0' * (DISPCNT * 2)) # uint8_t* const
 
 	# read backreference displacement length decode table
-	#if SHOW_TABLE: print "backreference displacement length table"
+	#if SHOW_TABLE: print("backreference displacement length table")
 	start_input_offset = input_offset-1
 	i = 1
 	bits_left = 0
@@ -164,11 +164,11 @@ def decompress(infile):
 			break
 		displen_decode_table[i] = get_next_bits(infile, DISPBITS)
 		i += 1
-		#if SHOW_TABLE: print "%ld: %d" % (i-1, displen_decode_table[bit_pool = 0 # uint8_ti-1])
+		#if SHOW_TABLE: print("%ld: %d" % (i-1, displen_decode_table[bit_pool = 0 # uint8_ti-1]))
 	input_offset = start_input_offset + displen_table_bytes
 	bits_left = 0
 	
-	#if SHOW_TABLE: print "done at 0x%lx" % input_offset
+	#if SHOW_TABLE: print("done at 0x%lx" % input_offset)
 
 	bytes_decoded = 0
 
@@ -180,7 +180,7 @@ def decompress(infile):
 		while True:
 			next_length_child = get_next_bits(infile, 1)
 			length_node_payload = length_decode_table[length_table_offset] & 0x7F
-			next_length_table_offset =  (length_table_offset / 2 * 2) + (length_node_payload + 1) * 2 + bool(next_length_child)
+			next_length_table_offset =  (int(length_table_offset / 2) * 2) + (length_node_payload + 1) * 2 + bool(next_length_child)
 			next_length_child_isleaf = length_decode_table[length_table_offset] & (0x100 >> next_length_child)
 
 			if next_length_child_isleaf:
@@ -199,7 +199,7 @@ def decompress(infile):
 					while True:
 						next_displen_child = get_next_bits(infile, 1)
 						displen_node_payload = displen_decode_table[displen_table_offset] & 0x7
-						next_displen_table_offset = (displen_table_offset / 2 * 2) + (displen_node_payload + 1) * 2 + bool(next_displen_child)
+						next_displen_table_offset = (int(displen_table_offset / 2) * 2) + (displen_node_payload + 1) * 2 + bool(next_displen_child)
 						next_displen_child_isleaf = displen_decode_table[displen_table_offset] & (0x10 >> next_displen_child)
 
 						if next_displen_child_isleaf:
@@ -237,13 +237,13 @@ def decompress(infile):
 		# end of length tree traversal
 	# end of main decode loop
 	
-	return outbuf.tostring()
+	return outbuf
 
 
 if __name__ == "__main__":
 	if len(sys.argv) != 3:
-		print "lzh8_dec %s\n" % VERSION
-		print "Usage: %s infile outfile" % sys.argv[0]
+		print("lzh8_dec %s\n" % VERSION)
+		print("Usage: %s infile outfile" % sys.argv[0])
 		sys.exit(1)
 
 	# open file
@@ -251,11 +251,11 @@ if __name__ == "__main__":
 	outfile = open(sys.argv[2], "wb")
 	
 	# decompress
-	print "Decompressing"
+	print("Decompressing")
 	infile.seek(0, os.SEEK_SET)
 	output = decompress(infile)
 	
-	print "Writing to file"
+	print("Writing to file")
 	outfile.write(output)
 	
 	outfile.close()

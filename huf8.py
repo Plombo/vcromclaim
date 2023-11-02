@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (translated to Python from the "puff8" program by hcs, written in C)
 # Date: January 17, 2011
 # Description: Decompresses Nintendo's Huf8 compression used in Virtual Console games.
@@ -8,7 +8,7 @@ from array import array
 
 def decompress(infile, outfile):
 	infile.seek(0, os.SEEK_END)
-	file_length = infile.tell()
+	#file_length = infile.tell()
 	infile.seek(0, os.SEEK_SET)
 
 	# read header
@@ -23,10 +23,10 @@ def decompress(infile, outfile):
 	decode_table = array('B', infile.read(decode_table_size))
 	
 	'''
-	print "encoded size = %ld bytes (%d header + %ld body)" % (
+	print("encoded size = %ld bytes (%d header + %ld body)" % (
 			file_length, 5 + decode_table_size,
-			file_length - (5 + decode_table_size))
-	print "decoded size = %ld bytes" % decoded_length
+			file_length - (5 + decode_table_size)))
+	print("decoded size = %ld bytes" % decoded_length)
 	'''
 
 	# decode
@@ -41,7 +41,7 @@ def decompress(infile, outfile):
 			bits_left = 32
 
 		current_bit = ((bits & 0x80000000) != 0)
-		next_offset = (((table_offset + 1) / 2 * 2) + 1 +
+		next_offset = ((int((table_offset + 1) / 2) * 2) + 1 +
 			(decode_table[table_offset] & 0x3f) * 2 +
 			current_bit)
 
@@ -50,9 +50,9 @@ def decompress(infile, outfile):
 
 		if ((not current_bit and (decode_table[table_offset] & 0x80)) or
 			(    current_bit and (decode_table[table_offset] & 0x40))):
-			outfile.write(chr(decode_table[next_offset]))
+			outfile.write(decode_table[next_offset].to_bytes(1, byteorder='big'))
 			bytes_decoded += 1
-			# print "%02x" % decode_table[next_offset]
+			# print("%02x" % decode_table[next_offset])
 			next_offset = 0
 		
 		if next_offset == table_offset:

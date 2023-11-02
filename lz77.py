@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (Plombo)
 # Original WiiLZ77 class by Hector Martin (marcan)
 # Date: December 30, 2010
@@ -6,135 +6,139 @@
 
 import sys, os, struct
 from array import array
-from cStringIO import StringIO
+from io import BytesIO
+import romchu
 
-class BaseLZ77(object):
-	TYPE_LZ77_10 = 0x10
-	TYPE_LZ77_11 = 0x11
+def decompress_lz77_lzss(file, inputOffset, outputLength):
+
+	#print("Decompressing LZ77/LZSS")
+
+	dout = array('B', b'\0' * outputLength)
+	file.seek(inputOffset)
+	outputOffset = 0
+
+	while outputOffset < outputLength:
+		flags = file.read(1)[0]
+
+		for i in range(8):
+			if flags & 0x80:
+				info = struct.unpack(">H", file.read(2))[0]
+				num = 3 + (info>>12)
+				disp = info & 0xFFF
+				ptr = outputOffset - disp - 1
+				for i in range(num):
+					dout[outputOffset] = dout[ptr]
+					ptr += 1
+					outputOffset += 1
+					if outputOffset >= outputLength:
+						break
+			else:
+				dout[outputOffset] = file.read(1)[0]
+				outputOffset += 1
+			flags <<= 1
+			if outputOffset >= outputLength:
+				break
+
+	return dout
+
+def decompress_lz77_11(file, inputOffset, outputLength):
+	#print("Decompressing LZ77 mode 11"()
+
+	dout = array('B', b'\0'*outputLength)
+
+	file.seek(inputOffset)
+	outputOffset = 0
+
+
+	while outputOffset < outputLength:
 	
-	def uncompress(self):
-		if self.compression_type == self.TYPE_LZ77_11: return self.uncompress_11()
-		elif self.compression_type == self.TYPE_LZ77_10: return self.uncompress_10()
-		else: raise ValueError("Unsupported compression method %d"%self.compression_type)
-	
-	def uncompress_10(self):
-		dout = array('c', '\0' * self.uncompressed_length)
-		offset = 0
- 
-		self.file.seek(self.offset + 0x4)
- 
-		while offset < self.uncompressed_length:
-			flags = ord(self.file.read(1))
- 
-			for i in xrange(8):
-				if flags & 0x80:
-					info = struct.unpack(">H", self.file.read(2))[0]
-					num = 3 + (info>>12)
-					disp = info & 0xFFF
-					ptr = offset - disp - 1
-					for i in xrange(num):
-						dout[offset] = dout[ptr]
-						ptr += 1
-						offset += 1
-						if offset >= self.uncompressed_length:
-							break
-				else:
-					dout[offset] = self.file.read(1)
-					offset += 1
-				flags <<= 1
-				if offset >= self.uncompressed_length:
-					break
- 
-		self.data = dout
-		return self.data
-	
-	def uncompress_11(self):
-		dout = array('c', '\0'*self.uncompressed_length)
-		offset = 0
-		
-		self.file.seek(self.offset + 0x4)
-		
-		if not self.uncompressed_length:
-			self.uncompressed_length = struct.unpack("<I", self.file.read(4))[0]
-		
-		while offset < self.uncompressed_length:
-			flags = ord(self.file.read(1))
-			
-			for i in xrange(7, -1, -1):
-				if (flags & (1<<i)) > 0:
-					info = struct.unpack(">H", self.file.read(2))[0]
-					ptr, num = 0, 0
-					if info < 0x2000:
-						if info >= 0x1000:
-							info2 = struct.unpack(">H", self.file.read(2))[0]
-							ptr = offset - (info2 & 0xFFF) - 1
-							num = (((info & 0xFFF) << 4) | (info2 >> 12)) + 273
-						else:
-							info2 = ord(self.file.read(1))
-							ptr = offset - (((info & 0xF) << 8) | info2) - 1
-							num = ((info&0xFF0)>>4) + 17
+		flags = file.read(1)[0]
+
+		for i in range(7, -1, -1):
+			if (flags & (1<<i)) > 0:
+				info = struct.unpack(">H", file.read(2))[0]
+				ptr, num = 0, 0
+				if info < 0x2000:
+					if info >= 0x1000:
+						info2 = struct.unpack(">H", file.read(2))[0]
+						ptr = outputOffset - (info2 & 0xFFF) - 1
+						num = (((info & 0xFFF) << 4) | (info2 >> 12)) + 273
 					else:
-						ptr = offset - (info & 0xFFF) - 1
-						num = (info>>12) + 1
-					for i in xrange(num):
-						dout[offset] = dout[ptr]
-						offset += 1
-						ptr += 1
-						if offset >= self.uncompressed_length:
-							break
+						info2 = file.read(1)[0]
+						ptr = outputOffset - (((info & 0xF) << 8) | info2) - 1
+						num = ((info&0xFF0)>>4) + 17
 				else:
-					dout[offset] = self.file.read(1)
-					offset += 1
-				
-				if offset >= self.uncompressed_length:
-					break
-		
-		self.data = dout
-		return dout
+					ptr = outputOffset - (info & 0xFFF) - 1
+					num = (info>>12) + 1
+				for i in range(num):
+					dout[outputOffset] = dout[ptr]
+					outputOffset += 1
+					ptr += 1
+					if outputOffset >= outputLength:
+						break
+			else:
+				dout[outputOffset] = file.read(1)[0]
+				outputOffset += 1
+			
+			if outputOffset >= outputLength:
+				break
+	
+	return dout
 
-class WiiLZ77(BaseLZ77):
-	def __init__(self, file):
-		self.file = file
-		hdr = self.file.read(4)
-		if hdr != "LZ77":
-			self.file.seek(0)
-		self.offset = self.file.tell()
-		
-		self.file.seek(0, os.SEEK_END)
-		self.compressed_length = self.file.tell()
-		self.file.seek(0, os.SEEK_SET)
-		
-		hdr = struct.unpack("<I", self.file.read(4))[0]
-		self.uncompressed_length = hdr>>8
-		self.compression_type = hdr & 0xFF
-		
-		#print "Compression type: 0x%02x" % self.compression_type
-		#print "Decompressed size: %d" % self.uncompressed_length
+def decompress_romchu(file, inputOffset, outputLength):
+	# LZ77+Huffman (romchu)
+	return romchu.decompress(file, inputOffset, outputLength)
 
-def decompress(infile):
-	lz77obj = WiiLZ77(infile)
-	return StringIO(lz77obj.uncompress())
+def decompress_n64(file):	
 
-def romc_decode(infile):
-	dec = RomcLZ77()
-	return dec.uncompress()
+	file.seek(0)
+
+	# This header has a 30 bit size of the uncompressed file, and 2 bit flag (0x1 and 0x2 being known)
+	# It has reversed byte order compared to the non-n64 header.
+	inputOffset = 4
+	hdr = struct.unpack(">I", file.read(4))[0]
+	uncompressed_length = hdr>>2
+	compression_type = hdr & 0x3
+
+	if compression_type == 0x1: return decompress_lz77_lzss(file, inputOffset, uncompressed_length)
+	elif compression_type == 0x2: return decompress_romchu(file, inputOffset, uncompressed_length)
+	else: raise ValueError("Unsupported compression method %d"%compression_type)
+
+def decompress_nonN64(file):
+	# This header MAY have magic word "LZ77"
+	# Then it has a 24 bit size of the uncompressed file, and 8 bits fla (0x10 and 0x11 being known)
+	# It has reversed byte order compared to the n64 header.
+
+	hdr = file.read(4)
+	if hdr != "LZ77":
+		file.seek(0)
+	lz77offset = file.tell()
+	inputOffset = lz77offset + 4
+
+	file.seek(lz77offset)
+
+	hdr = struct.unpack("<I", file.read(4))[0]
+	uncompressed_length = hdr>>8
+	compression_type = hdr & 0xFF
+
+	if compression_type == 0x11: return decompress_lz77_11(file, inputOffset, uncompressed_length)
+	elif compression_type == 0x10: return decompress_lz77_lzss(file, inputOffset, uncompressed_length)
+	else: raise ValueError("Unsupported compression method %d"%compression_type)
+
 
 if __name__ == '__main__':
 	import time
 	f = open(sys.argv[1], 'rb')
 	
-	start = time.clock()
-	unc = WiiLZ77(f)
-	try:
-		du = unc.uncompress_11()
-	except IndexError:
-		du = unc.data
+	start = time.process_time()
+	if (sys.argv[2] == 'True'):
+		du = decompress_n64(f)
+	else:
+		du = decompress_nonN64(f)
 	
-	end = time.clock()
-	print 'Time: %.2f seconds' % (end - start)
+	end = time.process_time()
+	print('Time: %.2f seconds' % (end - start))
 		
-	#du = romc_decode(f)
-	 
 	f2 = open(sys.argv[2], 'wb')
 	f2.write(''.join(du))
 	f2.close()

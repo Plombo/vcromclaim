@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain
 # Original software (romchu 0.3) written in C by hcs
 # Date: January 17, 2011
@@ -16,87 +16,77 @@ class backref(object):
 
 #backref backref_len[0x1D], backref_disp[0x1E];
 backref_len, backref_disp = [], []
-for i in xrange(0x1D):
+for i in range(0x1D):
 	backref_len.append(backref())
-for i in xrange(0x1E):
+for i in range(0x1E):
 	backref_disp.append(backref())
 
-def main():
-	if len(sys.argv) != 3:
-		sys.stderr.write("romchu %s - romc type 2 decompressor\n" % VERSION)
-		sys.stderr.write("Usage: %s romc out.n64\n", sys.argv[0]);
-		sys.exit(1)
+#easiest to call through lz77.py
+def decompress(infile, inputOffset, nominal_size):
+	#print("Decompressing Romchu")
 
-	infile = open(sys.argv[1], "rb")
-	outfile = open(sys.argv[2], "wb")
-	
-	outfile.write(decompress(infile))
-	outfile.close()
-	infile.close()
-	print "ok!"
-
-def decompress(infile):
-	block_mult = 0x10000
+	#block_mult = 0x10000 - unused
 	block_count = 0
 	out_offset = 0
 	
+	#header parsing moved to lz77.py
 	# read header
-	infile.seek(0)
-	head_buf = infile.read(4)
+	#infile.seek(0)
+	#head_buf = infile.read(4)
 	#bs = init_bitstream(head_buf, 0, 4*8)
 
-	nominal_size = ord(head_buf[0])
-	nominal_size *= 0x100
-	nominal_size |= ord(head_buf[1])
-	nominal_size *= 0x100
-	nominal_size |= ord(head_buf[2])
-	nominal_size *= 0x40;
-	nominal_size |= ord(head_buf[3]) >> 2
-	romc_type = ord(head_buf[3]) & 0x3
+	#nominal_size = head_buf[0]
+	#nominal_size *= 0x100
+	#nominal_size |= head_buf[1]
+	#nominal_size *= 0x100
+	#nominal_size |= head_buf[2]
+	#nominal_size *= 0x40
+	#nominal_size |= head_buf[3] >> 2
+	#romc_type = head_buf[3] & 0x3
 
-	if romc_type != 2:
-		raise ValueError("Expected type 2 romc, got %d\n" % romc_type)
+	#if romc_type != 2:
+	#	raise ValueError("Expected type 2 romc, got %d\n" % romc_type)
 
 	#free_bitstream(bs)
 
+	infile.seek(inputOffset)
+
 	# initialize backreference lookup tables
-	for i in xrange(8):
+	for i in range(8):
 		backref_len[i].bits = 0
 		backref_len[i].base = i
 	
 	i = 8
-	for scale in xrange(1, 6):
+	for scale in range(1, 6):
 		k = (1<<(scale+2))
 		while k < (1<<(scale+3)):
-			backref_len[i].bits = scale;
-			backref_len[i].base = k;
+			backref_len[i].bits = scale
+			backref_len[i].base = k
 			k += (1<<scale)
 			i += 1
 
 	backref_len[28].bits = 0
 	backref_len[28].base = 255
 
-	for i in xrange(4):
+	for i in range(4):
 		backref_disp[i].bits = 0
 		backref_disp[i].base = i
 	
 	i = 4
 	k = 4
 	#for (unsigned int i = 4, scale = 1, k = 4; scale < 14; scale ++)
-	for scale in xrange(1, 14):
+	for scale in range(1, 14):
 		#for (unsigned int j = 0; j < 2; j ++, k += (1 << scale), i++)
-		for j in xrange(2):
+		for j in range(2):
 			backref_disp[i].bits = scale
 			backref_disp[i].base = k
 			k += (1 << scale)
 			i += 1
 
 	# be lazy and just allocate memory for the whole file
-	out_buf = array('B', '\0' * nominal_size)
+	out_buf = array('B', b'\0' * nominal_size)
 	out_offset = 0
 	
-	start = time.clock()
-
 	# decode each block
 	while True:
 		head_buf = infile.read(4)
@@ -114,7 +104,7 @@ def decompress(infile):
 		if compression_flag: # compressed
 			# number of bits, including this header
 			block_size = get_bits(head_bs, 31) - 32
-			payload_bytes = block_size/8
+			payload_bytes = int(block_size/8)
 			payload_bits = block_size%8
 		else: # uncompressed
 			# number of bytes
@@ -150,7 +140,7 @@ def decompress(infile):
 			#free_bitstream(bs)
 
 			# read table 2 size
-			tab2_offset = tab1_offset + 2 + (tab1_size+7) / 8
+			tab2_offset = int(tab1_offset + 2 + (tab1_size+7) / 8)
 			bs = init_bitstream(payload_buf, tab2_offset, 2*8)
 			tab2_size = get_bits(bs, 16)
 			#free_bitstream(bs)
@@ -161,7 +151,7 @@ def decompress(infile):
 			#free_bitstream(bs)
 
 			# decode body
-			body_offset = tab2_offset + 2 + (tab2_size+7) / 8
+			body_offset = int(tab2_offset + 2 + (tab2_size+7) / 8)
 			body_size = payload_bytes*8 + payload_bits - body_offset*8
 			bs = init_bitstream(payload_buf, body_offset, body_size)
 
@@ -207,18 +197,15 @@ def decompress(infile):
 			#free_bitstream(bs)
 		else: # not compression_flag
 			assert (out_offset + payload_bytes) <= nominal_size # generated too many bytes
-			out_buf[out_offset:out_offset+payload_bytes] = payload_buf[0:payload_bytes]
+			out_buf[out_offset:out_offset+payload_bytes] = array('B', payload_buf[0:payload_bytes])
 			out_offset += payload_bytes
 
 		block_count += 1
 		sys.stdout.write("\rDecompressed %d of %d bytes [%x/%x] (%5.2f%%)" % (out_offset, nominal_size, out_offset, nominal_size, 100.0 * out_offset / nominal_size))
 		sys.stdout.flush()
-		#print '\nDecompressed block %d in %.2f seconds' % (block_count, time.clock() - start)
 	
-	print # start a new line after the progress counter
+	print() # start a new line after the progress counter
 	assert out_offset == nominal_size # size mismatch
-	
-	#print 'Average block time: %.2f seconds' % (time.clock() / block_count)
 	
 	return out_buf
 	
@@ -246,7 +233,7 @@ def init_bitstream(pool_buf, pool_start, pool_size):
 
 	# check that padding bits are 0 (to ensure we aren't ignoring anything)
 	if pool_size % 8:
-		if bs.pool[pool_size/8] & ~((1<<(pool_size%8))-1):
+		if bs.pool[int(pool_size/8)] & ~((1<<(pool_size%8))-1):
 			raise ValueError("nonzero padding at end of bitstream")
 	
 	return bs
@@ -264,7 +251,7 @@ def get_bits(bs, bits):
 	#for i in range(bits):
 	while count < bits:
 		if bs.first_byte_bits == 0:
-			#print bs.bits_left, len(bs.pool), i
+			#print(bs.bits_left, len(bs.pool), i)
 			bs.first_byte = bs.pool[bs.index]
 			bs.index += 1
 			if bs.bits_left >= 8:
@@ -326,14 +313,14 @@ def load_table(bs, symbols):
 			length = get_bits(bs, 5)
 
 			len_count[length] += count
-			for j in xrange(count):
+			for j in range(count):
 				length_of[i] = length
 				i += 1
 		else:
 			# set of inequal lengths
 			count = get_bits(bs, 7) + 1
 
-			for j in xrange(count):
+			for j in range(count):
 				length = get_bits(bs, 5)
 				length_of[i] = length
 				len_count[length] += 1
@@ -343,14 +330,14 @@ def load_table(bs, symbols):
 
 	# compute the first canonical Hufman code for each length
 	accum = 0
-	for i in xrange(1, 32):
+	for i in range(1, 32):
 		accum = (accum + len_count[i-1]) << 1
 		codes[i] = accum
 
 	# determine codes and build a tree
 	ht = huftable()
 	ht.symbols = symbols
-	for i in xrange(symbols * 2):
+	for i in range(symbols * 2):
 		node = hufnode()
 		node.is_leaf = 0
 		node.left = 0
@@ -358,14 +345,14 @@ def load_table(bs, symbols):
 		ht.t.append(node)
 	
 	next_free_node = 1
-	for i in xrange(symbols):
+	for i in range(symbols):
 		cur = 0
 		if length_of[i] == 0:
 			# 0 length indicates absent symbol
 			continue
 		
 		#for (int j = length_of[i]-1; j >= 0; j --)
-		for j in xrange(length_of[i]-1, -1, -1):
+		for j in range(length_of[i]-1, -1, -1):
 			#next = 0 # shouldn't be necessary
 			assert not ht.t[cur].is_leaf # oops, walked onto a leaf
 
@@ -419,11 +406,4 @@ def huf_lookup(bs, ht):
 
 	return ht.t[cur].symbol
 
-# void free_table(struct huftable *ht)
-def free_table(ht):
-	pass
-
-
-if __name__ == "__main__":
-	main()
 

@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Bryan Cain (Plombo)
 # Date: December 27, 2010
 # Description: Reads Wii CCF archives, which contain Genesis and Master System ROMs.
 
 import struct
 import zlib
-from cStringIO import StringIO
+from io import BytesIO
 
 class CCFArchive(object):
 	# archive: a file-like object containing the CCF archive, OR the path to a CCF archive
@@ -19,10 +19,10 @@ class CCFArchive(object):
 	
 	def readheader(self):
 		magic, zeroes1, rootnode_offset, numfiles, zeroes2 = struct.unpack('<4s12sII8s', self.file.read(32))
-		assert magic == 'CCF\0'
-		assert zeroes1 == 12 * '\0'
+		assert magic == b'CCF\0'
+		assert zeroes1 == 12 * b'\0'
 		assert rootnode_offset == 0x20
-		assert zeroes2 == 8 * '\0'
+		assert zeroes2 == 8 * b'\0'
 		for i in range(numfiles):
 			fd = FileDescriptor(self.file)
 			self.files.append(fd)
@@ -45,7 +45,7 @@ class CCFArchive(object):
 		if fd.compressed:
 			string = zlib.decompress(string)
 			assert len(string) == fd.decompressed_size
-		return StringIO(string)
+		return BytesIO(string)
 	
 	# returns the requested file, even if the name is cut off inside the archive
 	def find(self, name):
@@ -57,7 +57,7 @@ class FileDescriptor(object):
 	# f: a file-like object of a CCF file at the position of this file descriptor
 	def __init__(self, f):
 		self.name, self.data_offset, self.size, self.decompressed_size = struct.unpack('<20sIII', f.read(32))
-		self.name = self.name[0:self.name.find('\0')]
+		self.name = (self.name[0:self.name.find(b'\0')]).decode('ascii')
 		self.compressed = (self.size != self.decompressed_size)
 
 if __name__ == '__main__':
